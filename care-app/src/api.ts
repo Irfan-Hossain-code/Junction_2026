@@ -60,6 +60,18 @@ export type PathwayState = {
 
 export type Facility = { id: string; name: string; kind: string; region_id: string | null };
 
+export type CapacityOption = {
+  facility_id: string; name: string; county: string | null;
+  utilisation: number | null; mean_wait_days: number | null; capacity_per_week: number | null; travel_min: number | null;
+};
+/** GET /care/pathways/{id}/capacity: twin data for this patient's next capacity-limited step. */
+export type PathwayCapacity = {
+  capability: string | null; reason?: string;
+  stage?: { id: string; label: string }; steps_ahead?: number; booked?: boolean;
+  current?: CapacityOption; alternatives?: CapacityOption[];
+  suggestion?: { facility_id: string; wait_saving_days: number; extra_travel_min: number } | null;
+};
+
 export type NewEvent =
   | { type: "STAGE_ENTERED"; stage: string; occurred_at?: string; facility_id?: string; payload?: Record<string, any> }
   | { type: "NOTE"; payload: { text: string } }
@@ -116,6 +128,7 @@ export const api = {
   patientPathways: (patientId: string) => req<PathwaySummary[]>("GET", `/patients/${encodeURIComponent(patientId)}/pathways`),
   worklist: () => req<{ pathways: PathwaySummary[]; alerts: Alert[] }>("GET", "/worklist"),
   pathway: (id: string) => req<PathwayState>("GET", `/pathways/${id}`),
+  capacity: (id: string) => req<PathwayCapacity>("GET", `/care/pathways/${id}/capacity`),
   /** `eventId` should be generated once per user action so retries stay idempotent. */
   postEvent: (pathwayId: string, ev: NewEvent, eventId: string = uuid()) =>
     req<{ result: { duplicate: boolean; event_id: string; seq: number }; state: PathwayState }>(
