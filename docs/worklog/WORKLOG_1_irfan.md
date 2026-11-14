@@ -64,3 +64,14 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
 - Runs: baseline `190a5f4c…`, demo scenario "Demo: optimised colonoscopy (4 units) + monitoring" `6a6fc36d…`.
 - Impact on Shams: none breaking. Both UIs share the API; monitoring in the twin is the simulated value of his app.
 - Next: demo script, polish, verify remaining HYPOTHESIS capabilities.
+
+### 2026-11-15 00:30 — Claude (irfan) — Behavioural patient agents + living network (model crc-abm-0.4)
+- Audit (before): sim patient = route+municipality only, no attributes/identity, FIFO, no attendance/refusal, no GP stage, health centres were map-only, Docrates was default-routed (bug), particles unscaled, no network anomaly detection.
+- Agents: persistent fictional patients (age, symptom category → urgency, archetype engaged/travel-constrained/low-follow-through with CONTINUOUS travel tolerance, attendance, acceptance, reminder response). Colonoscopy booking slice: offer → accept/decline (logistic utility on travel, wait, urgency, transport) → attend/no-show (slot wasted) → rebook / lost to follow-up. Urgent priority queues. GP first contact at nearest health centre. Separate clinical/behaviour/timing RNG streams per patient → paired comparisons (regression test).
+- Network: 206 private clinics (OSM, first contact, never routed by default), Mehiläinen Joensuu private colonoscopy pilot (HYPOTHESIS, purchasing scenario only), DNA-aware capacity planning (8 %).
+- Optimiser: `behavioral=True` expected-value model (acceptance-weighted load, declines fall back home, excess no-shows). Naive vs behaviour-aware demo: naive plan 41–61 % of offers declined.
+- Anomalies: `backend/services/anomalies.py` with 9 rule types, evidence + thresholds + suggestion; `/twin/anomalies`.
+- Patients: `sim_patient` table (migration 003), `/twin/patients`, `/twin/patients/{run}/{pid}?compare_run=`, `/explain` (Nemotron, grounded).
+- UI: tabs Analysis | Network alarms | Patient agent; alarm markers + highlight; patient dots + journey paths; GP→endoscopy flows; particle key; follow-through KPIs; recommendations triggered by data.
+- Tests: 30+ (incl. pairing + decline tests). Commits 3440086, 3466727.
+- Impact on Shams: none (analytical tables only).

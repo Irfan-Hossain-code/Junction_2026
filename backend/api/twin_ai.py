@@ -98,6 +98,10 @@ Supported action objects (use ids exactly as in the CATALOGUE):
  {"type":"route_share","from_county":ID,"capability":CAP,"to_facility":ID,"share":0..1}
  {"type":"monitoring"}                                                             (automatic stalled-step / follow-up alerts)
  {"type":"screening","county_id":ID or "*","factor":NUMBER}                        (multiplier on screening participation, e.g. 1.1)
+ {"type":"reminders","county_id":ID or "*"}                                        (proactive reminders / confirmation calls before appointments)
+ {"type":"transport_support","county_id":ID or "*"}                                (transport support for distant appointments)
+ {"type":"private_purchase","county_id":ID,"per_week":NUMBER}                      (buy colonoscopies from the eligible private PILOT provider; per month / 4.33 = per week)
+ {"type":"behavioural_reroute","county_id":ID,"capability":CAP}                    (acceptance-aware optimiser re-routing, includes transport support)
 Convert "sessions" to slots using SESSION_SIZE patients per session. If the user names a region but not a hospital, use
 the hospital in that region that has the capability. Anything you cannot express (staff training, budgets, new equipment
 types, pathway rule changes, etc.) goes into "unsupported" as short strings. The explanation is one sentence describing the
@@ -149,6 +153,38 @@ def expand_actions(snap, actions: list[dict]) -> tuple[dict, list[dict], list[st
             elif t == "monitoring":
                 params["monitoring"] = True
                 ok.append({"type": "monitoring", "label": "CancerFlow stalled-step monitoring ON"})
+            elif t in ("reminders", "transport_support"):
+                cid = a.get("county_id", "*")
+                if cid != "*" and cid not in snap.counties:
+                    raise ValueError(f"unknown county {cid}")
+                key = "reminders" if t == "reminders" else "transport_support"
+                params[key] = True if cid == "*" else sorted(set((params.get(key) if isinstance(params.get(key), list) else []) + [cid]))
+                where = "all counties" if cid == "*" else snap.counties[cid]["name"]
+                ok.append({**a, "label": ("Proactive reminders & follow-up calls" if t == "reminders" else "Transport support for distant appointments") + f" in {where}"})
+            elif t == "private_purchase":
+                from backend.sim import params as SP
+                cid, wk = a["county_id"], float(a["per_week"])
+                if cid not in snap.counties:
+                    raise ValueError(f"unknown county {cid}")
+                pilot = SP.PRIVATE_PILOT_FACILITY
+                if pilot not in snap.facilities or snap.facilities[pilot]["county"] != cid:
+                    raise ValueError("no eligible private provider is configured for this county (pilot exists only for North Karelia)")
+                if not 0 < wk <= 80:
+                    raise ValueError("per_week must be in (0, 80]")
+                params.setdefault("private_purchase", []).append({"facility_id": pilot, "capability": "colonoscopy", "per_week": wk, "eligible_counties": [cid]})
+                ok.append({**a, "label": f"Purchase {wk:g} colonoscopies/week from {snap.facilities[pilot]['name']} (SYNTHETIC pilot, {SP.PRIVATE_COST_PER_COLONOSCOPY_EUR} EUR each)"})
+            elif t == "behavioural_reroute":
+                from backend.sim.snapshot import apply_scenario as _apply
+                cid, cap = a["county_id"], a.get("capability", "colonoscopy")
+                if cid not in snap.counties:
+                    raise ValueError(f"unknown county {cid}")
+                plan = optimise(_apply(snap, {"transport_support": [cid]}), cap, budget_units=0, behavioral=True, restrict_counties=[cid])
+                rs = {f"{c['municipality']}|{cap}": plan["scenario_params"]["routing_set"][f"{c['municipality']}|{cap}"] for c in plan["routing_changes"]}
+                if not rs:
+                    raise ValueError("behaviour-aware optimiser found no beneficial re-routing")
+                params.setdefault("routing_set", {}).update(rs)
+                params["transport_support"] = sorted(set((params.get("transport_support") if isinstance(params.get("transport_support"), list) else []) + [cid]))
+                ok.append({**a, "label": f"Behaviour-aware re-routing of {len(rs)} municipalities (expected acceptance {100 * (plan['expected_acceptance_of_moves'] or 0):.0f} %) + transport support"})
             elif t == "screening":
                 f = float(a["factor"])
                 if not 0.5 <= f <= 1.5:
@@ -190,6 +226,14 @@ def rule_parse(snap, text: str, scope: str, sid: Optional[str]) -> dict:
             actions.append({"type": "add_capacity", "facility_id": fac, "capability": cap, "add_per_week": add})
     if re.search(r"rerout|re-rout|redistribut|nearby|spare capacity|neighbo", t) and county:
         actions.append({"type": "reroute", "county_id": county, "capability": cap, "max_travel_min": 180})
+    if re.search(r"remind|text message|sms|call patients|confirmation", t):
+        actions.append({"type": "reminders", "county_id": county or "*"})
+    if re.search(r"transport|taxi|travel support|kela", t):
+        actions.append({"type": "transport_support", "county_id": county or "*"})
+    pm = re.search(r"(\d+)\s*(?:extra\s+|additional\s+)?(?:colonoscop\w*\s+)?(?:per|a|each)\s+(month|week)[^.]*private|private[^.]*?(\d+)\s*(?:\w+\s+)?(?:per|a|each)\s+(month|week)", t)
+    if pm and county:
+        n, per = (pm.group(1), pm.group(2)) if pm.group(1) else (pm.group(3), pm.group(4))
+        actions.append({"type": "private_purchase", "county_id": county, "per_week": round(float(n) / (4.33 if per == "month" else 1), 1)})
     sm = re.search(r"screening[^.]*?(\d+)\s*%", t)
     if sm:
         actions.append({"type": "screening", "county_id": county or "*", "factor": 1 + float(sm.group(1)) / 100})

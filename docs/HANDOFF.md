@@ -26,6 +26,9 @@ uvicorn backend.api.main:app --reload --port 8000   # API docs: http://localhost
 ## National twin UI
 `twin-ui/` (React/TS/MapLibre/deck.gl). Run `cd twin-ui && npm install && npm run dev` → http://localhost:5173 (API on :8000). Reads only `/twin/*`. Simulations take about 30 s and use 4 worker processes.
 
+## Simulation model (crc-abm-0.4)
+Hybrid agent-based + SimPy: behavioural patient agents (offers, declines, no-shows, lost to follow-up), urgent priority, GP first contact, private providers opt-in only (purchasing scenario). Parameters and assumptions are in `backend/sim/params.py` (shown at `/twin/assumptions`). Twin extras: `/twin/anomalies`, `/twin/patients`, `/twin/hc_flows`.
+
 ## Endpoints
 See `documentation/backend/app_backend_routes.md` (contracts + examples). Live OpenAPI at `/docs`. Generate TS types with `npx openapi-typescript http://localhost:8000/openapi.json -o src/api.d.ts`.
 
