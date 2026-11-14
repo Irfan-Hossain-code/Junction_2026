@@ -12,7 +12,7 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
 | Simulation | **Done**: SimPy DES, replications + CI, stored runs, `/twin/*` API |
 | Optimization | **Done**: OR-Tools MIP (flows + capacity units, equity), verified in sim |
 | Blockers | None |
-| Next priorities | 1) demo script + rehearsal 2) visual polish 3) source remaining HYPOTHESIS capabilities |
+| Next priorities | 1) rehearse `docs/DEMO.md` 2) polish 3) source remaining HYPOTHESIS capabilities |
 
 ---
 
@@ -75,3 +75,7 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
 - UI: tabs Analysis | Network alarms | Patient agent; alarm markers + highlight; patient dots + journey paths; GP→endoscopy flows; particle key; follow-through KPIs; recommendations triggered by data.
 - Tests: 30+ (incl. pairing + decline tests). Commits 3440086, 3466727.
 - Impact on Shams: none (analytical tables only).
+
+### 2026-11-15 01:30 — Claude (irfan) — Demo seeded (paired RNG) + interpreter levers
+- Re-seeded baseline + Demo 1–3 with clinical/behaviour/timing streams. NK: 41.6 % → naive 49.1 % (35 % declined) / capacity 54.1 % / behaviour-aware 61.2 % (missed 7.6→3.5 %, lost 1.0→0 %). Script in `docs/DEMO.md` with caveats.
+- `/twin/interpret` now maps reminders, transport support, private purchase (pilot) and behaviour-aware re-routing.
