@@ -18,6 +18,11 @@ Both front-ends read the **same event stream and pathway state machine**. Neithe
 
 | # | Date | Decision | Why |
 |---|---|---|---|
+| D11 | 11-14 | Simulation writes only aggregate `sim_metric` rows. It never writes events into the operational log | Keeps fake simulated events out of the care app |
+| D10 | 11-14 | Schema is SQL-first (`backend/db/migrations/*.sql`) on Aiven PostgreSQL 18 + PostGIS, schema `cf`. Event log is append-only, enforced by a DB trigger | Shams can read the schema directly. Corrections are new events, which gives a full audit trail. |
+| D9 | 11-14 | Facilities and capabilities: everything public (OSM, hospital and county websites). Staff and capacity: simulated only where not published anywhere, tagged `SYNTHETIC` or `CALIBRATED` (enforced by DB CHECK) | Allowed by the organisers. Keeps real and simulated data separate. |
+| D8 | 11-14 | The care app **creates events** (GP observations and decisions, patient actions). The backend validates each one against the pathway pack's state machine | Shams's app is the source of operational truth |
+| D7 | 11-14 | Auth: demo login with a doctor/patient toggle, no passwords. Stack: Python (FastAPI) backend, TypeScript front-ends | Proof of concept |
 | D6 | 11-14 | Where Finland has no per-stage target, use Denmark's colorectal cancer pathway times as the reference, **labelled as Danish** | AstraZeneca mentor (Medical Affairs): target intervals should be in *weeks*, but Finland has not set them yet. Denmark publishes them and measures compliance by region (§5). |
 | D5 | 11-14 | Every number carries an epistemic tag (§3), enforced in code, not by convention | This is the judges' data-quality criterion (20%) and our core design principle |
 | D4 | 11-14 | Cancer types are **pathway packs**: one declarative file each (§6). Adding a cancer type = one new pack + data bindings | The requirement is that a new type can be added "with one prompt" |
@@ -128,7 +133,21 @@ Adding lung cancer = writing `packs/lung.yaml`, adding its capability tags to th
 
 **API sketch:** `GET /pathways/{id}` · `GET /patients/{id}/pathways` · `POST /events` · `GET /alerts?facility=…` · `WS /stream` (live events for both front-ends).
 
-Open questions for Shams: auth/roles? Does his app create events, or only read them plus acknowledge alerts? Which tech stack (so we share types)?
+Answered (D7, D8): the demo login has a doctor/patient toggle. The app creates events. Stack is Python + TypeScript, so we'll generate TS types from the FastAPI OpenAPI schema.
+
+### 7b. Database (implemented: `backend/db/migrations/001_core.sql`)
+
+| World | Tables |
+|---|---|
+| Provenance | `source` |
+| Geography / statistics | `region` (country, YTA, wellbeing county, municipality), `indicator`, `indicator_value` |
+| Facilities | `facility` (PostGIS point), `capability`, `facility_capability`, `facility_capacity` (CALIBRATED/SYNTHETIC only, low–high range), `staff`, `travel_time` |
+| Packs | `pathway_pack` (id, version, sha256, definition JSONB) |
+| Operational (care app) | `patient` (SYNTHETIC only), `app_user` (doctor/patient), `pathway`, **`event` (append-only)**, `pathway_clock`, `appointment`, `alert` (max one unresolved per pathway+rule) |
+| Analytical (twin) | `scenario`, `sim_run` (seed, replications, assumptions), `sim_metric` (SIMULATED only, with CI) |
+
+Commands: `python -m backend.db.migrate` · `python -m pytest backend/tests` (9 invariant tests, all pass).
+Secrets live in `.env`, which git ignores. A template is in `.env.example`.
 
 ## 8. Known data gaps (say these in the pitch)
 
