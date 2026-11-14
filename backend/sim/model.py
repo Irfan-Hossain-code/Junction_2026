@@ -22,6 +22,7 @@ from backend.sim.snapshot import Snapshot
 PACK = get_pack("colorectal")
 T0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
 ADMIN_FRACTION = 0.4   # share of a stage's median that is admin/transit; the rest emerges from queueing
+RTT_BINS = [(0, 14), (14, 28), (28, 42), (42, 56), (56, 70), (70, float("inf"))]
 
 
 @dataclass
@@ -212,6 +213,14 @@ def score(model: Model, tail_days: float = 75) -> dict:
                 agg[scope][f"{c.id}.within_target"].append(ok)
                 if c.status in ("met", "missed"):
                     agg[scope][f"{c.id}.days"].append(c.elapsed_days)
+                    if c.id == "referral_to_treatment":
+                        b = next(lo_ for lo_, hi_ in RTT_BINS if c.elapsed_days < hi_)
+                        agg[scope]["rtt_bins"].append(b)
+        # time spent in each stage (until the next recorded stage), for cohort patients
+        if p.hist and lo <= p.hist[0][1] <= hi:
+            for (s1, t1), (_, t2) in zip(p.hist, p.hist[1:]):
+                for scope in ("national", p.county):
+                    agg[scope][f"stage:{s1}"].append(t2 - t1)
         if p.stalls and lo <= p.hist[0][1] <= hi:
             for scope in ("national", p.county):
                 agg[scope]["stall_days"].append(sum(d for _, d in p.stalls))
@@ -219,7 +228,12 @@ def score(model: Model, tail_days: float = 75) -> dict:
     for scope, mets in agg.items():
         row = {}
         for k, v in mets.items():
-            if k.endswith(".within_target"):
+            if k == "rtt_bins":
+                for lo_, _ in RTT_BINS:
+                    row[f"rtt_hist.{lo_}"] = float(np.mean([x == lo_ for x in v]))
+            elif k.startswith("stage:"):
+                row[f"stage_days.{k[6:]}"] = float(np.mean(v))
+            elif k.endswith(".within_target"):
                 row[k.replace(".within_target", ".p_within_target")] = float(np.mean(v))
                 row[k.replace(".within_target", ".n")] = float(len(v))
             elif k.endswith(".days"):
