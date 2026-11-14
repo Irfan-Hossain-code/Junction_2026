@@ -128,3 +128,61 @@ Rule IDs: `colorectal.clock.<clock_id>` (target time approaching or exceeded) ·
 `{"kind":"event","pathway_id":"…","type":"STAGE_ENTERED","stage":"GP_VISIT","current_stage":"GP_VISIT","open_alerts":0}` ·
 `{"kind":"pathway_created",…}` · `{"kind":"clock","now":"…","rescanned":123}`.
 On `event`, refetch `GET /pathways/{id}`.
+
+---
+
+## Digital twin (simulation + optimisation)
+Everything here is **analytical**. It never writes to patients or events. Every simulated number has `tag: "SIMULATED"` and a 95 % CI over replications.
+
+### `GET /twin/network?capability=colonoscopy&run_id=` (default: latest baseline run)
+One call for the map:
+```json
+{"capability":"colonoscopy","run_id":"…",
+ "national":{"indicators":{"sotkanet:6103":{"value":73.5,"year":2024,"tag":"OBSERVED","source":"sotkanet"}},
+             "sim":{"referral_to_treatment.p_within_target":{"mean":0.834,"ci":[0.81,0.857],"tag":"SIMULATED"}}},
+ "counties":[{"id":"hva-972","name":"North Karelia …","yta":"yta-846","population":162091,"lon":30.1,"lat":62.9,
+              "indicators":{"sotkanet:3336":{"value":99.0,"year":2025,"tag":"OBSERVED"}},
+              "sim":{"referral_to_treatment.p_within_target":{"mean":0.27,"ci":[0.07,0.46]}},
+              "model":{"m_primary_care":1.05,"m_specialist":1.2,"capacity_factor":0.92,"tag":"DERIVED from sotkanet 6411/3336"}}],
+ "facilities":[{"id":"fi-hosp-pkks","name":"North Karelia Central Hospital (Joensuu)","kind":"central_hospital","lon":29.7,"lat":62.6,
+                "county":"hva-972","yta":"yta-846",
+                "capabilities":[{"capability":"colonoscopy","capacity_per_week":15.1,"capacity_tag":"SYNTHETIC",
+                                 "sim":{"utilisation":{"mean":0.99,"ci":[…]},"mean_wait_days":{"mean":11.7,"ci":[…]}}}],
+                "live":{"active_pathways":8,"open_alerts":4,"critical_alerts":2,"tag":"SYNTHETIC"}}],
+ "flows":[{"from_county":"hva-972","to_facility":"fi-hosp-pkks","capability":"colonoscopy","flow_per_week":13.2,"cross_county":false,"tag":"SIMULATED"}]}
+```
+Sim metric names: `referral_to_treatment.{p_within_target,median_days,p90_days,n}`, `fit_positive_to_colonoscopy.*`, `stall_days.mean`, `stalls.n`. Facility metrics: `utilisation`, `mean_wait_days`, `p90_wait_days`, `throughput_per_week`, `queue_end`, `capacity_per_week`.
+
+### `GET /twin/geo/counties` → GeoJSON FeatureCollection of the 22 county boundaries (`properties.id` matches `counties[].id`).
+### `GET /twin/assumptions` → every model parameter, every source and the tag legend.
+
+### Scenarios
+- `GET /twin/scenarios` → `[{"id","name","description","is_baseline","latest_run","params_summary"}]`
+- `POST /twin/scenarios` `{"name":"NK +20% colonoscopy","params":{…}}` → `{"id"}`. Params schema:
+```json
+{"capacity":[{"facility_id":"fi-hosp-pkks","capability":"colonoscopy","factor":1.2}],
+ "routing":[{"from_county":"hva-972","capability":"colonoscopy","to_facility":"fi-hosp-kys","share":0.3}],
+ "routing_set":{"kunta-167|colonoscopy":[["fi-hosp-pkks",0.7],["fi-hosp-kys",0.3]]},
+ "screening_factor":{"hva-972":1.1},
+ "arrival_factor":1.0,
+ "monitoring":true}
+```
+- `POST /twin/scenarios/{id}/run` `{"reps":4,"seed":1000,"horizon_days":365}` → `{"run_id","seconds","metrics"}` (~25 s for 4 reps)
+- `POST /twin/baseline/run` re-runs the baseline.
+- `GET /twin/runs/{run_id}` → run row (with `assumptions`) + all metrics.
+- `GET /twin/compare?base_run=&alt_run=` → rows `{scope_kind, scope_id, metric, base, alt, delta, base_ci, alt_ci, ci_separated}`.
+
+### `POST /twin/optimise` (OR-Tools MIP, then SimPy verification)
+```json
+// request
+{"capability":"colonoscopy","budget_units":4,"unit_per_week":5,"max_travel_min":180,"rho":0.85,
+ "w_equity":2,"w_move":20,"verify":true,"monitoring":true,"reps":4}
+// response (abridged)
+{"plan":{"status":"OPTIMAL","overload_before":11.37,"overload_after":0,
+         "capacity_additions":[{"facility_id":"fi-hosp-pkks","capability":"colonoscopy","units":1,"add_per_week":5}],
+         "routing_changes":[{"municipality":"kunta-541","name":"Nurmes","from":"fi-hosp-kaks","to":[["fi-hosp-kys",0.77]],"share_moved":0.88}],
+         "utilisation":[{"facility_id":"fi-hosp-pkks","util_before":1.004,"util_after":0.759}],
+         "county_travel_min_before":{…},"county_travel_min_after":{…}},
+ "scenario_id":"…","run":{"run_id":"…","seconds":23.1},
+ "comparison":{"rows":[{"scope_kind":"national","metric":"referral_to_treatment.p_within_target","base":0.834,"alt":0.878,"ci_separated":true}]}}
+```

@@ -26,16 +26,7 @@ from backend.services.pathways import ensure_pack, now as db_now
 
 PACK = get_pack("colorectal")
 
-# median days to the NEXT stage (lognormal, sigma 0.5); 'pc'/'sp' = scaled by primary/specialist multiplier
-DURATIONS = {
-    "SCREENING_INVITED": (14, None), "FIT_RETURNED": (5, None), "FIT_POSITIVE": (6, "sp"),
-    "NURSE_ASSESSMENT": (14, "sp"), "SYMPTOMS_REPORTED": (5, "pc"), "GP_VISIT": (1, "pc"),
-    "REFERRAL_SENT": (1, None), "REFERRAL_RECEIVED": (12, "sp"), "SPECIALIST_ASSESSMENT": (7, "sp"),
-    "COLONOSCOPY": (0.2, None), "ALT_EXAMINATION": (5, "sp"), "HISTOLOGY": (6, "sp"),
-    "CANCER_CONFIRMED": (3, None), "STAGING": (6, "sp"), "MDT_DECISION": (12, "sp"),
-    "NEOADJUVANT_THERAPY": (45, None), "SURGERY": (25, "sp"), "SYSTEMIC_THERAPY": (60, None),
-    "ADJUVANT_THERAPY": (90, None),
-}
+from backend.sim.params import DURATIONS, MULT_HI, MULT_LO  # shared with the SimPy simulator
 # branch probabilities (HYPOTHESIS; screening sample is ENRICHED for FIT-positives so the demo has flow)
 BRANCH = {
     "SCREENING_INVITED": [("FIT_RETURNED", 0.735), ("SCREENING_NO_RESPONSE", 0.265)],   # participation OBSERVED (FCR 2024)
@@ -102,7 +93,7 @@ def load_world(conn):
                                WHERE indicator_id=%s AND gender='total' AND region_id LIKE 'hva-%%'
                                ORDER BY region_id, year DESC""", (f"sotkanet:{ind}",)).fetchall()
         return dict(rows)
-    def mult(vals, lo=0.75, hi=1.35):
+    def mult(vals, lo=MULT_LO, hi=MULT_HI):
         if not vals:
             return {}
         a, b = min(vals.values()), max(vals.values())

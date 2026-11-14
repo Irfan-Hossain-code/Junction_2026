@@ -148,7 +148,8 @@ def main():
                 g = json.dumps(cgeo[r["code"]]["geometry"])
                 conn.execute("""INSERT INTO region(id,kind,name_fi,name_en,parent_id,sotkanet_id,population,boundary,centroid,source_id)
                                 VALUES (%s,'wellbeing_county',%s,%s,%s,%s,%s, ST_GeomFromGeoJSON(%s)::geography,
-                                        ST_PointOnSurface(ST_GeomFromGeoJSON(%s))::geography,'statfi-geo')""",
+                                        ST_PointOnSurface(ST_GeomFromGeoJSON(%s))::geography,'statfi-geo')
+                                ON CONFLICT (id) DO UPDATE SET population=EXCLUDED.population""",
                              (f"hva-{r['id']}", r["title"]["fi"], r["title"].get("en"), yta, r["id"], pop.get(r["id"]), g, g))
             mgeo = {f["properties"]["kunta"]: f for f in munis_geo["features"]}
             n_mun = 0
@@ -161,7 +162,8 @@ def main():
                 g = json.dumps(mgeo[r["code"]]["geometry"])
                 conn.execute("""INSERT INTO region(id,kind,name_fi,name_en,parent_id,sotkanet_id,population,boundary,centroid,source_id)
                                 VALUES (%s,'municipality',%s,%s,%s,%s,%s, ST_GeomFromGeoJSON(%s)::geography,
-                                        ST_PointOnSurface(ST_GeomFromGeoJSON(%s))::geography,'statfi-geo')""",
+                                        ST_PointOnSurface(ST_GeomFromGeoJSON(%s))::geography,'statfi-geo')
+                                ON CONFLICT (id) DO UPDATE SET population=EXCLUDED.population""",
                              (f"kunta-{r['code']}", r["title"]["fi"], r["title"].get("en"), hva, r["id"], pop.get(r["id"]), g, g))
                 n_mun += 1
 
@@ -292,7 +294,7 @@ def synthetic_capacity(conn):
         cap_wk = demand_wk / 0.85
         # deterministic +-15 % jitter so not every hospital is identically balanced
         h = int(hashlib.md5(f"{fid}|{cap}|{rng_seed}".encode()).hexdigest(), 16)
-        j = 1 + 0.15 * math.sin(h % 1000)
+        j = 1 + 0.08 * math.sin(h % 1000)
         mid = max(cap_wk * j, 0.5)
         out.append((fid, cap, round(mid * 0.8, 2), round(mid * 1.2, 2)))
         if cap == "colonoscopy":

@@ -10,3 +10,5 @@ pandas
 pytest>=8
 httpx
 psycopg-pool>=3.2
+simpy>=4.1
+ortools>=9.10

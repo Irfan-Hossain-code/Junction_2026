@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
     pool.close()
 
 
-app = FastAPI(title="CancerFlow API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="CancerFlow API", version="0.2.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
@@ -310,3 +310,9 @@ async def stream(ws: WebSocket):
         pass
     finally:
         _ws_clients.discard(ws)
+
+
+# ------------------------------------------------------------------ digital twin (simulation / optimisation)
+from backend.api.twin import router as twin_router  # noqa: E402
+
+app.include_router(twin_router)

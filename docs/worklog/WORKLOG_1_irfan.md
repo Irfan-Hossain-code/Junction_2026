@@ -9,10 +9,10 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
 | Backend | **API working** (pathways, events, alerts, worklist, facilities, regions, demo clock, WS). 24 tests pass |
 | Frontend / integration | Shams can integrate now: `docs/HANDOFF.md` lists the tasks and demo logins. Routes in `documentation/backend/app_backend_routes.md` |
 | Database | Aiven PG 18 + PostGIS, migrations 001–002. Real reference data loaded. 600 synthetic pathways + 4 demo stories |
-| Simulation | Next: SimPy engine on scenario snapshots |
-| Optimization | Next: OR-Tools capacity/referral allocation |
+| Simulation | **Done**: SimPy DES, replications + CI, stored runs, `/twin/*` API |
+| Optimization | **Done**: OR-Tools MIP (flows + capacity units, equity), verified in sim |
 | Blockers | None |
-| Next priorities | 1) SimPy simulator 2) OR-Tools optimiser 3) twin API (network/flows/bottlenecks) 4) twin frontend |
+| Next priorities | 1) twin frontend (TS) 2) demo script 3) source remaining HYPOTHESIS capabilities |
 
 ---
 
@@ -47,3 +47,12 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
 - Impact on Shams: demo logins in HANDOFF. **Running the generator wipes operational data.**
 - Outstanding: radiotherapy at Tays/Tyks/KYS/OYS/Nova/Seinäjoki/Vaasa/Pori/Joensuu is still HYPOTHESIS; needs one source each.
 - Next: SimPy simulator + OR-Tools optimiser on scenario snapshots
+
+### 2026-11-14 19:30 — Claude (irfan) — Simulation + optimisation + twin API
+- Summary: SimPy DES (`backend/sim/model.py`) on pure `Snapshot`s (`backend/sim/snapshot.py`). Two arrival routes, county-scaled delays, stochastic "cracks", capacity-limited stations, and pooled shared resources (background load for CT/oncology/radiotherapy). **Clocks are scored with the same pathway engine** as operations. Runner: parallel replications, mean + 95 % CI, stored in `sim_run`/`sim_metric`. OR-Tools MIP (`backend/opt/allocate.py`): municipality→hospital flows + integer capacity units, utilisation cap ρ = 0.85, minimax county travel (equity), disruption penalty. The plan is **verified in simulation**.
+- Results (4 reps, colonoscopy, 4 units): national within-42 d 83.4 % [81.0–85.7] → 87.8 % [85.9–89.6] with plan + monitoring; North Karelia 27 % → 57 %; monitoring cuts stall time 40 → 9 d; NK colonoscopy wait 11.7 → 0.4 d. Finding: capacity alone does not close the NK gap (the rest is process delay).
+- Files: `backend/sim/{params,snapshot,model,runner}.py`, `backend/opt/allocate.py`, `backend/api/twin.py`, `backend/tests/test_sim_opt.py`; generator now imports shared params.
+- API: `/twin/*` (network, geo, assumptions, scenarios, runs, compare, optimise). Docs in routes file.
+- Tests: 30/30 pass
+- Impact on Shams: none breaking. Optional: show "Simulated impact of monitoring" from `/twin/compare`.
+- Next: twin frontend (map + network + scenario panel)
