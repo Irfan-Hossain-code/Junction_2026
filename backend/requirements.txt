@@ -9,3 +9,4 @@ scipy
 pandas
 pytest>=8
 httpx
+psycopg-pool>=3.2
