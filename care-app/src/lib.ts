@@ -20,6 +20,38 @@ export function useStageLabel(): (id: string) => string {
   return (id: string) => labels[id] || (id ? id.charAt(0) + id.slice(1).toLowerCase().replace(/_/g, " ") : "–");
 }
 
+// ------------------------------------------------------------------ facility names (for "who is responsible")
+let facCache: Promise<Record<string, string>> | null = null;
+function loadFacilities() {
+  facCache ??= api.facilities()
+    .then((fs) => Object.fromEntries(fs.map((f) => [f.id, f.name])))
+    .catch(() => { facCache = null; return {}; });
+  return facCache;
+}
+/** Lookup from facility id to its name, e.g. "fi-hosp-pkks" → "North Karelia Central Hospital (Joensuu)". */
+export function useFacilityName(): (id: string | null | undefined) => string | null {
+  const [names, setNames] = useState<Record<string, string>>({});
+  useEffect(() => { loadFacilities().then(setNames); }, []);
+  return (id) => (id ? names[id] ?? null : null);
+}
+
+/** Who an alert's `responsible_role` refers to: clinician wording, and the softer patient wording. */
+export const ROLE_LABEL: Record<string, { staff: string; patient: string }> = {
+  gp: { staff: "GP", patient: "your GP" },
+  screening_nurse: { staff: "Screening nurse", patient: "your screening nurse" },
+  specialist: { staff: "Specialist", patient: "your specialist" },
+  endoscopy_unit: { staff: "Endoscopy unit", patient: "the endoscopy unit" },
+  pathology: { staff: "Pathology lab", patient: "the pathology laboratory" },
+  radiology: { staff: "Radiology", patient: "the imaging (radiology) department" },
+  mdt: { staff: "Cancer team (MDT)", patient: "your cancer care team" },
+  surgery: { staff: "Surgery team", patient: "your surgical team" },
+  oncology: { staff: "Oncology", patient: "the oncology (cancer treatment) team" },
+};
+export function roleLabel(role: string | null | undefined, who: "staff" | "patient"): string {
+  if (!role) return who === "staff" ? "Care team" : "your care team";
+  return ROLE_LABEL[role]?.[who] ?? (who === "staff" ? role.replace(/_/g, " ") : `the ${role.replace(/_/g, " ")} team`);
+}
+
 // ------------------------------------------------------------------ hash routing (works on any static host)
 export function useRoute(): string[] {
   const [hash, setHash] = useState(location.hash);

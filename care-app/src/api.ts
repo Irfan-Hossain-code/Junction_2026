@@ -120,6 +120,8 @@ export const api = {
   postEvent: (pathwayId: string, ev: NewEvent, eventId: string = uuid()) =>
     req<{ result: { duplicate: boolean; event_id: string; seq: number }; state: PathwayState }>(
       "POST", `/pathways/${pathwayId}/events`, { id: eventId, ...ev }),
+  /** All unresolved alerts network-wide (used to find my patients' alerts owned by other units). */
+  openAlerts: () => req<Alert[]>("GET", "/alerts"),
   acknowledge: (alertId: string) => req<PathwayState>("POST", `/alerts/${alertId}/acknowledge`),
   createPatient: (p: { display_name: string; birth_year?: number; sex?: "F" | "M" | "X" }) =>
     req<Patient>("POST", "/patients", p),
