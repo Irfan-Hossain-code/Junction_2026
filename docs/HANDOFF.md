@@ -26,5 +26,30 @@ uvicorn backend.api.main:app --reload --port 8000   # API docs: http://localhost
 ## Endpoints
 See `documentation/backend/app_backend_routes.md` (contracts + examples). Live OpenAPI at `/docs`. Generate TS types with `npx openapi-typescript http://localhost:8000/openapi.json -o src/api.d.ts`.
 
+## Data currently in the shared Aiven DB (2026-11-14)
+- **Real:** 23 wellbeing counties + 5 university-hospital areas (YTA) + 308 municipalities with boundaries and population. 392 facilities from OpenStreetMap (30 curated hospitals, 362 health centres). Sotkanet indicators.
+- **Synthetic:** 600 colorectal pathways + 4 demo stories, ~3.2k events, ~70 open alerts. Capacity and staff are `SYNTHETIC`.
+- Reload: `python -m backend.ingest.load_reference`, then `python -m backend.generator.population --n 600`.
+  ⚠️ The generator **wipes all operational data**, including events your app created. Tell the team before running it.
+
+## Demo logins (`X-User-Id`)
+| id | role | where / who |
+|---|---|---|
+| `nurse-pkks-scr` | doctor (screening nurse) | North Karelia Central Hospital. Worklist shows Matti's overdue colonoscopy |
+| `dr-pkks-surg` | doctor | North Karelia Central Hospital |
+| `dr-kys-endo` | doctor | KYS Kuopio |
+| `dr-hus-endo` | doctor | HUS Meilahti |
+| `dr-tyks-onc` | doctor | Tyks Turku |
+| `gp-…` | doctor (GP) | health centres used by the demo stories (`GET /auth/users?role=doctor`) |
+| `pat-d-0001` | patient | Matti Virtanen: positive FIT, **no colonoscopy for 40 d** (critical) |
+| `pat-d-0002` | patient | Aino Korhonen: **referral sent, never received** |
+| `pat-d-0003` | patient | Eino Mäkinen: on track, MDT done |
+| `pat-d-0004` | patient | Helmi Laine: **histology pending too long** |
+
 ## Immediate integration tasks for the care app
-_(filled in as endpoints land, see below)_
+1. Login screen: `GET /auth/users?role=…`, then `POST /auth/login`; store the id; send the `X-User-Id` header.
+2. Patient home: `GET /me/pathways`, then `GET /pathways/{id}` (timeline, clocks, appointments, next step).
+3. Doctor home: `GET /worklist` (pathways + alerts, critical first).
+4. Pathway screen: render `allowed_next` as actions → `POST /pathways/{id}/events` with `STAGE_ENTERED`. Handle 409 by showing `detail`.
+5. Live refresh: `WS /stream`. On `{"kind":"event"}`, refetch the pathway.
+6. Demo trick: `POST /admin/clock {"offset_days": 14}` fast-forwards time so new alerts appear (reset with 0).
