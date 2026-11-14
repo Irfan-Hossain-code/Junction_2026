@@ -79,3 +79,12 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
 ### 2026-11-15 01:30 — Claude (irfan) — Demo seeded (paired RNG) + interpreter levers
 - Re-seeded baseline + Demo 1–3 with clinical/behaviour/timing streams. NK: 41.6 % → naive 49.1 % (35 % declined) / capacity 54.1 % / behaviour-aware 61.2 % (missed 7.6→3.5 %, lost 1.0→0 %). Script in `docs/DEMO.md` with caveats.
 - `/twin/interpret` now maps reminders, transport support, private purchase (pilot) and behaviour-aware re-routing.
+
+### 2026-11-15 — Claude (irfan) — MPC foundation (feature flag, default OFF)
+- Summary: hierarchical stochastic MPC. Strategic layer = existing `optimise(behavioral=True)` (unchanged). New operational layer = lexicographic MIP (L1 clinically weighted expected target violation → L2 expected RTT → L3 transfer/admin/travel burden) over patient × facility × day, with SAA over downstream forecasts, acceptance probabilities, consent, capacity, urgent safety limit, authorisation. Coordinator: versioned state, stale-result protection, scheduled + event-triggered local re-optimisation, compute budget with greedy fallback, escalation (log; ElevenLabs voice placeholder disabled).
+- `potential_brain/` is empty (locally and on all remotes), so there was nothing to evaluate. Decision: MIP for decisions, AI for forecasting/explanation (see `docs/MPC_SPEC.md` §0).
+- Files: `backend/mpc/{state,forecast,problem,coordinator,escalation,api}.py`, `backend/tests/test_mpc.py`, `docs/MPC_SPEC.md`; `backend/api/main.py` mounts `/mpc` only if `CANCERFLOW_MPC=1`.
+- Tests: 12 MPC tests + full suite 44/44 pass. Read-only DB smoke: 48 waiting patients, 580 slots, lexicographic-optimal in 1.1–2.5 s. L1 equals myopic on current data (no occupancy data yet), never worse (property test).
+- Found and fixed: reading MIP solution after adding the tier lock invalidated it; SCIP default MIP gap (1e-4) let lower tiers leak clinical slack → gap 1e-7 + absolute tier lock.
+- Impact on Shams: none (flag off). Future: "recommended actions" list via `/mpc/step`.
+- Demo untouched: no stored scenarios recomputed, no services restarted, no simulation workers.

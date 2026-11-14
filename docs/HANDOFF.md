@@ -29,6 +29,9 @@ uvicorn backend.api.main:app --reload --port 8000   # API docs: http://localhost
 ## Simulation model (crc-abm-0.4)
 Hybrid agent-based + SimPy: behavioural patient agents (offers, declines, no-shows, lost to follow-up), urgent priority, GP first contact, private providers opt-in only (purchasing scenario). Parameters and assumptions are in `backend/sim/params.py` (shown at `/twin/assumptions`). Twin extras: `/twin/anomalies`, `/twin/patients`, `/twin/hc_flows`.
 
+## MPC layer (experimental, OFF by default)
+`backend/mpc/`: lexicographic receding-horizon MIP, recommendation-only. Enable with `CANCERFLOW_MPC=1` → `GET /mpc/status`, `POST /mpc/step`. Spec: `docs/MPC_SPEC.md`.
+
 ## Endpoints
 See `documentation/backend/app_backend_routes.md` (contracts + examples). Live OpenAPI at `/docs`. Generate TS types with `npx openapi-typescript http://localhost:8000/openapi.json -o src/api.d.ts`.
 

@@ -318,3 +318,10 @@ import backend.api.twin_agents  # noqa: E402,F401  (registers /twin/anomalies, /
 from backend.api.twin import router as twin_router  # noqa: E402
 
 app.include_router(twin_router)
+
+# ------------------------------------------------------------------ experimental MPC layer (feature flag, default OFF)
+from backend.mpc.coordinator import enabled as _mpc_enabled  # noqa: E402
+
+if _mpc_enabled():
+    from backend.mpc.api import router as mpc_router  # noqa: E402
+    app.include_router(mpc_router)
