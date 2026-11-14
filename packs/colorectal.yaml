@@ -1,0 +1,119 @@
+# Colorectal cancer pathway pack (C18–C20).  Source of truth for stages, transitions, clocks and alert rules.
+# Adding a cancer type = copy this file, change stages/clocks/sources. No engine code changes needed.
+id: colorectal
+version: 1
+title: Colorectal cancer (C18–C20)
+icd10: [C18, C19, C20]
+
+sources:
+  FI-1:  {title: "STM 2010:6 Syövän hoidon kehittäminen 2010–2020, summarised in THL Ohjaus 6/2014 p.3", url: "http://urn.fi/URN:ISBN:978-952-302-185-3", kind: guideline}
+  FI-LAW: {title: "Terveydenhuoltolaki 1326/2010 §52 (assessment of need within 3 weeks of referral)", url: "https://www.finlex.fi/fi/laki/ajantasa/2010/20101326", kind: law}
+  FI-SCR: {title: "Suomen Syöpärekisteri: Suolistosyövän seulontaprotokolla ja seulonnassa käytettävät testit (2023)", url: "https://syoparekisteri.fi/assets/files/2023/03/Suolistosyovan-seulontaprotokolla-ja-seulonnassa-kaytettavat-testit.pdf", kind: guideline}
+  FI-SCR-STATS: {title: "Finnish Cancer Registry, colorectal screening annual statistics (2024 cohort)", url: "https://stats.cancerregistry.fi/joukkistilastot/colorectal.html", kind: statistic}
+  DK-1:  {title: "Sundhedsdatastyrelsen, Monitorering af kræftområdet årsopgørelse 2025, Tabel 2.12 (B12)", url: "https://cdn1.gopublic.dk/sundhedsdatastyrelsen/Media/639168548110422377/monitorering-af-kraeftomraadet-aarsopgoerelse-2025.pdf", kind: report}
+  CF-ASSUMPTION: {title: "CancerFlow modelling assumption (no published target). Configurable, shown as HYPOTHESIS", kind: model}
+
+# Published programme figures (OBSERVED), used by the generator/simulator for calibration
+programme_stats:
+  screening_participation: {value: 0.735, tag: OBSERVED, source: FI-SCR-STATS, year: 2024}
+  fit_positive_rate:       {value: 0.045, tag: OBSERVED, source: FI-SCR-STATS, year: 2024}
+  screening_colonoscopies: {value: 10244, tag: OBSERVED, source: FI-SCR-STATS, year: 2024}
+
+entry_routes:
+  screening:   {first_stage: SCREENING_INVITED, label: "Screening programme (FIT)"}
+  symptomatic: {first_stage: SYMPTOMS_REPORTED, label: "Symptoms → GP referral"}
+
+# actors: who may record entering this stage (system/generator may always)
+# level: care level responsible; capability: facility capability needed (matches facility registry)
+# max_dwell_days: "nothing happened for N days" alert threshold for this stage
+stages:
+  # --- screening route (FI-SCR): positive FIT -> screening nurse -> colonoscopy / alternative exam
+  SCREENING_INVITED:   {label: "Invited to screening", level: screening_programme, actors: [doctor], next: [FIT_RETURNED, SCREENING_NO_RESPONSE]}
+  SCREENING_NO_RESPONSE: {label: "No response to invitation", level: screening_programme, actors: [doctor], terminal: true}
+  FIT_RETURNED:        {label: "FIT sample returned", level: screening_programme, actors: [patient, doctor], next: [FIT_NEGATIVE, FIT_POSITIVE]}
+  FIT_NEGATIVE:        {label: "FIT negative, re-invite next round", level: screening_programme, actors: [doctor], terminal: true}
+  FIT_POSITIVE:        {label: "FIT positive", level: screening_programme, actors: [doctor], next: [NURSE_ASSESSMENT, DECLINED],
+                        max_dwell_days: {value: 14, tag: HYPOTHESIS, source: CF-ASSUMPTION}, responsible: screening_nurse}
+  NURSE_ASSESSMENT:    {label: "Screening nurse follow-up assessment", level: specialist, actors: [doctor], next: [COLONOSCOPY, ALT_EXAMINATION, DECLINED],
+                        max_dwell_days: {value: 21, tag: HYPOTHESIS, source: CF-ASSUMPTION}, responsible: screening_nurse}
+
+  # --- symptomatic route: GP -> referral -> specialist
+  SYMPTOMS_REPORTED:   {label: "Symptoms reported", level: primary, actors: [patient, doctor], next: [GP_VISIT],
+                        max_dwell_days: {value: 14, tag: HYPOTHESIS, source: CF-ASSUMPTION}, responsible: gp}
+  GP_VISIT:            {label: "GP assessment", level: primary, actors: [doctor], next: [REFERRAL_SENT, CANCER_EXCLUDED],
+                        max_dwell_days: {value: 7, tag: HYPOTHESIS, source: CF-ASSUMPTION}, responsible: gp}
+  REFERRAL_SENT:       {label: "Referral sent to specialist care", level: primary, actors: [doctor], next: [REFERRAL_RECEIVED],
+                        max_dwell_days: {value: 5, tag: HYPOTHESIS, source: CF-ASSUMPTION}, responsible: gp}
+  REFERRAL_RECEIVED:   {label: "Referral received by hospital", level: specialist, actors: [doctor], next: [SPECIALIST_ASSESSMENT, COLONOSCOPY], responsible: specialist}
+  SPECIALIST_ASSESSMENT: {label: "Specialist assessment", level: specialist, actors: [doctor], next: [COLONOSCOPY, ALT_EXAMINATION, CANCER_EXCLUDED], responsible: specialist}
+
+  # --- shared diagnostics
+  COLONOSCOPY:         {label: "Colonoscopy", level: specialist, capability: colonoscopy, actors: [doctor], next: [HISTOLOGY, CANCER_EXCLUDED, POLYP_SURVEILLANCE], responsible: endoscopy_unit}
+  ALT_EXAMINATION:     {label: "Alternative examination (e.g. CT colonography)", level: specialist, capability: ct_imaging, actors: [doctor], next: [COLONOSCOPY, CANCER_EXCLUDED], responsible: radiology}
+  HISTOLOGY:           {label: "Histology pending", level: specialist, capability: pathology, actors: [doctor], next: [CANCER_CONFIRMED, POLYP_SURVEILLANCE, CANCER_EXCLUDED],
+                        max_dwell_days: {value: 10, tag: HYPOTHESIS, source: CF-ASSUMPTION}, responsible: pathology}
+  CANCER_CONFIRMED:    {label: "Cancer confirmed", level: specialist, actors: [doctor], next: [STAGING], responsible: specialist}
+  STAGING:             {label: "Staging (CT; MRI if rectal)", level: specialist, capability: ct_imaging, actors: [doctor], next: [MDT_DECISION], responsible: radiology}
+  MDT_DECISION:        {label: "Multidisciplinary team decision", level: specialist, capability: mdt_crc, actors: [doctor], next: [SURGERY, NEOADJUVANT_THERAPY, SYSTEMIC_THERAPY, PALLIATIVE_CARE], responsible: mdt}
+
+  # --- treatment
+  NEOADJUVANT_THERAPY: {label: "Neoadjuvant (chemo)radiotherapy", level: specialist, capability: radiotherapy, actors: [doctor], next: [SURGERY], treatment_start: true, responsible: oncology}
+  SURGERY:             {label: "Surgery", level: specialist, capability: crc_surgery, actors: [doctor], next: [ADJUVANT_THERAPY, FOLLOW_UP], treatment_start: true, responsible: surgery}
+  SYSTEMIC_THERAPY:    {label: "Systemic therapy", level: specialist, capability: oncology, actors: [doctor], next: [SURGERY, FOLLOW_UP, PALLIATIVE_CARE], treatment_start: true, responsible: oncology}
+  ADJUVANT_THERAPY:    {label: "Adjuvant chemotherapy", level: specialist, capability: oncology, actors: [doctor], next: [FOLLOW_UP], responsible: oncology}
+  PALLIATIVE_CARE:     {label: "Palliative care", level: specialist, actors: [doctor], terminal: true, treatment_start: true}
+  FOLLOW_UP:           {label: "Follow-up", level: specialist, actors: [doctor], terminal: true}
+
+  # --- outcomes
+  POLYP_SURVEILLANCE:  {label: "Polyps removed, surveillance", level: specialist, actors: [doctor], terminal: true}
+  CANCER_EXCLUDED:     {label: "Cancer excluded", level: specialist, actors: [doctor], terminal: true}
+  DECLINED:            {label: "Patient declined further examination", level: specialist, actors: [patient, doctor], terminal: true}
+
+# reachable from any non-terminal stage
+universal_next: [DECEASED, WITHDRAWN]
+universal_stages:
+  DECEASED:  {label: "Deceased", level: specialist, actors: [doctor], terminal: true}
+  WITHDRAWN: {label: "Withdrawn / moved care elsewhere", level: specialist, actors: [doctor], terminal: true}
+
+# Clocks start at the first matching stage and stop at the first matching stop stage.
+# 'cancel_on' stops the clock without judging it (e.g. no adjuvant indicated).
+clocks:
+  referral_to_treatment:
+    label: "Referral → treatment start"
+    start: [REFERRAL_RECEIVED, FIT_POSITIVE]
+    stop: [SURGERY, NEOADJUVANT_THERAPY, SYSTEMIC_THERAPY, PALLIATIVE_CARE]
+    cancel_on: [CANCER_EXCLUDED, POLYP_SURVEILLANCE, DECLINED, FIT_NEGATIVE, DECEASED, WITHDRAWN]
+    targets:
+      - {days: 42, tag: REFERENCE, source: FI-1, note: "diagnosis + treatment within 6 weeks of referral"}
+      - {days: 37, tag: EXTERNAL_PROXY, source: DK-1, note: "Denmark B12 surgery/medical standard time"}
+  referral_to_assessment:
+    label: "Referral received → specialist assessment"
+    start: [REFERRAL_RECEIVED]
+    stop: [SPECIALIST_ASSESSMENT, COLONOSCOPY]
+    cancel_on: [DECEASED, WITHDRAWN]
+    targets:
+      - {days: 21, tag: REFERENCE, source: FI-LAW, note: "assessment of need within 3 weeks"}
+  fit_positive_to_colonoscopy:
+    label: "Positive FIT → colonoscopy"
+    start: [FIT_POSITIVE]
+    stop: [COLONOSCOPY, ALT_EXAMINATION]
+    cancel_on: [DECLINED, DECEASED, WITHDRAWN]
+    targets:
+      - {days: 28, tag: HYPOTHESIS, source: CF-ASSUMPTION, note: "no published Finnish target found; confirm with screening programme"}
+  diagnostic_turnaround:
+    label: "Colonoscopy → histology result"
+    start: [COLONOSCOPY]
+    stop: [CANCER_CONFIRMED, CANCER_EXCLUDED, POLYP_SURVEILLANCE]
+    cancel_on: [DECEASED, WITHDRAWN]
+    targets:
+      - {days: 7, tag: REFERENCE, source: FI-1, note: "imaging and tissue analysis at most one week"}
+  surgery_to_adjuvant:
+    label: "Surgery → adjuvant therapy"
+    start: [SURGERY]
+    stop: [ADJUVANT_THERAPY]
+    cancel_on: [FOLLOW_UP, DECEASED, WITHDRAWN]
+    targets:
+      - {days: 28, tag: REFERENCE, source: FI-1, note: "adjuvant therapy at the latest 4 weeks after surgery"}
+
+alerts:
+  warn_fraction: 0.75   # warning when elapsed >= 75 % of the strictest REFERENCE/EXTERNAL_PROXY target
