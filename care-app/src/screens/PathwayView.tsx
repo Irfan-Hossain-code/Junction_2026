@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { api, Appointment, Facility, NewEvent, PathwayState, Stage, uuid } from "../api";
+import { api, Appointment, CapacityOption, Facility, NewEvent, PathwayState, Stage, uuid } from "../api";
 import { useAuth } from "../auth";
 import { AlertCard, ClockBar, ErrorNote, Header, Spinner, Tag, Timeline } from "../components";
 import { EXIT_STAGES, fmtDate, fromLocalInput, go, relDays, ROUTE_LABEL, toLocalInput, useLive, useStageLabel } from "../lib";
@@ -12,6 +12,7 @@ export default function PathwayView({ id }: { id: string }) {
   const [flash, setFlash] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [prefill, setPrefill] = useState<BookPrefill | null>(null);
 
   // One place for every write: shows the backend's reason on 409, swaps in the returned state on success.
   const send = async (ev: NewEvent, eventId: string, ok: string): Promise<boolean> => {
@@ -54,6 +55,10 @@ export default function PathwayView({ id }: { id: string }) {
               <div className="col">
                 <NextStep s={s} busy={busy} send={send} />
                 <OpenAlerts s={s} busy={busy} onAck={ack} />
+                <CapacityCard id={id} closed={s.status === "closed"} onBook={(p) => {
+                  setPrefill({ ...p, n: Date.now() });
+                  setTimeout(() => document.getElementById("pw-tools")?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+                }} />
                 <section className="panel">
                   <div className="panel-h"><h3>Target clocks</h3></div>
                   <div className="panel-b">
@@ -61,7 +66,7 @@ export default function PathwayView({ id }: { id: string }) {
                   </div>
                 </section>
                 <Appointments s={s} busy={busy} send={send} stageLabel={stageLabel} />
-                <Tools s={s} busy={busy} send={send} />
+                <Tools s={s} busy={busy} send={send} prefill={prefill} />
               </div>
               <section className="panel">
                 <div className="panel-h"><h3>Timeline</h3><span className="ctx">{s.timeline.length} events · append-only</span></div>
@@ -76,6 +81,75 @@ export default function PathwayView({ id }: { id: string }) {
 }
 
 type Send = (ev: NewEvent, eventId: string, ok: string) => Promise<boolean>;
+/** "Book there" from the capacity card: open the booking form for this stage at this hospital. */
+type BookPrefill = { stage: string; stageLabel: string; capability: string; facility: string; n: number };
+
+const fmtMin = (m: number | null | undefined) => {
+  if (m == null) return "–";
+  const r = Math.round(m);
+  return r < 60 ? `${r} min` : `${Math.floor(r / 60)} h${r % 60 ? ` ${r % 60} min` : ""}`;
+};
+const fmtWait = (d: number | null | undefined) => (d == null ? "–" : d < 1 ? "< 1 day" : `~${Math.round(d)} days`);
+
+function LoadRow({ o, label, tone }: { o: CapacityOption; label?: string; tone?: string }) {
+  const u = o.utilisation ?? 0;
+  const ucls = u > 0.93 ? "bad" : u > 0.8 ? "warn" : "ok";
+  return (
+    <div className={`load-row ${tone ?? ""}`}>
+      <div className="load-name"><b>{o.name.replace(/\s*\(.*\)$/, "")}</b>{label && <span className="load-tag">{label}</span>}</div>
+      <div className={`load-util ${ucls}`} title="Simulated utilisation">
+        <div className="bar"><div style={{ width: `${Math.min(100, u * 100)}%` }} /></div>
+        <span className="num">{Math.round(u * 100)}%</span>
+      </div>
+      <div className="load-meta num">queue {fmtWait(o.mean_wait_days)} · {fmtMin(o.travel_min)} drive</div>
+    </div>
+  );
+}
+
+/** Twin data for this patient: how loaded the hospital for their next step is, and a nearby alternative. */
+function CapacityCard({ id, closed, onBook }: {
+  id: string; closed: boolean; onBook: (p: Omit<BookPrefill, "n">) => void;
+}) {
+  const cap = useLive(() => api.capacity(id), [id], (m) => m.kind === "event" && m.pathway_id === id);
+  const c = cap.data;
+  if (closed || !c || !c.capability || !c.current || !c.stage) return null;
+  const alts = c.alternatives || [];
+  const sug = c.suggestion ? alts.find((a) => a.facility_id === c.suggestion!.facility_id) : undefined;
+  const when = c.steps_ahead === 1 ? "next step" : `${c.steps_ahead} steps ahead`;
+  const book = (facility: string) => onBook({ stage: c.stage!.id, stageLabel: c.stage!.label, capability: c.capability!, facility });
+  return (
+    <section className="panel capacity">
+      <div className="panel-h">
+        <h3>Capacity ahead</h3>
+        <span className="ctx">{c.stage.label} · {when}</span>
+      </div>
+      <div className="panel-b">
+        <LoadRow o={c.current} label={c.booked ? "booked" : "default route"} tone="current" />
+        {sug && c.suggestion && (
+          <div className="suggest">
+            <div>
+              <b>{sug.name.replace(/\s*\(.*\)$/, "")}</b> has a queue about <b>{Math.round(c.suggestion.wait_saving_days)} days shorter</b>
+              {c.suggestion.extra_travel_min > 0 ? <> for <b>{fmtMin(c.suggestion.extra_travel_min)}</b> more driving</> : <>, and isn't farther away</>}.
+            </div>
+            <button className="btn small primary" onClick={() => book(sug.facility_id)}>Book there</button>
+          </div>
+        )}
+        {alts.length > 0 && (
+          <details className="alts">
+            <summary>Nearby alternatives ({alts.length})</summary>
+            {alts.map((a) => (
+              <div key={a.facility_id} className="alt-wrap">
+                <LoadRow o={a} />
+                <button className="btn small ghost" onClick={() => book(a.facility_id)}>Book</button>
+              </div>
+            ))}
+          </details>
+        )}
+        <p className="muted small cap-foot">Queues and load are simulated on synthetic capacity; drive times are estimates. Advisory only.</p>
+      </div>
+    </section>
+  );
+}
 
 function PatientHead({ s }: { s: PathwayState }) {
   const p = s.patient;
@@ -210,11 +284,12 @@ function Appointments({ s, busy, send, stageLabel }: { s: PathwayState; busy: bo
 
 type ToolTab = "note" | "result" | "book";
 
-function Tools({ s, busy, send }: { s: PathwayState; busy: boolean; send: Send }) {
+function Tools({ s, busy, send, prefill }: { s: PathwayState; busy: boolean; send: Send; prefill: BookPrefill | null }) {
   const [tab, setTab] = useState<ToolTab>("note");
+  useEffect(() => { if (prefill) setTab("book"); }, [prefill]);
   if (s.status === "closed") return null;
   return (
-    <section className="panel">
+    <section className="panel" id="pw-tools">
       <div className="panel-h">
         <div className="seg small">
           <button className={tab === "note" ? "on" : ""} onClick={() => setTab("note")}>Note</button>
@@ -225,7 +300,7 @@ function Tools({ s, busy, send }: { s: PathwayState; busy: boolean; send: Send }
       <div className="panel-b">
         {tab === "note" && <NoteForm busy={busy} send={send} />}
         {tab === "result" && <ResultForm busy={busy} send={send} />}
-        {tab === "book" && <BookForm key={s.current_stage?.id} s={s} busy={busy} send={send} />}
+        {tab === "book" && <BookForm key={`${s.current_stage?.id}-${prefill?.n ?? 0}`} s={s} busy={busy} send={send} prefill={prefill} />}
       </div>
     </section>
   );
@@ -272,18 +347,22 @@ function ResultForm({ busy, send }: { busy: boolean; send: Send }) {
   );
 }
 
-function BookForm({ s, busy, send }: { s: PathwayState; busy: boolean; send: Send }) {
+function BookForm({ s, busy, send, prefill }: { s: PathwayState; busy: boolean; send: Send; prefill?: BookPrefill | null }) {
   const { user } = useAuth();
   // Stages worth booking: upcoming steps that need a service, then the current one.
-  const options = [...s.allowed_next.filter((n) => n.capability && !EXIT_STAGES.has(n.id)),
+  const options: Stage[] = [...s.allowed_next.filter((n) => n.capability && !EXIT_STAGES.has(n.id)),
     ...(s.current_stage?.capability ? [s.current_stage] : [])];
+  // A "Book there" from the capacity card may target a step further ahead (e.g. colonoscopy after referral).
+  if (prefill && !options.some((o) => o.id === prefill.stage)) {
+    options.unshift({ id: prefill.stage, label: prefill.stageLabel, level: "specialist", capability: prefill.capability, actors: ["doctor"] });
+  }
   const fallback = s.allowed_next.filter((n) => !EXIT_STAGES.has(n.id));
   const stages = options.length ? options : fallback;
-  const [stage, setStage] = useState(stages[0]?.id ?? "");
+  const [stage, setStage] = useState(prefill?.stage ?? stages[0]?.id ?? "");
   const defaultWhen = (() => { const d = new Date(s.as_of); d.setDate(d.getDate() + 7); d.setHours(9, 0, 0, 0); return toLocalInput(d.toISOString()); })();
   const [when, setWhen] = useState(defaultWhen);
   const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [facility, setFacility] = useState(user?.facility_id ?? "");
+  const [facility, setFacility] = useState(prefill?.facility ?? user?.facility_id ?? "");
   const [eventId, setEventId] = useState(uuid);
   const cap = stages.find((x) => x.id === stage)?.capability;
 
@@ -293,7 +372,9 @@ function BookForm({ s, busy, send }: { s: PathwayState; busy: boolean; send: Sen
     api.facilities(cap).then((fs) => {
       if (!live) return;
       setFacilities(fs);
-      setFacility(fs.some((f) => f.id === user?.facility_id) ? user!.facility_id! : fs[0]?.id ?? "");
+      // keep a valid current choice (e.g. the prefilled hospital), else default to my unit, else the first one
+      setFacility((cur) => fs.some((f) => f.id === cur) ? cur
+        : fs.some((f) => f.id === user?.facility_id) ? user!.facility_id! : fs[0]?.id ?? "");
     }).catch(() => {});
     return () => { live = false; };
   }, [cap, user?.facility_id]);

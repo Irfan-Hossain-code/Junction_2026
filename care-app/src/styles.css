@@ -366,3 +366,24 @@ label { display: flex; flex-direction: column; gap: 4px; font-size: .88em; color
 .resp-late { color: var(--bad); font-weight: 600; }
 .tab-hint { margin: 0 0 8px; }
 .who-acts { color: var(--text); }
+
+/* ---------------------------------------------------------------- capacity ahead (care ↔ twin) */
+.load-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(90px, 1fr); grid-template-areas: "name util" "meta meta";
+  gap: 2px 12px; align-items: center; padding: 6px 0; }
+.load-row.current { padding: 8px 10px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); }
+.load-name { grid-area: name; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.load-tag { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--border-2); border-radius: 999px; padding: 0 6px; }
+.load-util { grid-area: util; display: flex; gap: 8px; align-items: center; font-weight: 700; }
+.load-util .bar { flex: 1; margin: 0; height: 7px; }
+.load-util.ok .bar > div { background: var(--accent); }
+.load-util.warn .bar > div { background: var(--warn); } .load-util.warn span { color: var(--warn); }
+.load-util.bad .bar > div { background: var(--bad); } .load-util.bad span { color: var(--bad); }
+.load-meta { grid-area: meta; font-size: .85em; color: var(--muted); }
+.suggest { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px;
+  border-radius: 8px; border: 1px solid color-mix(in srgb, var(--good) 45%, transparent); background: var(--good-soft); }
+.alts { margin-top: 10px; }
+.alts summary { cursor: pointer; color: var(--text-2); font-size: .9em; font-weight: 600; }
+.alt-wrap { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--border); }
+.alt-wrap .load-row { flex: 1; min-width: 0; }
+.cap-foot { margin: 10px 0 0; }

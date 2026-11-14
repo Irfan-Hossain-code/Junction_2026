@@ -319,6 +319,10 @@ from backend.api.twin import router as twin_router  # noqa: E402
 
 app.include_router(twin_router)
 
+from backend.api.care import router as care_router  # noqa: E402  (care app ↔ twin bridge, read-only)
+
+app.include_router(care_router)
+
 # ------------------------------------------------------------------ experimental MPC layer (feature flag, default OFF)
 from backend.mpc.coordinator import enabled as _mpc_enabled  # noqa: E402
 
