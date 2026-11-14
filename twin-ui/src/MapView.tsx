@@ -100,9 +100,13 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
     if (size.width < 50) return;
     const vp = new WebMercatorViewport({ width: size.width, height: size.height });
     const p = Math.min(padding, size.height / 4);
-    // keep the selection card (right, ~340 px) from covering the zoomed region
+    // keep the selection card (right, ~340 px) from covering the zoomed region;
+    // on phones the card is a bottom sheet (~44 % of the map) and the toggles take ~90 px at the top
+    const phone = size.width <= 760;
     const right = padding > 30 && size.width > 800 ? 350 : p;
-    const { longitude, latitude, zoom } = vp.fitBounds(b, { padding: { top: p + 30, bottom: p, left: p, right } });
+    const top = phone ? 90 : p + 30;
+    const bottom = phone && padding > 30 ? Math.round(size.height * 0.46) : p;
+    const { longitude, latitude, zoom } = vp.fitBounds(b, { padding: { top, bottom, left: p, right: phone ? p : right } });
     setViewState((v: any) => ({ ...v, longitude, latitude, zoom, transitionDuration: duration, transitionInterpolator: new FlyToInterpolator({ speed: 1.6 }) }));
   };
 
