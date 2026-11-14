@@ -1,1 +1,0 @@
-{"root":["./src/App.tsx","./src/api.ts","./src/auth.tsx","./src/components.tsx","./src/lib.ts","./src/main.tsx","./src/screens/DoctorWorklist.tsx","./src/screens/Login.tsx","./src/screens/PathwayView.tsx","./src/screens/PatientHome.tsx"],"version":"5.6.3"}
