@@ -47,3 +47,42 @@ SLOT_SIZE = 5.0
 # types are simulated as background Poisson load at BACKGROUND_UTILISATION of their share. (ASSUMPTION)
 POOL = {"colonoscopy": 1, "pathology": 1, "mdt_crc": 1, "crc_surgery": 2, "ct_imaging": 10, "oncology": 6, "radiotherapy": 8}
 BACKGROUND_UTILISATION = 0.80
+
+# =====================================================================================================
+# BEHAVIOURAL PATIENT AGENTS  (all ASSUMPTIONS / HYPOTHESIS: illustrative archetypes, not medical facts)
+# =====================================================================================================
+# Each patient draws CONTINUOUS parameters around one archetype's means (beta for probabilities,
+# lognormal for travel tolerance), so profiles overlap. Urgency comes from the referral's symptom
+# category, never from demographics.
+ARCHETYPES = {
+    "engaged_flexible":   {"share": 0.45, "max_travel_min": 150, "travel_aversion": 0.6, "wait_aversion": 1.0,
+                           "p_attend": 0.97, "p_accept_alt": 0.80, "reminder_gain": 0.5, "care_seeking_days": 5},
+    "travel_constrained": {"share": 0.35, "max_travel_min": 60,  "travel_aversion": 2.0, "wait_aversion": 0.7,
+                           "p_attend": 0.93, "p_accept_alt": 0.35, "reminder_gain": 0.5, "care_seeking_days": 8},
+    "low_follow_through": {"share": 0.20, "max_travel_min": 90,  "travel_aversion": 1.2, "wait_aversion": 0.5,
+                           "p_attend": 0.82, "p_accept_alt": 0.50, "reminder_gain": 0.6, "care_seeking_days": 15},
+}
+BETA_CONCENTRATION = 30.0          # spread of individual probabilities around the archetype mean
+TRAVEL_SIGMA = 0.30                # lognormal spread of individual max travel tolerance
+
+SCREENING_AGE = (56, 74)           # screening programme invitation ages (verify against programme rules)
+SYMPTOMATIC_AGE_MEAN, SYMPTOMATIC_AGE_SD = 70, 11
+# symptom category -> probability the GP marks the referral URGENT (ASSUMPTION)
+SYMPTOMS = {"rectal_bleeding": (0.35, 0.40), "bowel_habit_change": (0.30, 0.25),
+            "iron_deficiency_anaemia": (0.20, 0.50), "abdominal_pain_weight_loss": (0.15, 0.40)}   # (share, p_urgent)
+URGENT_PRIORITY, STANDARD_PRIORITY = 0, 1   # SimPy PriorityResource: lower = earlier
+
+# appointment mechanics
+REBOOK_AFTER_DECLINE_DAYS = 5.0    # median days to get a new (home) booking after declining an offer
+REBOOK_AFTER_DNA_DAYS = 14.0       # median days to rebook after a missed appointment
+MAX_DNA_BEFORE_LOST = 2            # after this many no-shows the patient is lost to follow-up (without monitoring)
+TRAVEL_DNA_PENALTY_PER_HOUR = 0.03 # attendance drops 3 pp per hour of travel beyond the first hour
+TRANSPORT_SUPPORT_RELIEF = 0.6     # transport support removes 60 % of the perceived travel burden
+SAMPLE_EVERY = 40                  # store every 40th patient's full journey (replication 0) for inspection
+
+# private purchasing pilot (SYNTHETIC)
+PRIVATE_COST_PER_COLONOSCOPY_EUR = 650   # ASSUMPTION for the purchasing scenario
+PRIVATE_PILOT_FACILITY = "fi-pc-osm-n8792578075"   # Mehiläinen Joensuu (location OBSERVED, endoscopy capacity HYPOTHESIS)
+
+# capacity planning absorbs a typical no-show rate (units overbook / plan around DNAs). ASSUMPTION
+EXPECTED_DNA_FOR_PLANNING = 0.08

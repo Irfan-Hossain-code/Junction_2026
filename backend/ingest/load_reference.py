@@ -42,6 +42,8 @@ SOURCES = [
     ("cf-capacity-model", "CancerFlow synthetic capacity model: weekly capacity = catchment demand / target utilisation. "
      "Demand from Cancer Registry screening volumes + population. NOT real hospital data.", None, None, "model"),
     ("cf-travel-model", "CancerFlow travel model: great-circle distance x 1.3 road factor at 70 km/h", None, None, "model"),
+    ("cf-private-pilot", "CancerFlow SYNTHETIC private purchasing pilot (service purchase / voucher). Capability and capacity "
+     "are assumptions; eligibility only when a scenario enables it.", None, None, "model"),
 ]
 
 CAPABILITIES = {
@@ -53,6 +55,7 @@ CAPABILITIES = {
     "crc_surgery": "Colorectal cancer surgery",
     "oncology": "Medical oncology (systemic therapy)",
     "radiotherapy": "Radiotherapy",
+    "private_first_contact": "Private / occupational first-contact care",
 }
 FULL = ["colonoscopy", "ct_imaging", "pathology", "mdt_crc", "crc_surgery", "oncology"]
 
@@ -209,6 +212,18 @@ def main():
                     continue
                 seen.add(key)
                 fac_rows.append((f"fi-hc-osm-{e['type'][0]}{e['id']}", name, kind, lon, lat, f"{e['type']}/{e['id']}"))
+            # private / occupational first-contact clinics (real OSM locations); NOT routed by default
+            priv = json.loads((RAW / "osm_private_fi.json").read_text(encoding="utf-8"))["elements"]
+            for e in priv:
+                name = e["tags"].get("name")
+                if not name or "docrates" in name.lower() or EXCLUDE.search(name):
+                    continue
+                lon, lat = osm_point(e)
+                key = (name.lower(), round(lon, 2), round(lat, 2))
+                if key in seen:
+                    continue
+                seen.add(key)
+                fac_rows.append((f"fi-pc-osm-{e['type'][0]}{e['id']}", name, "private_clinic", lon, lat, f"{e['type']}/{e['id']}"))
             with conn.cursor() as cur:
                 cur.executemany("""INSERT INTO facility(id,name,kind,geom,tag,source_id,external_ref)
                                    VALUES (%s,%s,%s,ST_SetSRID(ST_MakePoint(%s,%s),4326)::geography,'OBSERVED','osm',%s)
@@ -238,6 +253,12 @@ def main():
                     caps.append((fid, "radiotherapy", rt_tag, rt_src, None))
             caps += [(r[0], "primary_care", "OBSERVED", "osm", "tagged as health centre in OSM")
                      for r in conn.execute("SELECT id FROM facility WHERE kind='health_center'")]
+            caps += [(r[0], "private_first_contact", "OBSERVED", "osm", "private/occupational clinic location in OSM")
+                     for r in conn.execute("SELECT id FROM facility WHERE kind='private_clinic' AND id <> 'fi-hosp-docrates'")]
+            # one clearly-labelled purchasing pilot: private endoscopy in Joensuu (capacity only via scenario)
+            if conn.execute("SELECT 1 FROM facility WHERE id='fi-pc-osm-n8792578075'").fetchone():
+                caps.append(("fi-pc-osm-n8792578075", "colonoscopy", "HYPOTHESIS", "cf-private-pilot",
+                             "SYNTHETIC pilot: assumed private endoscopy unit; eligible only when a purchasing scenario enables it"))
             with conn.cursor() as cur:
                 cur.executemany("""INSERT INTO facility_capability(facility_id,capability,tag,source_id,note) VALUES (%s,%s,%s,%s,%s)
                                    ON CONFLICT (facility_id,capability) DO UPDATE SET tag=EXCLUDED.tag, source_id=EXCLUDED.source_id""", caps)
@@ -249,7 +270,10 @@ def main():
                                    ST_Distance(m.centroid, f.geom)/1000*1.3,
                                    'great-circle x1.3 @70km/h (cf-travel-model)', 'DERIVED'
                             FROM region m, facility f
-                            WHERE m.kind='municipality' AND f.kind <> 'health_center'""")
+                            WHERE m.kind='municipality' AND f.kind NOT IN ('health_center','private_clinic')
+                               OR (m.kind='municipality' AND f.kind='private_clinic' AND EXISTS (
+                                   SELECT 1 FROM facility_capability c WHERE c.facility_id=f.id
+                                   AND c.capability NOT IN ('primary_care','private_first_contact')))""")
 
             synthetic_capacity(conn)
 
@@ -282,7 +306,8 @@ def synthetic_capacity(conn):
           SELECT DISTINCT ON (m.id, fc.capability) m.id AS mun, m.population AS pop, fc.capability, t.facility_id
           FROM region m JOIN travel_time t ON t.origin_region_id = m.id
           JOIN facility_capability fc ON fc.facility_id = t.facility_id
-          WHERE m.kind='municipality' AND fc.capability <> 'primary_care'
+          JOIN facility pf ON pf.id = t.facility_id AND pf.kind <> 'private_clinic'   -- private: capacity only via purchasing scenarios
+          WHERE m.kind='municipality' AND fc.capability NOT IN ('primary_care','private_first_contact')
           ORDER BY m.id, fc.capability, t.minutes)
         SELECT facility_id, capability, sum(coalesce(pop,0)) FROM nearest GROUP BY 1,2""").fetchall()
     out, staff = [], {}

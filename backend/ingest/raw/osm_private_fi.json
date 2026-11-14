@@ -1,0 +1,4151 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-11-14T16:20:58Z",
+    "timestamp_areas_base": "2026-11-14T14:36:20Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 27551714,
+  "lat": 60.4521290,
+  "lon": 22.2574201,
+  "tags": {
+    "addr:city": "Turku",
+    "addr:country": "FI",
+    "addr:housenumber": "9-11",
+    "addr:postcode": "20100",
+    "addr:street": "Humalistonkatu",
+    "amenity": "clinic",
+    "branch": "Pulssi",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "name": "Terveystalo Pulssi",
+    "opening_hours": "Mo-Fr 08:00-22:00; Sa,Su 09:00-22:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "url": "http://www.pulssi.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 30288479,
+  "lat": 60.4529119,
+  "lon": 22.2663558,
+  "tags": {
+    "addr:housenumber": "8",
+    "addr:postcode": "20100",
+    "addr:street": "Kauppiaskatu",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "brand:wikidata": "Q10580005",
+    "brand:wikipedia": "fi:Mehiläinen (yritys)",
+    "check_date": "2026-07-24",
+    "healthcare": "clinic",
+    "name": "Mehiläinen",
+    "opening_hours": "Mo-Fr 08:00-20:00; Sa-Su 09:00-20:00",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "payment:credit_cards": "yes",
+    "payment:debit_cards": "yes",
+    "website": "https://www.mehilainen.fi/terveyspalvelut/toimipisteet/30/mehilainen_turku",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 250548556,
+  "lat": 60.1772904,
+  "lon": 24.9228060,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:country": "FI",
+    "addr:housenumber": "17",
+    "addr:postcode": "00260",
+    "addr:street": "Pohjoinen Hesperiankatu",
+    "addr:unit": "C",
+    "amenity": "clinic",
+    "branch": "Helsinki Töölö",
+    "brand": "Mehiläinen",
+    "check_date": "2026-11-12",
+    "fee": "yes",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Töölö",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "phone": "+358 10 41400",
+    "short_name": "Mehiläinen",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-helsinki-toolo",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 253311701,
+  "lat": 63.9286182,
+  "lon": 24.9630970,
+  "tags": {
+    "addr:housenumber": "28",
+    "addr:street": "Kalliontie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-nivala"
+  }
+},
+{
+  "type": "node",
+  "id": 260422279,
+  "lat": 62.6020029,
+  "lon": 29.7638677,
+  "tags": {
+    "addr:city": "Joensuu",
+    "addr:housenumber": "25",
+    "addr:postcode": "80100",
+    "addr:street": "Torikatu",
+    "addr:unit": "A",
+    "amenity": "clinic",
+    "contact:facebook": "https://www.facebook.com/PihlajalinnaJoensuu/",
+    "fee": "yes",
+    "healthcare": "clinic",
+    "level": "1",
+    "name": "Pihlajalinna Ite Joensuu",
+    "opening_hours": "Mo-Th 07:30-18:30; Fr 07:30-18:00; Sa 08:00-14:00",
+    "operator": "Pihlajalinna",
+    "operator:type": "private",
+    "operator:wikidata": "Q18689068",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-ite-joensuu-torikatu-25",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 283276710,
+  "lat": 60.1963487,
+  "lon": 24.9285329,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "4",
+    "addr:postcode": "00240",
+    "addr:street": "Pasilankatu",
+    "addr:unit": "A",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Aava Helsinki Pasila",
+    "old_name": "Lääkärikeskus Pasila",
+    "opening_hours": "Mo-Fr 07:00-21:00; Sa 08:00-17:00; Su 10:00-17:00",
+    "phone": "+358103803838",
+    "short_name": "Aava",
+    "website": "https://www.aava.fi/laakarikeskukset/aava-helsinki-pasila/"
+  }
+},
+{
+  "type": "node",
+  "id": 544218796,
+  "lat": 63.8385116,
+  "lon": 23.1445025,
+  "tags": {
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Kokkolan Lääkärikeskus",
+    "postal_code": "67100",
+    "url": "http://www.kokkolanlaakarikeskus.fi"
+  }
+},
+{
+  "type": "node",
+  "id": 551306209,
+  "lat": 61.1301867,
+  "lon": 22.1347290,
+  "tags": {
+    "addr:city": "Eura",
+    "addr:housenumber": "12",
+    "addr:postcode": "27510",
+    "addr:street": "Satakunnankatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Lääkärikeskus Minerva",
+    "website": "https://laakarikeskusminerva.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 574919943,
+  "lat": 63.0980758,
+  "lon": 21.6164166,
+  "tags": {
+    "addr:city": "Vaasa",
+    "addr:housenumber": "28-30",
+    "addr:postcode": "65100",
+    "addr:street": "Pitkäkatu",
+    "amenity": "clinic",
+    "check_date": "2026-02-06",
+    "healthcare": "clinic",
+    "name": "Terveystalo Vaasa",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-vaasa"
+  }
+},
+{
+  "type": "node",
+  "id": 620881366,
+  "lat": 60.9826063,
+  "lon": 25.6494108,
+  "tags": {
+    "addr:city": "Lahti",
+    "addr:country": "FI",
+    "addr:housenumber": "6",
+    "addr:postcode": "15110",
+    "addr:street": "Sibeliuksenkatu",
+    "addr:unit": "C",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "check_date": "2023-09-29",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Lahti",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-lahti",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 653107886,
+  "lat": 63.8385655,
+  "lon": 23.1291860,
+  "tags": {
+    "addr:city": "Kokkola",
+    "addr:housenumber": "1",
+    "addr:postcode": "67100",
+    "addr:street": "Mannerheiminaukio",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Kokkola",
+    "opening_hours": "Mo-Th 08:00-19:00; Fr 08:00-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "source": "survey",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-kokkola"
+  }
+},
+{
+  "type": "node",
+  "id": 661164368,
+  "lat": 65.7921794,
+  "lon": 24.3319063,
+  "tags": {
+    "addr:city": "Kyläjoki",
+    "addr:housenumber": "31",
+    "addr:postcode": "95440",
+    "addr:street": "Wilenintie",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Laivaniemen lääkäriasema",
+    "phone": "+358 16 449607"
+  }
+},
+{
+  "type": "node",
+  "id": 666744097,
+  "lat": 63.8353609,
+  "lon": 23.1335016,
+  "tags": {
+    "addr:city": "Kokkola",
+    "addr:housenumber": "2",
+    "addr:postcode": "67100",
+    "addr:street": "Rantakatu",
+    "addr:unit": "B",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "healthcare:speciality": "työterveyshuolto",
+    "level": "2",
+    "name": "Mehiläinen Kokkola",
+    "operator": "Mehiläinen Oy",
+    "postal_code": "67100",
+    "source": "survey",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-kokkola"
+  }
+},
+{
+  "type": "node",
+  "id": 726492945,
+  "lat": 61.1283267,
+  "lon": 21.5035840,
+  "tags": {
+    "addr:city": "Rauma",
+    "addr:housenumber": "4",
+    "addr:postcode": "26100",
+    "addr:street": "Kalliokatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Lääkärikeskus Minerva",
+    "website": "https://laakarikeskusminerva.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 766428791,
+  "lat": 60.4006244,
+  "lon": 25.0228803,
+  "tags": {
+    "addr:city": "Tuusula",
+    "addr:country": "FI",
+    "addr:housenumber": "13",
+    "addr:postcode": "04300",
+    "addr:street": "Kauppatie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Aava Tuusula",
+    "website": "https://www.aava.fi/laakarikeskukset/aava-tuusula/"
+  }
+},
+{
+  "type": "node",
+  "id": 941381821,
+  "lat": 60.6238156,
+  "lon": 26.1978689,
+  "tags": {
+    "addr:city": "Lapinjärvi",
+    "addr:housenumber": "25",
+    "addr:postcode": "07800",
+    "addr:street": "Lapinjärventie",
+    "amenity": "hospital",
+    "name": "Lapinjärven terveystalo",
+    "name:fi": "Lapinjärven terveystalo",
+    "name:sv": "Lappträsk hälsogård",
+    "website": "https://www.lapinjarvi.fi/sosiaali-ja-terveyspalvelut/terveydenhuolto/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 954550289,
+  "lat": 60.2055365,
+  "lon": 24.8793842,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "1",
+    "addr:postcode": "00350",
+    "addr:street": "Raumantie",
+    "addr:unit": "a",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Pihlajalinna Dextra",
+    "name:en": "Pihlajalinna Dextra",
+    "name:fi": "Pihlajalinna Dextra",
+    "name:sv": "Pihlajalinna Dextra",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-dextra-munkkivuori",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 956120819,
+  "lat": 60.4037650,
+  "lon": 25.0989456,
+  "tags": {
+    "addr:city": "Kerava",
+    "addr:country": "FI",
+    "addr:housenumber": "15",
+    "addr:postcode": "04200",
+    "addr:street": "Kauppakaari",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "1",
+    "name": "Aava Kerava",
+    "website": "https://www.aava.fi/laakarikeskukset/aava-kerava/"
+  }
+},
+{
+  "type": "node",
+  "id": 1063853550,
+  "lat": 60.1640540,
+  "lon": 24.9094822,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "22 A",
+    "addr:postcode": "00180",
+    "addr:street": "Porkkalankatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Ruoholahti",
+    "old_name": "Diacor Ruoholahti",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Ruoholahti/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1199444254,
+  "lat": 60.1800441,
+  "lon": 24.9491530,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "18 A",
+    "addr:postcode": "00530",
+    "addr:street": "Siltasaarenkatu",
+    "amenity": "clinic",
+    "check_date": "2026-08-20",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Ympyrätalo",
+    "opening_hours": "Mo-Th 08:00-20:00; Fr 08:00-18:00; Sa 10:00-16:00",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-helsinki-ympyratalo",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 1286777508,
+  "lat": 60.3792977,
+  "lon": 24.7566075,
+  "tags": {
+    "addr:city": "Klaukkala",
+    "addr:country": "FI",
+    "addr:housenumber": "3",
+    "addr:postcode": "01800",
+    "addr:street": "Viirintie",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Klaukkalan Lääkäriasema",
+    "website": "https://www.klaukkalanlaakariasema.fi"
+  }
+},
+{
+  "type": "node",
+  "id": 1328664232,
+  "lat": 61.1802072,
+  "lon": 25.5263808,
+  "tags": {
+    "addr:city": "Vääksy",
+    "addr:housenumber": "7",
+    "addr:postcode": "17200",
+    "addr:street": "Honkaniementie",
+    "amenity": "doctors",
+    "email": "info@vaaksynlaakarikeskus.fi",
+    "fax": "+358 3 8741810",
+    "healthcare": "doctor",
+    "name": "Vääksyn lääkärikeskus",
+    "opening_hours": "Mo 07:45-18:15; Tu 07:45-12:15; We,Fr 07:45-16:15; Th 07:45-14:15, Sa-Su off",
+    "phone": "+358 3 874180",
+    "website": "https://www.vaaksynlaakarikeskus.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 1527269472,
+  "lat": 60.9990332,
+  "lon": 24.4787197,
+  "tags": {
+    "addr:city": "Hämeenlinna",
+    "addr:housenumber": "3",
+    "addr:postcode": "13200",
+    "addr:street": "Talaskuja",
+    "amenity": "clinic",
+    "check_date": "2023-05-27",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Hämeenlinna",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-hameenlinna"
+  }
+},
+{
+  "type": "node",
+  "id": 1550687899,
+  "lat": 60.2585736,
+  "lon": 24.8527470,
+  "tags": {
+    "addr:city": "Vantaa",
+    "addr:housenumber": "8",
+    "addr:postcode": "01600",
+    "addr:street": "Rajatorpantie",
+    "addr:unit": "B",
+    "amenity": "clinic",
+    "check_date": "2025-11-21",
+    "check_date:opening_hours": "2023-04-26",
+    "emergency": "no",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Vantaa Myyrmäki",
+    "opening_hours": "Mo-Th 07:30-20:00; Fr 07:30-16:00",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "payment:cash": "no",
+    "payment:credit_cards": "yes",
+    "payment:debit_cards": "yes",
+    "phone": "+358 10 41400",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-vantaa-myyrmaki",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1985597270,
+  "lat": 60.1695572,
+  "lon": 24.9435041,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:country": "FI",
+    "addr:housenumber": "7",
+    "addr:postcode": "00100",
+    "addr:street": "Keskuskatu",
+    "amenity": "clinic",
+    "check_date": "2023-07-12",
+    "healthcare": "clinic",
+    "level": "0;1;2",
+    "name": "Terveystalo Keskuskatu",
+    "old_name": "Diacor Keskusta",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "toilets:wheelchair": "yes",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Keskuskatu/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1989688339,
+  "lat": 60.8680692,
+  "lon": 26.7044524,
+  "tags": {
+    "addr:city": "Kouvola",
+    "addr:postcode": "45100",
+    "addr:street": "Kouvolankatu",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 08:00-18:00;Sa 09:00-12:00;Su off",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 3 06000",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Kouvola/"
+  }
+},
+{
+  "type": "node",
+  "id": 2294596816,
+  "lat": 61.4510314,
+  "lon": 23.8517938,
+  "tags": {
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "check_date:opening_hours": "2026-11-14",
+    "emergency": "no",
+    "healthcare": "clinic",
+    "level": "0",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Th 07:30-16:00; Fr 08:00-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-tampere-hervanta",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2476642833,
+  "lat": 60.1639672,
+  "lon": 24.9165154,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "11-13 EF",
+    "addr:postcode": "00180",
+    "addr:street": "Itämerenkatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Lääkärikeskus MEDFIN",
+    "opening_hours": "Mo-Fr 08:00-20:00",
+    "phone": "+358 40 7712121",
+    "website": "https://medfin.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 3001697929,
+  "lat": 60.1936492,
+  "lon": 25.0352562,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:country": "FI",
+    "addr:housenumber": "4 A",
+    "addr:postcode": "00880",
+    "addr:street": "Linnanrakentajantie",
+    "amenity": "clinic",
+    "check_date": "2026-05-01",
+    "healthcare": "clinic",
+    "name": "Terveystalo Herttoniemi",
+    "old_name": "Diacor Herttoniemi",
+    "opening_hours": "Mo-Fr 07:30-17:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 3 06000",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Herttoniemi/"
+  }
+},
+{
+  "type": "node",
+  "id": 3071533008,
+  "lat": 60.8675769,
+  "lon": 26.6969184,
+  "tags": {
+    "addr:city": "Kouvola",
+    "addr:housenumber": "4",
+    "addr:postcode": "45100",
+    "addr:street": "Kauppamiehenkatu",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "name": "Mehiläinen"
+  }
+},
+{
+  "type": "node",
+  "id": 3119079633,
+  "lat": 60.1819000,
+  "lon": 24.9549593,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "16",
+    "addr:postcode": "00530",
+    "addr:street": "Hämeentie",
+    "addr:unit": "D",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Hammas Mehiläinen Hämeentie",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://hammasmehilainen.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 3213289983,
+  "lat": 60.4499934,
+  "lon": 22.2788266,
+  "tags": {
+    "addr:city": "Turku",
+    "addr:housenumber": "6a",
+    "addr:street": "Uudenmaankatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Turun Silmälääkäriasema"
+  }
+},
+{
+  "type": "node",
+  "id": 3523796414,
+  "lat": 62.8900522,
+  "lon": 27.6322915,
+  "tags": {
+    "addr:city": "Kuopio",
+    "addr:housenumber": "2",
+    "addr:postcode": "70120",
+    "addr:street": "Neulaniementie",
+    "amenity": "clinic",
+    "check_date:opening_hours": "2024-05-16",
+    "healthcare": "clinic",
+    "name": "Terveystalo Bioteknia",
+    "opening_hours": "Mo-Fr 07:30-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+3583063311",
+    "website": "https://www.terveystalo.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 3667042179,
+  "lat": 60.9828158,
+  "lon": 25.6564978,
+  "tags": {
+    "addr:city": "Lahti",
+    "addr:housenumber": "13",
+    "addr:postcode": "15110",
+    "addr:street": "Aleksanterinkatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-lahti"
+  }
+},
+{
+  "type": "node",
+  "id": 3817337320,
+  "lat": 61.1234900,
+  "lon": 21.5023656,
+  "tags": {
+    "addr:city": "Rauma",
+    "addr:housenumber": "2",
+    "addr:postcode": "26100",
+    "addr:street": "Sahankatu",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Rauma",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-rauma"
+  }
+},
+{
+  "type": "node",
+  "id": 3856575737,
+  "lat": 64.1379133,
+  "lon": 25.3695675,
+  "tags": {
+    "addr:housenumber": "3",
+    "addr:street": "Kansanpellontie",
+    "addr:unit": "A 2",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://beta.terveystalo.com/fi/toimipaikat/terveystalo-haapavesi/"
+  }
+},
+{
+  "type": "node",
+  "id": 3975876027,
+  "lat": 60.1759255,
+  "lon": 24.8044753,
+  "tags": {
+    "addr:city": "Espoo",
+    "addr:housenumber": "12",
+    "addr:postcode": "02100",
+    "addr:street": "Länsituuli",
+    "amenity": "clinic",
+    "contact:phone": "+358 10 380 8000",
+    "contact:website": "https://pikkujatti.fi/laakariasema/tapiola/",
+    "healthcare": "clinic",
+    "level": "2-3",
+    "name": "Lääkäriasema Pikkujätti",
+    "opening_hours": "Mo-Fr 08:00-20:00, Sa-Su 10:00-17:00"
+  }
+},
+{
+  "type": "node",
+  "id": 3975876028,
+  "lat": 60.1761976,
+  "lon": 24.8050230,
+  "tags": {
+    "addr:city": "Espoo",
+    "addr:housenumber": "12",
+    "addr:postcode": "02100",
+    "addr:street": "Länsituuli",
+    "amenity": "clinic",
+    "contact:phone": "+358 10 380 3838",
+    "contact:website": "https://www.aava.fi/",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Lääkärikeskus Aava Espoo Tapiola"
+  }
+},
+{
+  "type": "node",
+  "id": 3976087151,
+  "lat": 61.4975570,
+  "lon": 23.7726912,
+  "tags": {
+    "addr:city": "Tampere",
+    "addr:housenumber": "27",
+    "addr:postcode": "33100",
+    "addr:street": "Rautatienkatu",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "check_date:opening_hours": "2026-07-23",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 07:00-22:00; Sa,Su 08:00-22:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 3978697991,
+  "lat": 61.5058190,
+  "lon": 23.7465803,
+  "tags": {
+    "amenity": "clinic",
+    "emergency": "yes",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Särkänniemi",
+    "operator": "Pihlajalinna",
+    "operator:wikidata": "Q18689068"
+  }
+},
+{
+  "type": "node",
+  "id": 4116246409,
+  "lat": 65.0123523,
+  "lon": 25.4688266,
+  "tags": {
+    "addr:city": "Oulu",
+    "addr:housenumber": "9",
+    "addr:postcode": "90100",
+    "addr:street": "Kauppurienkatu",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Oulu",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-oulu"
+  }
+},
+{
+  "type": "node",
+  "id": 4128204399,
+  "lat": 62.5995678,
+  "lon": 29.7595580,
+  "tags": {
+    "addr:city": "Joensuu",
+    "addr:housenumber": "21",
+    "addr:postcode": "80100",
+    "addr:street": "Kauppakatu",
+    "amenity": "clinic",
+    "check_date:opening_hours": "2023-04-16",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours:signed": "no",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 30 6000",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4150436965,
+  "lat": 60.4861669,
+  "lon": 22.1674443,
+  "tags": {
+    "addr:city": "Raisio",
+    "addr:housename": "Raision Lasikuutio",
+    "addr:housenumber": "1a",
+    "addr:postcode": "21200",
+    "addr:street": "Raisiontori",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Raisio",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-raisio"
+  }
+},
+{
+  "type": "node",
+  "id": 4172981905,
+  "lat": 60.4878338,
+  "lon": 22.1075205,
+  "tags": {
+    "amenity": "clinic",
+    "name": "Paikkarin terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 4280686113,
+  "lat": 61.0564591,
+  "lon": 28.1859532,
+  "tags": {
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Dextra lääkärikeskus"
+  }
+},
+{
+  "type": "node",
+  "id": 4280686149,
+  "lat": 61.0560391,
+  "lon": 28.1902111,
+  "tags": {
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "healthcare": "clinic",
+    "level": "3",
+    "name": "Mehiläinen",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 4297353089,
+  "lat": 60.2105657,
+  "lon": 25.0785973,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "4",
+    "addr:postcode": "00930",
+    "addr:street": "Tallinnanaukio",
+    "addr:unit": "A",
+    "amenity": "clinic",
+    "branch": "Itäkeskus",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "old_name": "Diacor Itäkeskus",
+    "opening_hours": "Mo-Th 07:30-20:00; Fr 07:30-18:00; Sa,Su 10:00-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "toilets:wheelchair": "yes",
+    "website": "https://www.terveystalo.com",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4345517374,
+  "lat": 61.4691888,
+  "lon": 23.7168732,
+  "tags": {
+    "addr:city": "Pirkkala",
+    "addr:housenumber": "4",
+    "addr:postcode": "33950",
+    "addr:street": "Kenkätie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Pirkkala",
+    "opening_hours": "Mo-Th 08:00-19:00; Fr 08:00-16:00; Sa 10:00-14:00",
+    "phone": "+358 10 312 148"
+  }
+},
+{
+  "type": "node",
+  "id": 4381312057,
+  "lat": 64.1252051,
+  "lon": 29.5290826,
+  "tags": {
+    "addr:city": "Kuhmo",
+    "addr:housenumber": "20",
+    "addr:postcode": "88900",
+    "addr:street": "Koulukatu",
+    "amenity": "clinic",
+    "check_date": "2026-08-24",
+    "check_date:opening_hours": "2026-08-24",
+    "healthcare": "clinic",
+    "name": "Mehiläinen",
+    "opening_hours": "Mo-Th 08:00-16:00; Fr 08:00-15:00",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-kuhmo"
+  }
+},
+{
+  "type": "node",
+  "id": 4394554009,
+  "lat": 61.1299883,
+  "lon": 21.5031653,
+  "tags": {
+    "addr:city": "Rauma",
+    "addr:housenumber": "9-11",
+    "addr:postcode": "26100",
+    "addr:street": "Valtakatu",
+    "amenity": "clinic",
+    "check_date": "2026-02-14",
+    "healthcare": "clinic",
+    "name": "Terveystalo Rauma",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Rauma/"
+  }
+},
+{
+  "type": "node",
+  "id": 4512023393,
+  "lat": 60.2177507,
+  "lon": 24.8143391,
+  "tags": {
+    "addr:city": "Espoo",
+    "addr:housename": "Panorama Tower",
+    "addr:housenumber": "3",
+    "addr:postcode": "02600",
+    "addr:street": "Hevosenkenkä",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Espoo Leppävaara",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-espoo-leppavaara",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4512082089,
+  "lat": 60.2169537,
+  "lon": 24.8148885,
+  "tags": {
+    "addr:city": "Espoo",
+    "addr:housenumber": "7",
+    "addr:postcode": "02600",
+    "addr:street": "Bertel Jungin aukio",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Leppävaara",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Leppavaara/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4546845801,
+  "lat": 60.1683581,
+  "lon": 24.9346026,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "32",
+    "addr:postcode": "00100",
+    "addr:street": "Annankatu",
+    "amenity": "clinic",
+    "check_date": "2025-07-29",
+    "healthcare": "clinic",
+    "name": "Aava Helsinki Kamppi",
+    "opening_hours": "Mo-Fr 07:00-20:00; Sa 08:00-17:00; Su 10:00-18:00; PH off",
+    "phone": "+358103803838",
+    "website": "https://www.aava.fi/laakarikeskukset/aava-helsinki-kamppi/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4560739640,
+  "lat": 60.2101137,
+  "lon": 25.0798622,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housename": "Itis",
+    "addr:housenumber": "7",
+    "addr:postcode": "00930",
+    "addr:street": "Itäkatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Aava Helsinki Itäkeskus",
+    "opening_hours": "Mo 08:00-16:00; Tu 08:00-19:00; We-Th 08:00-16:00; Fr 08:00-15:00",
+    "phone": "+358 10 380 3838",
+    "short_name": "Aava Itäkeskus",
+    "toilets:wheelchair": "yes",
+    "website": "https://www.aava.fi/toimipiste/aava-itakeskus/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4592427446,
+  "lat": 60.3362439,
+  "lon": 24.3203132,
+  "tags": {
+    "addr:city": "Nummela",
+    "addr:housenumber": "1b",
+    "addr:postcode": "03100",
+    "addr:street": "Pisteenkaari",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Nummela",
+    "opening_hours": "Mo-Th 07:30-19:00; Fr 07:30-18:00; Sa 09:00-13:00; Su 12:00-15:00",
+    "phone": "+358 10 41400"
+  }
+},
+{
+  "type": "node",
+  "id": 4668225126,
+  "lat": 60.1699441,
+  "lon": 24.9317617,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:floor": "2",
+    "addr:housenumber": "3",
+    "addr:postcode": "00100",
+    "addr:street": "Jaakonkatu",
+    "amenity": "clinic",
+    "check_date": "2025-05-25",
+    "description": "Lääkärikeskus-sairaala Graniittitalossa",
+    "healthcare": "clinic",
+    "name": "Terveystalo Kamppi",
+    "opening_hours": "24/7",
+    "operator": "Terveystalo",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 3 063311",
+    "website": "https://www.terveystalo.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 4745636531,
+  "lat": 60.6316039,
+  "lon": 24.8596873,
+  "tags": {
+    "addr:city": "Hyvinkää",
+    "addr:housenumber": "1",
+    "addr:postcode": "05800",
+    "addr:street": "Ahjonkatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Hyvinkää",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Hyvinkaa/"
+  }
+},
+{
+  "type": "node",
+  "id": 4798434778,
+  "lat": 62.9011398,
+  "lon": 27.6496768,
+  "tags": {
+    "addr:city": "Kuopio",
+    "addr:housenumber": "2",
+    "addr:postcode": "70200",
+    "addr:street": "Kiekkotie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Puijonlaakson lääkärikeskus",
+    "opening_hours": "Mo-Fr 08:30-12:00",
+    "website": "https://www.puijonlaaksonlaakarikeskus.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 4876402291,
+  "lat": 60.1750733,
+  "lon": 24.8052862,
+  "tags": {
+    "addr:city": "Espoo",
+    "addr:housenumber": "4",
+    "addr:postcode": "02100",
+    "addr:street": "Tapionaukio",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "level": "3",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 5012868031,
+  "lat": 60.1891653,
+  "lon": 24.8264167,
+  "tags": {
+    "addr:city": "Espoo",
+    "addr:housenumber": "3",
+    "addr:postcode": "02150",
+    "addr:street": "Sähkömiehentie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Th 07:30-16:00; Fr 07:30-15:00; PH off",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 5020264817,
+  "lat": 60.1834106,
+  "lon": 24.8282446,
+  "tags": {
+    "access": "private",
+    "addr:city": "Espoo",
+    "addr:housenumber": "2",
+    "addr:postcode": "02150",
+    "addr:street": "Metallimiehenkuja",
+    "amenity": "clinic",
+    "description": "Vain Aalto-yliopiston henkilökunnalle.",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Th 08:00-16:00; Fr 08:00-14:00; PH off",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 5141226928,
+  "lat": 60.1613129,
+  "lon": 24.8899930,
+  "tags": {
+    "amenity": "doctors",
+    "contact:website": "http://www.hellstedt.fi/",
+    "healthcare": "doctor",
+    "healthcare:speciality": "ophthalmology",
+    "name": "Lauttasaaren silmälääkärikeskus",
+    "opening_hours": "Mo-Fr 10:00-18:00; Sa 10:00-15:00",
+    "phone": "+358 9 657 122"
+  }
+},
+{
+  "type": "node",
+  "id": 5152261731,
+  "lat": 60.2235739,
+  "lon": 25.0753838,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "2",
+    "addr:postcode": "00920",
+    "addr:street": "Kivensilmänkuja",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Lääkäriasema Klinikka 1",
+    "website": "https://klinikka1.fi/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 5175271066,
+  "lat": 60.1647010,
+  "lon": 24.7360122,
+  "tags": {
+    "addr:city": "Espoo",
+    "addr:housenumber": "10A",
+    "addr:postcode": "02200",
+    "addr:street": "Piispanportti",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Matinkylä",
+    "opening_hours": "Mo-Th 08:00-20:00, Fr 08:00-16:00",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 5291602224,
+  "lat": 61.4954092,
+  "lon": 23.7638349,
+  "tags": {
+    "addr:city": "Tampere",
+    "addr:housenumber": "9 B",
+    "addr:postcode": "33200",
+    "addr:street": "Laukontori",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Kehräsaari",
+    "phone": "+358 10 312 144",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-kehrasaari"
+  }
+},
+{
+  "type": "node",
+  "id": 5356719217,
+  "lat": 60.2371453,
+  "lon": 24.8913920,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housename": "Kaari",
+    "addr:housenumber": "1",
+    "addr:postcode": "00420",
+    "addr:street": "Kantelettarentie",
+    "amenity": "clinic",
+    "branch": "Kannelmäki",
+    "check_date:opening_hours": "2021-02-07",
+    "fax": "+358 10 634 1782",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Terveystalo Kaari",
+    "opening_hours": "Mo-Fr 07:30-20:00; Sa-Su 10:00-17:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 30 6000",
+    "website": "https://www.terveystalo.com/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 5378297393,
+  "lat": 60.2179680,
+  "lon": 24.8762795,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "8",
+    "addr:postcode": "00380",
+    "addr:street": "Hiomotie",
+    "amenity": "clinic",
+    "branch": "Pitäjänmäki",
+    "healthcare": "clinic",
+    "name": "Terveystalo Pitäjänmäki",
+    "opening_hours": "Mo-Th 07:30-16:00; Fr 07:30-14:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 30 6000",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-pitajanmaki"
+  }
+},
+{
+  "type": "node",
+  "id": 5429356852,
+  "lat": 65.0106371,
+  "lon": 25.4717481,
+  "tags": {
+    "amenity": "hospital",
+    "check_date": "2025-08-07",
+    "healthcare": "hospital",
+    "healthcare:speciality": "general",
+    "name": "Pihlajalinna",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 5467080670,
+  "lat": 60.9960219,
+  "lon": 24.4640831,
+  "tags": {
+    "addr:city": "Hämeenlinna",
+    "addr:housenumber": "10",
+    "addr:postcode": "13100",
+    "addr:street": "Raatihuoneenkatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "general",
+    "name": "Pihlajalinna Hämeenlinna",
+    "operator": "Linnan Klinikka Oy",
+    "website": "https://www.pihlajalinna.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 5520494458,
+  "lat": 62.8965288,
+  "lon": 27.6805419,
+  "tags": {
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Th 07:20-19:00; Fr 07:20-18:00; Sa-Su 09:00-14:30",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com"
+  }
+},
+{
+  "type": "node",
+  "id": 5613710264,
+  "lat": 60.2599687,
+  "lon": 24.8529795,
+  "tags": {
+    "addr:city": "Vantaa",
+    "addr:housename": "Myyrmanni",
+    "addr:housenumber": "3",
+    "addr:postcode": "01600",
+    "addr:street": "Iskoskuja",
+    "amenity": "clinic",
+    "check_date:opening_hours": "2022-06-26",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 07:30-20:00; Sa 09:00-14:00; Su 10:00-15:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 30 6000",
+    "website": "https://www.terveystalo.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 5796006285,
+  "lat": 63.0739232,
+  "lon": 25.8581927,
+  "tags": {
+    "addr:city": "Viitasaari",
+    "addr:housenumber": "2",
+    "addr:postcode": "44500",
+    "addr:street": "Porthanintie",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Fysioterapia ja Lääkärikeskus Täsmähoito Oy"
+  }
+},
+{
+  "type": "node",
+  "id": 6002579985,
+  "lat": 66.1675734,
+  "lon": 29.1383166,
+  "tags": {
+    "addr:city": "Rukatunturi",
+    "addr:housenumber": "9",
+    "addr:postcode": "93825",
+    "addr:street": "Rukatunturintie",
+    "alt_name": "Rukan lääkäriasema",
+    "amenity": "doctors",
+    "description": "c/o kauppakeskus Kumpare c/o shopping center Kumpare",
+    "healthcare": "doctor",
+    "name": "Rukan lääkäriasema",
+    "name:en": "Ruka Medical Station",
+    "name:fi": "Rukan lääkäriasema",
+    "operator": "Tunturin Lääkärikeskus",
+    "phone": "+358 40 707 7123",
+    "website": "https://www.tunturinlaakarikeskus.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 6076099380,
+  "lat": 60.2903788,
+  "lon": 24.9698558,
+  "tags": {
+    "addr:city": "Vantaa",
+    "addr:housename": "Flamingo",
+    "addr:housenumber": "8",
+    "addr:postcode": "01510",
+    "addr:street": "Tasetie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Terveystalo Flamingo",
+    "opening_hours": "Mo-Th 07:30-20:00; Fr 07:30-18:00; Sa-Su 10:00-17:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 3 06 000",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Flamingo/"
+  }
+},
+{
+  "type": "node",
+  "id": 6092729765,
+  "lat": 61.5052038,
+  "lon": 23.6284089,
+  "tags": {
+    "addr:city": "Tampere",
+    "addr:housenumber": "4",
+    "addr:postcode": "33310",
+    "addr:street": "Tesomankatu",
+    "addr:unit": "A",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveyskeskus Mehiläinen Tampere Tesoma",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/terveyskeskus-mehilainen-tampere-tesoma"
+  }
+},
+{
+  "type": "node",
+  "id": 6139262282,
+  "lat": 60.1694597,
+  "lon": 24.9381038,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:country": "FI",
+    "addr:housename": "Forum",
+    "addr:housenumber": "20 B",
+    "addr:postcode": "00100",
+    "addr:street": "Mannerheimintie",
+    "amenity": "clinic",
+    "branch": "Helsinki Forum",
+    "brand": "Mehiläinen",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Mehiläinen",
+    "opening_hours": "Mo-Th 07:00-20:00; Fr 07:00-18:00; Sa 09:00-16:00; Su 10:00-15:00",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "phone": "+358 10 41400",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-helsinki-forum"
+  }
+},
+{
+  "type": "node",
+  "id": 6139263846,
+  "lat": 60.2925758,
+  "lon": 25.0437908,
+  "tags": {
+    "addr:city": "Vantaa",
+    "addr:housename": "Dixi",
+    "addr:housenumber": "11",
+    "addr:postcode": "01300",
+    "addr:street": "Ratatie",
+    "addr:unit": "A",
+    "amenity": "clinic",
+    "branch": "Tikkurila",
+    "description": "Terveystalo Tikkurila sijaitsee Tikkurilan rautatieaseman yhteydessä sijaitsevan Dixi toimistotornin 7. kerroksessa sekä 3. kerroksessa kauppakeskuksen yhteydessä kauppakeskuskäytävän eteläpäädyssä.",
+    "fax": "+358 30 633 2802",
+    "healthcare": "clinic",
+    "level": "2;6",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 08:00-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 30 6000",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-tikkurila"
+  }
+},
+{
+  "type": "node",
+  "id": 6241140109,
+  "lat": 61.4474025,
+  "lon": 23.8577047,
+  "tags": {
+    "addr:city": "Tampere",
+    "addr:housenumber": "3 A",
+    "addr:postcode": "33720",
+    "addr:street": "Hermiankatu",
+    "amenity": "clinic",
+    "contact:facebook": "https://www.facebook.com/pihlajalinnapirkanmaa",
+    "healthcare": "clinic",
+    "healthcare:speciality": "general",
+    "level": "1",
+    "name": "Pihlajalinna Hermia työterveys",
+    "phone": "+358 10 312010",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-hermia-tyoterveys"
+  }
+},
+{
+  "type": "node",
+  "id": 6248607476,
+  "lat": 61.4473536,
+  "lon": 23.8617354,
+  "tags": {
+    "addr:city": "Tampere",
+    "addr:housenumber": "12",
+    "addr:postcode": "33720",
+    "addr:street": "Hermiankatu",
+    "addr:unit": "D",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "check_date": "2023-12-15",
+    "healthcare": "clinic",
+    "healthcare:speciality": "occupational",
+    "level": "1",
+    "name": "Mehiläinen Hermia",
+    "opening_hours": "Mo-Th 08:00-16:00; Fr 08:00-15:00"
+  }
+},
+{
+  "type": "node",
+  "id": 6400821664,
+  "lat": 63.6746172,
+  "lon": 22.7008104,
+  "tags": {
+    "addr:city": "Jakobstad",
+    "addr:housenumber": "11",
+    "addr:postcode": "68600",
+    "addr:street": "Rådhusgatan",
+    "amenity": "clinic",
+    "contact:facebook": "https://www.facebook.com/pihlajalinnapietarsaari",
+    "fax": "+358103122136",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Pietarsaari",
+    "opening_hours": "Mo-Tu 08:00-17:00, We-Th 08:00-16:00; Fr 08:00-14:00",
+    "phone": "+35810312136",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-pietarsaari"
+  }
+},
+{
+  "type": "node",
+  "id": 6484926650,
+  "lat": 59.9751702,
+  "lon": 23.4339506,
+  "tags": {
+    "addr:city": "Ekenäs",
+    "addr:housenumber": "2 A",
+    "addr:postcode": "10600",
+    "addr:street": "Gustav Wasas Gata",
+    "amenity": "clinic",
+    "check_date:opening_hours": "2023-07-14",
+    "fax": "+358306332727",
+    "healthcare": "clinic",
+    "name": "Terveystalo Tammisaari Ekenäs",
+    "opening_hours": "Mo-Th 08:00-18:00, Fr 08:00-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+35890030000",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-tammisaari-ekenas/",
+    "website:en": "https://www.terveystalo.com/en/",
+    "website:fi": "https://www.terveystalo.com/fi/",
+    "website:sv": "https://www.terveystalo.com/sv/"
+  }
+},
+{
+  "type": "node",
+  "id": 6637674750,
+  "lat": 64.2244570,
+  "lon": 27.7323628,
+  "tags": {
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 6842765820,
+  "lat": 60.4499706,
+  "lon": 22.2592337,
+  "tags": {
+    "addr:city": "Turku",
+    "addr:housenumber": "44",
+    "addr:postcode": "20100",
+    "addr:street": "Kauppiaskatu",
+    "addr:unit": "11 E",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "check_date": "2024-12-10",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 08:00-17:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 6960104485,
+  "lat": 61.1312907,
+  "lon": 21.4997094,
+  "tags": {
+    "addr:city": "Rauma",
+    "addr:housenumber": "9-11",
+    "addr:postcode": "26100",
+    "addr:street": "Valtakatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Th 07:30-20:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 7152028331,
+  "lat": 67.4176963,
+  "lon": 26.5927738,
+  "tags": {
+    "addr:city": "Sodankylä",
+    "addr:housenumber": "18",
+    "addr:postcode": "99600",
+    "addr:street": "Jäämerentie",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "name": "Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 7354770901,
+  "lat": 60.1758908,
+  "lon": 24.8035186,
+  "tags": {
+    "addr:city": "Espoo",
+    "addr:housenumber": "10",
+    "addr:postcode": "02100",
+    "addr:street": "Länsituuli",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "layer": "-1",
+    "level": "-1",
+    "name": "Mehiläinen Tapiola",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 7368647800,
+  "lat": 60.5676535,
+  "lon": 27.1939448,
+  "tags": {
+    "addr:city": "Hamina",
+    "addr:country": "FI",
+    "addr:housename": "Kaks Kulma",
+    "addr:housenumber": "3",
+    "addr:postcode": "49400",
+    "addr:street": "Kaivokatu",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Hamina",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-hamina"
+  }
+},
+{
+  "type": "node",
+  "id": 7368647801,
+  "lat": 60.5676571,
+  "lon": 27.1937252,
+  "tags": {
+    "addr:city": "Hamina",
+    "addr:country": "FI",
+    "addr:housename": "Kaks Kulma",
+    "addr:housenumber": "3",
+    "addr:postcode": "49400",
+    "addr:street": "Kaivokatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Hamina Työterveys",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-hamina-tyoterveys/"
+  }
+},
+{
+  "type": "node",
+  "id": 7540896571,
+  "lat": 62.7913182,
+  "lon": 22.8402081,
+  "tags": {
+    "addr:city": "Seinäjoki",
+    "addr:housenumber": "5",
+    "addr:postcode": "60100",
+    "addr:street": "Keskuskatu",
+    "amenity": "clinic",
+    "brand:wikidata": "Q18689068",
+    "contact:facebook": "https://www.facebook.com/pihlajalinnaseinajoki/",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Seinäjoki",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-seinajoki"
+  }
+},
+{
+  "type": "node",
+  "id": 7674007992,
+  "lat": 63.0733759,
+  "lon": 27.6616567,
+  "tags": {
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 7677931974,
+  "lat": 63.0726322,
+  "lon": 27.6569679,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Siilinjärvi työterveys",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 7694456421,
+  "lat": 60.1674247,
+  "lon": 24.9379697,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "9",
+    "addr:postcode": "00100",
+    "addr:street": "Kalevankatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Femeda lääkäriasema"
+  }
+},
+{
+  "type": "node",
+  "id": 7714611970,
+  "lat": 60.7994799,
+  "lon": 21.4117785,
+  "tags": {
+    "addr:housenumber": "1",
+    "addr:street": "Koulukatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen"
+  }
+},
+{
+  "type": "node",
+  "id": 7723841703,
+  "lat": 63.3257425,
+  "lon": 30.0244826,
+  "tags": {
+    "addr:city": "Lieksa",
+    "addr:housenumber": "7",
+    "addr:street": "Kainuuntie",
+    "amenity": "clinic",
+    "branch": "Lieksa",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 07:40-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-lieksa",
+    "wheelchair": "designated"
+  }
+},
+{
+  "type": "node",
+  "id": 7838240280,
+  "lat": 65.0607436,
+  "lon": 25.4665446,
+  "tags": {
+    "addr:housenumber": "5-7",
+    "addr:street": "Biologintie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 08:00-16:00",
+    "operator": "Terveystalo",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 8082150019,
+  "lat": 64.6852087,
+  "lon": 24.4792744,
+  "tags": {
+    "addr:city": "Raahe",
+    "addr:housenumber": "28",
+    "addr:postcode": "92100",
+    "addr:street": "Kirkkokatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Raahe",
+    "phone": "+35810312175",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-raahe"
+  }
+},
+{
+  "type": "node",
+  "id": 8121037696,
+  "lat": 65.0089344,
+  "lon": 25.4700476,
+  "tags": {
+    "addr:housenumber": "16",
+    "addr:postcode": "90100",
+    "addr:street": "Albertinkatu",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 07:00-22:00; Sa-Su 10:00-22:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 3 06000",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Oulu/"
+  }
+},
+{
+  "type": "node",
+  "id": 8135132169,
+  "lat": 60.1627515,
+  "lon": 24.7370904,
+  "tags": {
+    "addr:city": "Espoo",
+    "addr:housenumber": "9",
+    "addr:postcode": "02230",
+    "addr:street": "Piispansilta",
+    "addr:unit": "A",
+    "amenity": "clinic",
+    "branch": "Iso Omena A torni",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 8135132196,
+  "lat": 60.1618669,
+  "lon": 24.7389929,
+  "tags": {
+    "addr:city": "Espoo",
+    "addr:housenumber": "11",
+    "addr:postcode": "02230",
+    "addr:street": "Piispansilta",
+    "addr:unit": "C",
+    "amenity": "clinic",
+    "branch": "Iso Omena C torni",
+    "healthcare": "clinic",
+    "level": "2;3",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 8143872900,
+  "lat": 60.3881763,
+  "lon": 23.1238830,
+  "tags": {
+    "addr:city": "Salo",
+    "addr:housenumber": "12",
+    "addr:postcode": "24240",
+    "addr:street": "Turuntie",
+    "addr:unit": "B",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 08:00-16:00; Sa 09:00-14:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 8174128366,
+  "lat": 60.4564398,
+  "lon": 26.2254651,
+  "tags": {
+    "addr:city": "Loviisa",
+    "addr:housenumber": "5",
+    "addr:postcode": "07900",
+    "addr:street": "Aleksanterinkatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Loviisa"
+  }
+},
+{
+  "type": "node",
+  "id": 8209682650,
+  "lat": 62.2407629,
+  "lon": 25.7472679,
+  "tags": {
+    "addr:city": "Jyväskylä",
+    "addr:housenumber": "6",
+    "addr:postcode": "40100",
+    "addr:street": "Kilpisenkatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Mehiläinen"
+  }
+},
+{
+  "type": "node",
+  "id": 8225101755,
+  "lat": 62.7900526,
+  "lon": 22.8438542,
+  "tags": {
+    "addr:city": "Seinäjoki",
+    "addr:housenumber": "1",
+    "addr:postcode": "60100",
+    "addr:street": "Kauppakatu",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "check_date": "2024-09-04",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Seinäjoki",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 8232350679,
+  "lat": 61.8650852,
+  "lon": 25.1944064,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Jämsä",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 8238090652,
+  "lat": 62.2432625,
+  "lon": 25.7474170,
+  "tags": {
+    "addr:city": "Jyväskylä",
+    "addr:housenumber": "35",
+    "addr:postcode": "40100",
+    "addr:street": "Kauppakatu",
+    "amenity": "clinic",
+    "brand:wikidata": "Q10580005",
+    "brand:wikipedia": "fi:Mehiläinen (yritys)",
+    "check_date": "2024-07-29",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Jyväskylä"
+  }
+},
+{
+  "type": "node",
+  "id": 8425857589,
+  "lat": 61.4796066,
+  "lon": 21.8023187,
+  "tags": {
+    "addr:city": "Pori",
+    "addr:housenumber": "3",
+    "addr:postcode": "28130",
+    "addr:street": "Kuninkaantie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Pori",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-pori"
+  }
+},
+{
+  "type": "node",
+  "id": 8749326410,
+  "lat": 61.4510852,
+  "lon": 23.8511876,
+  "tags": {
+    "air_conditioning": "yes",
+    "amenity": "clinic",
+    "check_date": "2026-11-14",
+    "check_date:opening_hours": "2026-11-14",
+    "healthcare": "clinic",
+    "level": "0",
+    "name": "Terveyskeskus Mehiläinen",
+    "opening_hours": "Mo-Th 08:00-16:00; Fr 08:00-15:00",
+    "operator:type": "private",
+    "phone": "+358406710004",
+    "source": "survey",
+    "website": "https://www.mehilainen.fi/toimipisteet/terveyskeskus-mehilainen-tampere-hervanta-duo",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 8781433529,
+  "lat": 62.2440238,
+  "lon": 25.7486079,
+  "tags": {
+    "addr:city": "Jyväskylä",
+    "addr:housenumber": "9",
+    "addr:postcode": "40100",
+    "addr:street": "Väinönkatu",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "name": "Terveystalo Jyväskylä",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Jyvaskyla/"
+  }
+},
+{
+  "type": "node",
+  "id": 8792578075,
+  "lat": 62.6007935,
+  "lon": 29.7661771,
+  "tags": {
+    "addr:city": "Joensuu",
+    "addr:housenumber": "4",
+    "addr:postcode": "80100",
+    "addr:street": "Rantakatu",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "brand:wikidata": "Q10580005",
+    "healthcare": "clinic",
+    "level": "1",
+    "name": "Mehiläinen Joensuu",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-joensuu"
+  }
+},
+{
+  "type": "node",
+  "id": 8820233208,
+  "lat": 64.6849538,
+  "lon": 24.4828546,
+  "tags": {
+    "addr:city": "Raahe",
+    "addr:housenumber": "18",
+    "addr:postcode": "92100",
+    "addr:street": "Sovionkatu",
+    "addr:unit": "A",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-raahe"
+  }
+},
+{
+  "type": "node",
+  "id": 8827013139,
+  "lat": 64.2265805,
+  "lon": 27.7287339,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 8862204495,
+  "lat": 60.1847844,
+  "lon": 24.9397258,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "2",
+    "addr:postcode": "00530",
+    "addr:street": "Alppikatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Helsingin urheilulääkäriasema"
+  }
+},
+{
+  "type": "node",
+  "id": 8920008862,
+  "lat": 61.0563480,
+  "lon": 28.1918088,
+  "tags": {
+    "addr:city": "Lappeenranta",
+    "addr:housenumber": "3",
+    "addr:postcode": "53100",
+    "addr:street": "Brahenkatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "layer": "1",
+    "name": "Terveystalo Lappeenranta",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-lappeenranta"
+  }
+},
+{
+  "type": "node",
+  "id": 8995458617,
+  "lat": 67.8024814,
+  "lon": 24.7986775,
+  "tags": {
+    "addr:city": "Levi",
+    "addr:housenumber": "1590",
+    "addr:postcode": "99130",
+    "addr:street": "Levintie",
+    "amenity": "clinic",
+    "contact:facebook": "https://www.facebook.com/pihlajalinnalevi",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Levi",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-levi"
+  }
+},
+{
+  "type": "node",
+  "id": 9028984623,
+  "lat": 59.9769961,
+  "lon": 23.4395099,
+  "tags": {
+    "addr:city": "Ekenäs",
+    "addr:housenumber": "6",
+    "addr:postcode": "10600",
+    "addr:street": "Stationsvägen",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "1",
+    "name": "Mehiläinen Tammisaari",
+    "opening_hours": "Mo-Th 08:00-18:00; Fr 08:00-16:00",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "phone": "+3581041400",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-tammisaari",
+    "website:fi": "https://www.mehilainen.fi/toimipisteet/mehilainen-tammisaari",
+    "website:sv": "https://www.mehilainen.fi/sv/verksamhetsstallen/mehilainen-tammisaari"
+  }
+},
+{
+  "type": "node",
+  "id": 9044279912,
+  "lat": 60.1842667,
+  "lon": 24.8307506,
+  "tags": {
+    "amenity": "clinic",
+    "check_date": "2024-06-05",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Th 08:00-16:00, Fr 08:00-14:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 9108163974,
+  "lat": 61.4971613,
+  "lon": 23.7560651,
+  "tags": {
+    "addr:housenumber": "25",
+    "addr:street": "Hämeenkatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "level": "5",
+    "name": "Lääkärikeskus Medical",
+    "phone": "+358103393830",
+    "website": "https://www.laakarikeskusmedical.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 9135406876,
+  "lat": 61.4979472,
+  "lon": 23.7683013,
+  "tags": {
+    "addr:city": "Tampere",
+    "addr:housenumber": "9",
+    "addr:postcode": "33100",
+    "addr:street": "Hämeenkatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "4",
+    "name": "Terveystalo Tampere Prima",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-tampere-prima"
+  }
+},
+{
+  "type": "node",
+  "id": 9246090353,
+  "lat": 60.8101137,
+  "lon": 23.6146939,
+  "tags": {
+    "addr:city": "Forssa",
+    "addr:housenumber": "2",
+    "addr:postcode": "30420",
+    "addr:street": "Rajakatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Forssa",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-forssa"
+  }
+},
+{
+  "type": "node",
+  "id": 9288235085,
+  "lat": 60.6795319,
+  "lon": 21.9880402,
+  "tags": {
+    "addr:city": "Mynämäki",
+    "addr:housenumber": "4",
+    "addr:postcode": "23100",
+    "addr:street": "Kirkkokatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "physiotherapy;psychology;general",
+    "name": "Mehiläinen Mynämäki Työterveys",
+    "operator": "Mehiläinen Oy",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-mynamaki-tyoterveys"
+  }
+},
+{
+  "type": "node",
+  "id": 9609463621,
+  "lat": 60.3912044,
+  "lon": 25.6648004,
+  "tags": {
+    "addr:city": "Porvoo",
+    "addr:housenumber": "22",
+    "addr:postcode": "06100",
+    "addr:street": "Piispankatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Lääkärikeskus Fenix"
+  }
+},
+{
+  "type": "node",
+  "id": 9806396485,
+  "lat": 60.5312779,
+  "lon": 24.2044548,
+  "tags": {
+    "addr:city": "Karkkila",
+    "addr:housenumber": "2a",
+    "addr:postcode": "03600",
+    "addr:street": "Valurinkatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Karkkila",
+    "operator": "Mehiläinen Oy",
+    "operator:type": "private",
+    "phone": "+358 10 41400",
+    "website": "https://mehilainen.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 9839817523,
+  "lat": 60.4009528,
+  "lon": 25.1064769,
+  "tags": {
+    "addr:city": "Kerava",
+    "addr:housenumber": "8",
+    "addr:postcode": "04250",
+    "addr:street": "Kultasepänkatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Kerava",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-kerava/"
+  }
+},
+{
+  "type": "node",
+  "id": 9849945266,
+  "lat": 63.0062281,
+  "lon": 23.8036689,
+  "tags": {
+    "addr:city": "Alajärvi",
+    "addr:housenumber": "5",
+    "addr:postcode": "62900",
+    "addr:street": "Yrittäjäntie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Th 08:00-16:00; Fr 08:00-15:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358306000"
+  }
+},
+{
+  "type": "node",
+  "id": 9851881325,
+  "lat": 63.0007771,
+  "lon": 23.8172817,
+  "tags": {
+    "addr:city": "Alajärvi",
+    "addr:housenumber": "14",
+    "addr:postcode": "62900",
+    "addr:street": "Keskuskatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Lääkäriasema Anselmi",
+    "operator": "Lääkäriasema Anselmi Oy",
+    "operator:type": "private"
+  }
+},
+{
+  "type": "node",
+  "id": 10047829488,
+  "lat": 60.1875347,
+  "lon": 24.9800953,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "5",
+    "addr:postcode": "00580",
+    "addr:street": "Hermannin rantatie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Th 07:30-20:00; Sa,Su 10:00-15:00; Fr 07:30-18:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 3 06000",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Redi/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 10057476361,
+  "lat": 64.0723798,
+  "lon": 24.5390594,
+  "tags": {
+    "addr:city": "Ylivieska",
+    "addr:housenumber": "12",
+    "addr:postcode": "84100",
+    "addr:street": "Asemakatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Ylivieska",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 10096100269,
+  "lat": 60.2490977,
+  "lon": 24.0621590,
+  "tags": {
+    "addr:city": "Lohja",
+    "addr:housenumber": "34",
+    "addr:postcode": "08100",
+    "addr:street": "Laurinkatu",
+    "amenity": "clinic",
+    "branch": "Lohja",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Lohja",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 10127836129,
+  "lat": 60.2930028,
+  "lon": 25.0458240,
+  "tags": {
+    "addr:city": "Vantaa",
+    "addr:housenumber": "8",
+    "addr:postcode": "01300",
+    "addr:street": "Väritehtaankatu",
+    "amenity": "clinic",
+    "contact:phone": "+358 10 414 0112",
+    "contact:website": "https://www.mehilainen.fi/toimipisteet/mehilainen-vantaa-tikkurila",
+    "emergency": "no",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Vantaa Tikkurila",
+    "name:en": "Mehilainen private health care center",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 10216010113,
+  "lat": 64.2626869,
+  "lon": 23.9450552,
+  "tags": {
+    "addr:city": "Kalajoki",
+    "addr:housenumber": "2",
+    "addr:postcode": "85100",
+    "addr:street": "Vierivainiontie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Kalajoki",
+    "operator": "Terveystalo",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 10286084191,
+  "lat": 61.3145894,
+  "lon": 23.7529788,
+  "tags": {
+    "addr:city": "Lempäälä",
+    "addr:housenumber": "12",
+    "addr:postcode": "37500",
+    "addr:street": "Tampereentie",
+    "addr:unit": "B",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Lempäälän Lääkäriasema",
+    "operator": "Lempäälän Lääkäriasema Oy",
+    "operator:type": "private",
+    "phone": "+358504705038",
+    "website": "https://lempaalanlaakariasema.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 10563588572,
+  "lat": 60.2521776,
+  "lon": 25.0110119,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "18",
+    "addr:postcode": "00700",
+    "addr:street": "Malmin kauppatie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "3",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-We 07:30-17:00; Th-Fr 07:30-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 3 06000",
+    "website": "https://www.terveystalo.com/fi/Toimipaikat/Terveystalo-Malmi/"
+  }
+},
+{
+  "type": "node",
+  "id": 10574811777,
+  "lat": 62.9720487,
+  "lon": 23.0300732,
+  "tags": {
+    "addr:city": "Lapua",
+    "addr:housenumber": "4",
+    "addr:postcode": "62100",
+    "addr:street": "Alangontie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Lapua",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 30 6000"
+  }
+},
+{
+  "type": "node",
+  "id": 10984356905,
+  "lat": 60.8524010,
+  "lon": 23.0570454,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 10984356906,
+  "lat": 60.8525763,
+  "lon": 23.0570512,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 11116601642,
+  "lat": 65.8426170,
+  "lon": 24.1437128,
+  "tags": {
+    "addr:city": "Tornio",
+    "addr:housenumber": "10",
+    "addr:postcode": "95400",
+    "addr:street": "Länsiranta",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "1",
+    "name": "Terveystalo Tornio",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-tornio/"
+  }
+},
+{
+  "type": "node",
+  "id": 11174308957,
+  "lat": 60.4576126,
+  "lon": 22.6876199,
+  "tags": {
+    "addr:city": "Paimio",
+    "addr:housenumber": "2",
+    "addr:postcode": "21530",
+    "addr:street": "Asematie",
+    "amenity": "clinic",
+    "description": "Mehiläinen Paimio palvelee itsemaksavia ja työterveyden asiakkaita. Paimiossa on yleislääkärin, työterveyshoitajien, työterveyslääkärien, työfysioterapeutin ja työpsykologin säännölliset vastaanotot. Kaikilla heillä voi käydä asiakas myös itse maksaen.",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Paimio",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-paimio"
+  }
+},
+{
+  "type": "node",
+  "id": 11228870933,
+  "lat": 60.4755065,
+  "lon": 25.0894885,
+  "tags": {
+    "addr:city": "Järvenpää",
+    "addr:housenumber": "1 A, 2. kerros",
+    "addr:postcode": "04410",
+    "addr:street": "Myllytie",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Lääkärikeskus Aava Järvenpää",
+    "operator": "Aava",
+    "phone": "+358103803838",
+    "takeaway": "undefined",
+    "website": "https://www.aava.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 11243721016,
+  "lat": 61.2032767,
+  "lon": 26.0314995,
+  "tags": {
+    "addr:floor": "G",
+    "amenity": "clinic",
+    "check_date": "2023-10-06",
+    "healthcare": "clinic",
+    "level": "0",
+    "name": "Terveystalo Fysioterapia",
+    "operator": "Terveystalo",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 11243721019,
+  "lat": 61.2032174,
+  "lon": 26.0314840,
+  "tags": {
+    "addr:floor": "2",
+    "amenity": "clinic",
+    "check_date": "2023-10-06",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 11266536211,
+  "lat": 62.8837892,
+  "lon": 27.6412641,
+  "tags": {
+    "addr:city": "Kuopio",
+    "addr:housenumber": "1",
+    "addr:postcode": "70700",
+    "addr:street": "Leväsentie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Kuopio Leväsentie",
+    "opening_hours": "Mo-Fr 08:00-20:00; Sa-Su 11:00-17:00",
+    "operator": "Pihlajalinna Oyj",
+    "operator:type": "private",
+    "phone": "+358 10 312 010",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-kuopio-levasentie"
+  }
+},
+{
+  "type": "node",
+  "id": 11434316943,
+  "lat": 64.9163684,
+  "lon": 25.5337681,
+  "tags": {
+    "addr:city": "Kempele",
+    "addr:country": "FI",
+    "addr:housenumber": "17",
+    "addr:postcode": "90440",
+    "addr:street": "Kiertorata",
+    "amenity": "clinic",
+    "branch": "Kempele",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com"
+  }
+},
+{
+  "type": "node",
+  "id": 11516677791,
+  "lat": 60.4636922,
+  "lon": 26.9360813,
+  "tags": {
+    "addr:city": "Kotka",
+    "addr:housenumber": "11",
+    "addr:postcode": "48100",
+    "addr:street": "Kotkankatu",
+    "amenity": "clinic",
+    "branch": "Kotka",
+    "brand": "Mehiläinen",
+    "healthcare": "clinic",
+    "name": "Mehiläinen",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-kotka"
+  }
+},
+{
+  "type": "node",
+  "id": 11519195372,
+  "lat": 63.1008250,
+  "lon": 23.0415426,
+  "tags": {
+    "addr:city": "Kauhava",
+    "addr:housenumber": "6",
+    "addr:postcode": "62200",
+    "addr:street": "Nikolaintie",
+    "addr:unit": "A",
+    "amenity": "clinic",
+    "branch": "Kauhava",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 11569788137,
+  "lat": 61.4803792,
+  "lon": 23.5086591,
+  "tags": {
+    "addr:city": "Nokia",
+    "addr:housenumber": "1-3",
+    "addr:postcode": "37100",
+    "addr:street": "Kauppakatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 11593876071,
+  "lat": 60.3068656,
+  "lon": 24.9608865,
+  "tags": {
+    "addr:city": "Vantaa",
+    "addr:housenumber": "2",
+    "addr:postcode": "01530",
+    "addr:street": "Karhumäenkuja",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Lääkärikeskus Aava Vantaa Aviapolis",
+    "operator": "Aava"
+  }
+},
+{
+  "type": "node",
+  "id": 11603301914,
+  "lat": 62.4289563,
+  "lon": 22.1794750,
+  "tags": {
+    "addr:city": "Kauhajoki",
+    "addr:housenumber": "52",
+    "addr:postcode": "61800",
+    "addr:street": "Topeeka",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 90030000"
+  }
+},
+{
+  "type": "node",
+  "id": 11617117246,
+  "lat": 64.2582695,
+  "lon": 23.9490474,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Kalajoki",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-kalajoki"
+  }
+},
+{
+  "type": "node",
+  "id": 11675213669,
+  "lat": 60.7994817,
+  "lon": 21.4126195,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 08:00-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 11842123126,
+  "lat": 61.1304858,
+  "lon": 22.1345536,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 11922079957,
+  "lat": 61.4947940,
+  "lon": 23.7685060,
+  "tags": {
+    "amenity": "clinic",
+    "email": "tampere@aava.fi",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Lääkärikeskus Aava",
+    "opening_hours": "Mo-Fr 08:00-19:00; Sa-Su 10:00-17:00",
+    "operator": "Aava",
+    "operator:type": "private",
+    "phone": "+358103803838",
+    "website": "https://www.aava.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 11969255842,
+  "lat": 62.9746006,
+  "lon": 28.4811892,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna",
+    "survey:date": "2024-06-10"
+  }
+},
+{
+  "type": "node",
+  "id": 12015041047,
+  "lat": 61.0589188,
+  "lon": 28.1882336,
+  "tags": {
+    "amenity": "hospital",
+    "check_date": "2024-06-27",
+    "healthcare": "hospital",
+    "name": "Pihlajalinna",
+    "payment:cash": "yes",
+    "payment:credit_cards": "yes",
+    "payment:debit_cards": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 12016569483,
+  "lat": 60.9824433,
+  "lon": 25.6662299,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 12061167474,
+  "lat": 64.0727259,
+  "lon": 24.5366517,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen"
+  }
+},
+{
+  "type": "node",
+  "id": 12108651117,
+  "lat": 60.9819111,
+  "lon": 25.6593458,
+  "tags": {
+    "addr:city": "Lahti",
+    "addr:housenumber": "20-22",
+    "addr:postcode": "15110",
+    "addr:street": "Hämeenkatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "psychiatry",
+    "name": "Coronaria Psykologiset palvelut",
+    "phone": "+358 10 2712940",
+    "website": "https://www.coronaria.fi/toimipaikat/coronaria-psykologiset-palvelut-lahti-hameenkatu/"
+  }
+},
+{
+  "type": "node",
+  "id": 12108651128,
+  "lat": 60.9819018,
+  "lon": 25.6569255,
+  "tags": {
+    "addr:city": "Lahti",
+    "addr:housenumber": "15",
+    "addr:postcode": "15110",
+    "addr:street": "Hämeenkatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Lahti Työterveys",
+    "opening_hours": "Mo-Fr 08:00-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 9 0030000"
+  }
+},
+{
+  "type": "node",
+  "id": 12183715277,
+  "lat": 60.2201492,
+  "lon": 24.8788989,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "21",
+    "addr:postcode": "00380",
+    "addr:street": "Valimotie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Helsinki Uniklinikka",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 12323551548,
+  "lat": 60.8093714,
+  "lon": 23.6311884,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 12354035183,
+  "lat": 67.0223269,
+  "lon": 27.2415879,
+  "tags": {
+    "addr:city": "Pyhätunturi",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "general",
+    "name": "Pyhän lääkäriasema"
+  }
+},
+{
+  "type": "node",
+  "id": 12409510371,
+  "lat": 60.4506104,
+  "lon": 22.2607946,
+  "tags": {
+    "addr:floor": "3",
+    "addr:housenumber": "29b",
+    "addr:street": "Yliopistonkatu",
+    "amenity": "clinic",
+    "branch": "Turku Keskusta",
+    "check_date": "2026-08-18",
+    "contact:facebook": "pihlajalinnaturku",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Pihlajalinna",
+    "opening_hours": "Mo-Fr 08:00-16:00",
+    "phone": "+35810312178",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-turku-keskusta",
+    "wikidata": "Q18689068"
+  }
+},
+{
+  "type": "node",
+  "id": 12425016902,
+  "lat": 60.1987552,
+  "lon": 24.9340381,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "1 C",
+    "addr:postcode": "00520",
+    "addr:street": "Pasilan asema-aukio",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "4",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Fr 07:30-21:00; Sa-Su 10:00-17:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-tripla"
+  }
+},
+{
+  "type": "node",
+  "id": 12459652210,
+  "lat": 60.8569394,
+  "lon": 23.0445165,
+  "tags": {
+    "addr:city": "Loimaa",
+    "addr:housenumber": "7",
+    "addr:postcode": "32200",
+    "addr:street": "Aleksis Kiven katu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 12475854105,
+  "lat": 60.5078121,
+  "lon": 22.4586106,
+  "tags": {
+    "addr:city": "Lieto",
+    "addr:housenumber": "9",
+    "addr:postcode": "21420",
+    "addr:street": "Hyvättyläntie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Lieto",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-lieto",
+    "wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 12478115919,
+  "lat": 60.9882707,
+  "lon": 25.5141619,
+  "tags": {
+    "addr:city": "Hollola",
+    "addr:housenumber": "11",
+    "addr:postcode": "15870",
+    "addr:street": "Keskuskatu",
+    "amenity": "clinic",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Th 08:00-15:30; Fr 08:00-14:00",
+    "phone": "+358 900 30 000",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-hollola-tyoterveys"
+  }
+},
+{
+  "type": "node",
+  "id": 12498099852,
+  "lat": 60.6365504,
+  "lon": 25.3191346,
+  "tags": {
+    "addr:housenumber": "1",
+    "addr:street": "Mäntsäläntie",
+    "amenity": "clinic",
+    "branch": "Mäntsälä",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-mantsala"
+  }
+},
+{
+  "type": "node",
+  "id": 12534801101,
+  "lat": 60.2595832,
+  "lon": 24.8537273,
+  "tags": {
+    "addr:city": "Vantaa",
+    "addr:housenumber": "3",
+    "addr:postcode": "01600",
+    "addr:street": "Iskoskuja",
+    "amenity": "clinic",
+    "branch": "Myyrmäki",
+    "healthcare": "clinic",
+    "level": "2",
+    "name": "Lääkärikeskus Aava",
+    "opening_hours": "Mo-Fr 07:30-20:00",
+    "operator": "Lääkärikeskus Aava",
+    "operator:type": "private",
+    "phone": "+358103803838",
+    "website": "https://www.aava.fi/laakarikeskukset/aava-vantaa-myyrmaki/"
+  }
+},
+{
+  "type": "node",
+  "id": 12578290076,
+  "lat": 65.0109273,
+  "lon": 25.4803018,
+  "tags": {
+    "addr:city": "Oulu",
+    "addr:country": "FI",
+    "addr:housenumber": "36",
+    "addr:postcode": "90100",
+    "addr:street": "Hallituskatu",
+    "addr:unit": "B",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "5",
+    "name": "Aava Oulu",
+    "phone": "+358 10 380 3838",
+    "website": "https://www.aava.fi/laakarikeskukset/aava-oulu/"
+  }
+},
+{
+  "type": "node",
+  "id": 12582010002,
+  "lat": 60.2886377,
+  "lon": 24.9524257,
+  "tags": {
+    "addr:city": "Vantaa",
+    "addr:housenumber": "5",
+    "addr:postcode": "01510",
+    "addr:street": "Elannontie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Vantaa",
+    "operator": "Pihlajalinna",
+    "operator:type": "private",
+    "operator:wikidata": "Q18689068"
+  }
+},
+{
+  "type": "node",
+  "id": 12623535199,
+  "lat": 60.4683941,
+  "lon": 22.4127053,
+  "tags": {
+    "addr:city": "Lieto",
+    "addr:housenumber": "2",
+    "addr:postcode": "21420",
+    "addr:street": "Ydinkuja",
+    "amenity": "doctors",
+    "description": "Työterveysasema",
+    "healthcare": "doctor",
+    "name": "Pihlajalinna Lieto Työterveys",
+    "operator": "Pihlajalinna",
+    "operator:wikidata": "Q18689068",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-lieto-tyoterveys"
+  }
+},
+{
+  "type": "node",
+  "id": 12691455622,
+  "lat": 61.5019607,
+  "lon": 23.7592107,
+  "tags": {
+    "addr:city": "Tampere",
+    "addr:housenumber": "3",
+    "addr:postcode": "33210",
+    "addr:street": "Itäinenkatu",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Tampere Finlayson",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-tampere-finlayson",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 12704185444,
+  "lat": 61.5082060,
+  "lon": 23.8083076,
+  "tags": {
+    "addr:city": "Tampere",
+    "addr:housenumber": "17",
+    "addr:postcode": "33520",
+    "addr:street": "Kuntokatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Tampere Kauppi",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-tampere-kauppi"
+  }
+},
+{
+  "type": "node",
+  "id": 12739638491,
+  "lat": 61.3395154,
+  "lon": 22.9115148,
+  "tags": {
+    "addr:city": "Sastamala",
+    "addr:housenumber": "11",
+    "addr:postcode": "38200",
+    "addr:street": "Puistokatu",
+    "amenity": "clinic",
+    "branch": "Sastamala Puistokatu 11",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 9 0030000",
+    "website": "https://ajanvaraus.terveystalo.com/fi"
+  }
+},
+{
+  "type": "node",
+  "id": 13040731373,
+  "lat": 60.2104905,
+  "lon": 25.0795718,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "1-5",
+    "addr:postcode": "00930",
+    "addr:street": "Itäkatu",
+    "amenity": "clinic",
+    "branch": "Helsinki Itäkeskus",
+    "healthcare": "clinic",
+    "level": "1;2",
+    "name": "Mehiläinen",
+    "opening_hours": "Mo-Th 08:00-20:00; Fr 08:00-16:00; Sa-Su 09:00-15:00",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-helsinki-itakeskus",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 13057820968,
+  "lat": 61.1988467,
+  "lon": 21.7311400,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 13114228843,
+  "lat": 60.3938969,
+  "lon": 25.6652009,
+  "tags": {
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "general",
+    "name": "Lääkärikeskus Fenix"
+  }
+},
+{
+  "type": "node",
+  "id": 13125132325,
+  "lat": 61.7693601,
+  "lon": 23.0675413,
+  "tags": {
+    "addr:city": "Ikaalinen",
+    "addr:housenumber": "18",
+    "addr:postcode": "39500",
+    "addr:street": "Vanha Tampereentie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Ikaalinen",
+    "operator": "Pihlajalinna",
+    "operator:type": "private",
+    "operator:wikidata": "Q18689068",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-ikaalinen"
+  }
+},
+{
+  "type": "node",
+  "id": 13183472303,
+  "lat": 61.8690795,
+  "lon": 28.8786348,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Savonlinna",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 13261746329,
+  "lat": 60.4634905,
+  "lon": 26.9334254,
+  "tags": {
+    "addr:city": "Kotka",
+    "addr:housenumber": "21",
+    "addr:postcode": "48100",
+    "addr:street": "Koulukatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Pihlajalinna Kotka"
+  }
+},
+{
+  "type": "node",
+  "id": 13314281990,
+  "lat": 62.7884920,
+  "lon": 22.8338201,
+  "tags": {
+    "addr:city": "Seinäjoki",
+    "addr:housenumber": "23",
+    "addr:postcode": "60100",
+    "addr:street": "Kauppakatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "healthcare:speciality": "occupational",
+    "name": "Terveystalo Seinäjoki työterveys",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 13348061987,
+  "lat": 60.2173953,
+  "lon": 24.8112110,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Sello"
+  }
+},
+{
+  "type": "node",
+  "id": 13351122252,
+  "lat": 60.1214120,
+  "lon": 24.4432228,
+  "tags": {
+    "addr:housenumber": "3",
+    "addr:street": "Saloviuksentie",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo Kirkkonummi",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 13431204625,
+  "lat": 60.9837410,
+  "lon": 25.6535002,
+  "tags": {
+    "amenity": "clinic",
+    "brand": "Pihlajalinna",
+    "brand:wikidata": "Q18689068",
+    "contact:website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-lahti",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna",
+    "opening_hours": "Mo-We 08:00-20:00, Th-Fr 08:00-19:00, Sa 09:00-15:00"
+  }
+},
+{
+  "type": "node",
+  "id": 13566389385,
+  "lat": 60.2497567,
+  "lon": 25.0118624,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "3",
+    "addr:postcode": "00700",
+    "addr:street": "Pikkalankatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Lääkäriasema Medipulssi",
+    "website": "https://medipulssi.fi/"
+  }
+},
+{
+  "type": "node",
+  "id": 13574087614,
+  "lat": 60.4705165,
+  "lon": 25.0879194,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Mehiläinen",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 13664310452,
+  "lat": 66.4969765,
+  "lon": 25.7070996,
+  "tags": {
+    "addr:city": "Rovaniemi",
+    "amenity": "hospital",
+    "brand": "Mehiläinen",
+    "emergency": "no",
+    "healthcare": "hospital",
+    "name": "Mehiläinen Rovaniemi"
+  }
+},
+{
+  "type": "node",
+  "id": 13787426879,
+  "lat": 60.9219365,
+  "lon": 24.6470569,
+  "tags": {
+    "addr:city": "Janakkala",
+    "addr:housenumber": "3",
+    "addr:postcode": "14200",
+    "addr:street": "Keskuskuja",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "healthcare:speciality": "physiotherapy",
+    "name": "Mehiläinen Turenki",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005"
+  }
+},
+{
+  "type": "node",
+  "id": 13953985203,
+  "lat": 61.3126462,
+  "lon": 22.1499930,
+  "tags": {
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 14049009436,
+  "lat": 62.0059371,
+  "lon": 23.0234909,
+  "tags": {
+    "addr:city": "Parkano",
+    "addr:housenumber": "33",
+    "addr:postcode": "39700",
+    "addr:street": "Parkanontie",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "name": "Pihlajalinna",
+    "opening_hours": "Mo-Th 08:00-16:00; Fr 08:00-14:00",
+    "operator": "Pihlajalinna",
+    "operator:wikidata": "Q18689068",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-parkano"
+  }
+},
+{
+  "type": "node",
+  "id": 14052030050,
+  "lat": 60.7369920,
+  "lon": 24.7697890,
+  "tags": {
+    "addr:city": "Riihimäki",
+    "addr:housenumber": "1-5",
+    "addr:postcode": "11100",
+    "addr:street": "Junailijankatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "level": "2-3",
+    "name": "Terveystalo Riihimäki Junailijankatu",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "node",
+  "id": 14251075528,
+  "lat": 60.1911388,
+  "lon": 24.9590094,
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "14 A",
+    "addr:postcode": "00510",
+    "addr:street": "Päijänteentie",
+    "amenity": "clinic",
+    "branch": "Helsinki Vallila Työterveys",
+    "healthcare": "clinic",
+    "healthcare:speciality": "occupational",
+    "name": "Mehiläinen",
+    "opening_hours": "Mo-Th 08:00-16:00; Fr 08:00-14:00",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-helsinki-vallila-tyoterveys",
+    "wheelchair": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 14286545362,
+  "lat": 60.1645478,
+  "lon": 24.7363360,
+  "tags": {
+    "amenity": "clinic",
+    "name": "Pihlajalinna Matinkylä",
+    "operator": "Pihlajalinna",
+    "operator:type": "private"
+  }
+},
+{
+  "type": "way",
+  "id": 9166254,
+  "center": {
+    "lat": 60.4499877,
+    "lon": 22.2964038
+  },
+  "tags": {
+    "addr:city": "Turku",
+    "addr:housenumber": "6",
+    "addr:postcode": "20520",
+    "addr:street": "Joukahaisenkatu",
+    "amenity": "doctors",
+    "building": "yes",
+    "building:colour": "grey",
+    "building:material": "metal",
+    "check_date": "2026-03-29",
+    "healthcare": "hospital",
+    "name": "Sairaala Neo Mehiläinen",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-neo-turku",
+    "wikidata": "Q5908509"
+  }
+},
+{
+  "type": "way",
+  "id": 98581116,
+  "center": {
+    "lat": 62.2390096,
+    "lon": 25.7414794
+  },
+  "tags": {
+    "addr:city": "Jyväskylä",
+    "addr:housenumber": "8",
+    "addr:postcode": "40100",
+    "addr:street": "Cygnaeuksenkatu",
+    "amenity": "clinic",
+    "building": "yes",
+    "healthcare": "clinic",
+    "name": "Pihlajalinna Jyväskylä",
+    "operator": "Pihlajalinna",
+    "operator:wikidata": "Q18689068",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-jyvaskyla"
+  }
+},
+{
+  "type": "way",
+  "id": 155960763,
+  "center": {
+    "lat": 60.2868539,
+    "lon": 22.2853266
+  },
+  "tags": {
+    "addr:city": "Parainen",
+    "addr:housenumber": "18",
+    "addr:postcode": "21600",
+    "addr:street": "Malmnäsvägen",
+    "amenity": "clinic",
+    "building": "yes",
+    "healthcare": "clinic",
+    "name": "Mehiläinen Parainen Työterveys",
+    "opening_hours": "Mo-Fr 08:00-16:00; Sa,Su closed",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-parainen-tyoterveys"
+  }
+},
+{
+  "type": "way",
+  "id": 169207325,
+  "center": {
+    "lat": 62.6033015,
+    "lon": 23.7312811
+  },
+  "tags": {
+    "addr:city": "Alavus",
+    "addr:housenumber": "6",
+    "addr:postcode": "63610",
+    "addr:street": "Väkkäräpakantie",
+    "amenity": "clinic",
+    "building": "yes",
+    "healthcare": "clinic",
+    "name": "Terveystalo Tuuri",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "source": "MML",
+    "website": "https://www.terveystalo.com/fi/toimipaikat/terveystalo-tuuri/"
+  }
+},
+{
+  "type": "way",
+  "id": 223786935,
+  "center": {
+    "lat": 61.4714482,
+    "lon": 23.9912607
+  },
+  "tags": {
+    "addr:city": "Tampere",
+    "addr:housenumber": "3",
+    "addr:postcode": "36220",
+    "addr:street": "Kaarninkuja",
+    "amenity": "clinic",
+    "building": "yes",
+    "contact:facebook": "https://www.facebook.com/pihlajalinnapirkanmaa",
+    "healthcare": "clinic",
+    "healthcare:speciality": "general",
+    "name": "Pihlajalinna Kangasala",
+    "operator": "Pihlajalinna",
+    "operator:type": "private",
+    "operator:wikidata": "Q18689068",
+    "phone": "+35810312121",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-kangasala"
+  }
+},
+{
+  "type": "way",
+  "id": 232772370,
+  "center": {
+    "lat": 64.2279826,
+    "lon": 27.7273629
+  },
+  "tags": {
+    "addr:housenumber": "27b",
+    "addr:postcode": "87100",
+    "addr:street": "Kauppakatu",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "building": "yes",
+    "building:levels": "4",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "way",
+  "id": 240765155,
+  "center": {
+    "lat": 62.7889511,
+    "lon": 22.8336888
+  },
+  "tags": {
+    "addr:city": "Seinäjoki",
+    "addr:housenumber": "24-26",
+    "addr:postcode": "60100",
+    "addr:street": "Vapaudentie",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "building": "yes",
+    "building:levels": "3",
+    "emergency": "no",
+    "healthcare": "clinic",
+    "height": "12",
+    "name": "Terveystalo Seinäjoki",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "way",
+  "id": 448649321,
+  "center": {
+    "lat": 60.2079086,
+    "lon": 24.8935676
+  },
+  "tags": {
+    "addr:city": "Helsinki",
+    "addr:housenumber": "2",
+    "addr:postcode": "00300",
+    "addr:street": "Puutarhurinkuja",
+    "amenity": "hospital",
+    "check_date": "2025-11-03",
+    "healthcare": "hospital",
+    "internet_access": "wlan",
+    "internet_access:ssid": "Pihlajalinna-Guest",
+    "name": "Pihlajalinna Pikku Huopalahti",
+    "operator": "Pihlajalinna",
+    "operator:type": "private",
+    "operator:wikidata": "Q18689068",
+    "payment:cash": "yes",
+    "payment:credit_cards": "yes",
+    "payment:debit_cards": "yes",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-pikku-huopalahti",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 535571982,
+  "center": {
+    "lat": 61.4818286,
+    "lon": 21.7990144
+  },
+  "tags": {
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "building": "hospital",
+    "building:levels": "3",
+    "healthcare": "clinic",
+    "height": "12",
+    "name": "Terveystalo Pori Lääkäritalo",
+    "opening_hours": "Mo-Fr 07:00-20:00; Sa,Su,PH 09:00-18:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "way",
+  "id": 668334240,
+  "center": {
+    "lat": 64.9840405,
+    "lon": 25.5089107
+  },
+  "tags": {
+    "addr:city": "Oulu",
+    "addr:housenumber": "1",
+    "addr:postcode": "90250",
+    "addr:street": "Kiilakivenkuja",
+    "amenity": "clinic",
+    "building": "hospital",
+    "building:levels": "4",
+    "healthcare": "clinic",
+    "height": "16",
+    "name": "Pihlajalinna Hiironen",
+    "old_name": "Pohjola Sairaala",
+    "opening_hours": "Mo-Fr 08:00-21:00; Sa-Su 11:00-18:00; PH 11:00-18:00",
+    "operator:type": "private",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-hiironen"
+  }
+},
+{
+  "type": "way",
+  "id": 723392901,
+  "center": {
+    "lat": 60.4514029,
+    "lon": 22.2821819
+  },
+  "tags": {
+    "addr:city": "Turku",
+    "addr:housenumber": "10",
+    "addr:postcode": "20500",
+    "addr:street": "Hämeenkatu",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "healthcare:speciality": "occupational",
+    "name": "Länsirannikon Työterveystalo",
+    "name:en": "Turku Centre for Occupational Health",
+    "name:fi": "Länsirannikon Työterveystalo",
+    "name:sv": "Arbetshälsogården i Åbo",
+    "website": "https://www.tyoterveystalo.fi/turun-tyoterveystalo"
+  }
+},
+{
+  "type": "way",
+  "id": 838079706,
+  "center": {
+    "lat": 60.4568824,
+    "lon": 22.2699786
+  },
+  "tags": {
+    "addr:city": "Turku",
+    "addr:housenumber": "13",
+    "addr:postcode": "20100",
+    "addr:street": "Aninkaistenkatu",
+    "amenity": "clinic",
+    "brand": "Terveystalo",
+    "brand:wikidata": "Q11897034",
+    "brand:wikipedia": "fi:Terveystalo",
+    "healthcare": "clinic",
+    "landuse": "commercial",
+    "name": "Terveystalo",
+    "opening_hours": "Mo-Sa 07:30-16:00",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo"
+  }
+},
+{
+  "type": "way",
+  "id": 844519197,
+  "center": {
+    "lat": 63.0955588,
+    "lon": 21.6202871
+  },
+  "tags": {
+    "addr:housenumber": "22",
+    "addr:street": "Vaasanpuistikko",
+    "amenity": "clinic",
+    "building": "hospital",
+    "building:colour": "white",
+    "building:levels": "6",
+    "check_date:opening_hours": "2024-11-25",
+    "healthcare": "clinic",
+    "height": "23",
+    "name": "Mehiläinen",
+    "opening_hours:signed": "no",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "phone": "+358 10 414 00"
+  }
+},
+{
+  "type": "way",
+  "id": 845071688,
+  "center": {
+    "lat": 60.4481249,
+    "lon": 22.2981001
+  },
+  "tags": {
+    "addr:city": "Turku",
+    "addr:housenumber": "9",
+    "addr:postcode": "20520",
+    "addr:street": "Joukahaisenkatu",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "landuse": "commercial",
+    "name": "Pihlajalinna Turku Kupittaa",
+    "website": "https://www.pihlajalinna.fi/toimipisteet/pihlajalinna-turku-kupittaa"
+  }
+},
+{
+  "type": "way",
+  "id": 846901529,
+  "center": {
+    "lat": 65.0489814,
+    "lon": 25.5761469
+  },
+  "tags": {
+    "addr:city": "Oulu",
+    "addr:country": "FI",
+    "addr:housenumber": "30",
+    "addr:postcode": "90620",
+    "addr:street": "Konetie",
+    "amenity": "clinic",
+    "branch": "Oulu Rusko",
+    "building": "commercial",
+    "healthcare": "clinic",
+    "name": "Terveystalo",
+    "operator": "Terveystalo",
+    "operator:type": "private",
+    "operator:wikidata": "Q11897034",
+    "operator:wikipedia": "fi:Terveystalo",
+    "phone": "+358 3 06000"
+  }
+},
+{
+  "type": "way",
+  "id": 1299902243,
+  "center": {
+    "lat": 65.0105438,
+    "lon": 25.5158726
+  },
+  "tags": {
+    "addr:city": "Oulu",
+    "addr:country": "FI",
+    "addr:housenumber": "48",
+    "addr:postcode": "90220",
+    "addr:street": "Kajaanintie",
+    "addr:unit": "A-B",
+    "amenity": "clinic",
+    "branch": "Lamellitalo",
+    "brand": "Coronaria",
+    "healthcare": "clinic",
+    "healthcare:speciality": "rehabilitation",
+    "name": "Coronaria kuntoutus- ja terapiapalvelut",
+    "website": "https://www.coronaria.fi/toimipaikat/coronaria-kuntoutus-ja-terapiapalvelut-lamellitalo/"
+  }
+},
+{
+  "type": "way",
+  "id": 1489461326,
+  "center": {
+    "lat": 60.6323579,
+    "lon": 24.8629446
+  },
+  "tags": {
+    "addr:city": "Hyvinkää",
+    "addr:housenumber": "9",
+    "addr:postcode": "05800",
+    "addr:street": "Hämeenkatu",
+    "amenity": "clinic",
+    "brand": "Mehiläinen",
+    "healthcare": "clinic",
+    "healthcare:speciality": "general;occupational",
+    "indoor": "area",
+    "level": "5",
+    "name": "Mehiläinen Hyvinkää",
+    "opening_hours": "07:00-20:00",
+    "operator": "Mehiläinen",
+    "operator:type": "private",
+    "operator:wikidata": "Q10580005",
+    "website": "https://www.mehilainen.fi/toimipisteet/mehilainen-hyvinkaa",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1491417748,
+  "center": {
+    "lat": 60.6331985,
+    "lon": 24.8631617
+  },
+  "tags": {
+    "addr:city": "Hyvinkää",
+    "addr:housenumber": "14",
+    "addr:postcode": "05800",
+    "addr:street": "Hämeenkatu",
+    "amenity": "clinic",
+    "check_date": "2026-03-20",
+    "contact:phone": "+358 10 380 3838",
+    "healthcare": "clinic",
+    "indoor": "room",
+    "level": "1",
+    "name": "Aava Hyvinkää",
+    "operator": "Aava",
+    "operator:type": "private",
+    "room": "office",
+    "website": "https://www.aava.fi/laakarikeskukset/aava-hyvinkaa/"
+  }
+},
+{
+  "type": "relation",
+  "id": 18743560,
+  "center": {
+    "lat": 64.9031110,
+    "lon": 25.5385244
+  },
+  "tags": {
+    "addr:city": "Kempele",
+    "addr:country": "FI",
+    "addr:housename": "Zeppelin",
+    "addr:housenumber": "1",
+    "addr:postcode": "90450",
+    "addr:street": "Zeppeliinintie",
+    "amenity": "doctors",
+    "fee": "yes",
+    "healthcare": "doctor",
+    "indoor": "room",
+    "level": "1",
+    "name": "Lääkärikeskus Zeppelin",
+    "type": "multipolygon"
+  }
+}
+
+  ]
+}

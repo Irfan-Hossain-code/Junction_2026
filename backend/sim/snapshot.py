@@ -28,6 +28,10 @@ class Snapshot:
     screening_factor: dict = field(default_factory=dict)   # county -> participation multiplier
     monitoring: bool = False
     notes: list = field(default_factory=list)
+    home: dict = field(default_factory=dict)       # "muni|cap" -> nearest PUBLIC facility (where a decliner falls back)
+    reminders: dict = field(default_factory=dict)  # county -> True (proactive reminders / follow-up calls)
+    transport: dict = field(default_factory=dict)  # county -> True (transport support for distant appointments)
+    purchases: list = field(default_factory=list)  # private purchasing contracts (for cost accounting)
 
     def key(self, a, b):
         return f"{a}|{b}"
@@ -62,26 +66,37 @@ def build_snapshot(conn) -> Snapshot:
         cap_factor = 1.08 - 0.16 * (sp - P.MULT_LO) / (P.MULT_HI - P.MULT_LO)
         counties[r["id"]] = {"name": r["name_en"], "yta": r["parent_id"], "m_pc": m_pc.get(r["id"], 1.0),
                              "m_sp": sp, "cap_factor": round(cap_factor, 3), "pop": float(r["population"] or 0)}
+    # hospitals + private providers that have a specialist capability (only routed when a scenario buys capacity)
     facilities = {r["id"]: {**{k: r[k] for k in ("name", "kind", "lon", "lat")}, "county": r["region_id"], "yta": r["yta_id"]}
                   for r in cur.execute("""SELECT id, name, kind, region_id, yta_id, ST_X(geom::geometry) lon, ST_Y(geom::geometry) lat
-                                          FROM facility WHERE kind <> 'health_center'""")}
+                                          FROM facility f WHERE kind NOT IN ('health_center','private_clinic')
+                                             OR (kind='private_clinic' AND EXISTS (SELECT 1 FROM facility_capability c
+                                                 WHERE c.facility_id=f.id AND c.capability NOT IN ('primary_care','private_first_contact')))""")}
+    # nearest health centre per municipality (first contact for symptomatic patients)
+    for r in conn.execute("""SELECT m.id, (SELECT f.id FROM facility f WHERE f.kind='health_center'
+                                           ORDER BY f.geom <-> m.centroid LIMIT 1)
+                             FROM region m WHERE m.kind='municipality'"""):
+        if r[0] in munis:
+            munis[r[0]]["hc"] = r[1]
     capacity = {}
     for r in cur.execute("""SELECT facility_id, capability, (per_week_low+per_week_high)/2 AS mid FROM facility_capacity"""):
         f = facilities.get(r["facility_id"])
         if not f:
             continue
         cf = counties.get(f["county"], {}).get("cap_factor", 1.0)
-        capacity[f"{r['facility_id']}|{r['capability']}"] = round(float(r["mid"]) * cf, 3)
+        dna_plan = 1 / (1 - P.EXPECTED_DNA_FOR_PLANNING) if r["capability"] == "colonoscopy" else 1.0
+        capacity[f"{r['facility_id']}|{r['capability']}"] = round(float(r["mid"]) * cf * dna_plan, 3)
     travel = {f"{r[0]}|{r[1]}": float(r[2]) for r in conn.execute("SELECT origin_region_id, facility_id, minutes FROM travel_time")}
-    routing = {}
+    routing, home = {}, {}
     for m in munis:
         for cap in CAPS:
-            best = min(((t, f) for f in facilities if f"{f}|{cap}" in capacity
+            best = min(((t, f) for f in facilities if f"{f}|{cap}" in capacity and facilities[f]["kind"] != "private_clinic"
                         for t in [travel.get(f"{m}|{f}")] if t is not None), default=None)
             if best:
                 routing[f"{m}|{cap}"] = [[best[1], 1.0]]
+                home[f"{m}|{cap}"] = best[1]
     weekly_scr = P.SCREENING_COLONOSCOPIES_PER_YEAR / 52.0
-    return Snapshot(munis=munis, counties=counties, facilities=facilities, capacity=capacity, routing=routing,
+    return Snapshot(munis=munis, counties=counties, facilities=facilities, capacity=capacity, routing=routing, home=home,
                     travel=travel, arrivals_per_week={"screening": weekly_scr,
                                                       "symptomatic": weekly_scr * P.SYMPTOMATIC_TO_SCREENING_RATIO},
                     notes=["baseline: nearest capable hospital for every municipality",
@@ -119,6 +134,42 @@ def apply_scenario(snap: Snapshot, params: dict) -> Snapshot:
             s.routing[k] = [[f, float(w)] for f, w in shares]
     if params.get("routing_set"):
         s.notes.append(f"optimised routing applied to {len(params['routing_set'])} municipality-capability pairs")
+    def per_county(v):
+        if v is True:
+            return {c: True for c in s.counties}
+        if isinstance(v, dict):
+            return {c: True for c in s.counties if v.get(c) or v.get("*")}
+        if isinstance(v, list):
+            return {c: True for c in v if c in s.counties}
+        return {}
+    if params.get("reminders"):
+        s.reminders = per_county(params["reminders"])
+        s.notes.append(f"proactive reminders/follow-up calls in {len(s.reminders)} counties")
+    if params.get("transport_support"):
+        s.transport = per_county(params["transport_support"])
+        s.notes.append(f"transport support for distant appointments in {len(s.transport)} counties")
+    for pp in params.get("private_purchase", []) or []:
+        fid, cap, wk = pp["facility_id"], pp.get("capability", "colonoscopy"), float(pp["per_week"])
+        if fid not in s.facilities:
+            raise ValueError(f"unknown private facility {fid}")
+        elig = [c for c in pp.get("eligible_counties", []) if c in s.counties]
+        if not elig:
+            raise ValueError("private_purchase needs eligible_counties (private providers are never eligible by default)")
+        k = f"{fid}|{cap}"
+        s.capacity[k] = s.capacity.get(k, 0.0) + wk
+        # share of each eligible municipality's demand OFFERED the private slot (patients may still decline)
+        munis = [m for m, v in s.munis.items() if v["county"] in elig]
+        from backend.opt.allocate import demand as _demand   # local import (allocate imports snapshot)
+        d = _demand(s, cap)
+        tot = sum(d[m] for m in munis) or 1.0
+        share = float(pp.get("offer_share", min(0.9, wk / tot)))
+        for m in munis:
+            cur = {f: w * (1 - share) for f, w in s.routing.get(f"{m}|{cap}", [])}
+            cur[fid] = cur.get(fid, 0.0) + share
+            s.routing[f"{m}|{cap}"] = [[f, w] for f, w in cur.items() if w > 1e-9]
+        s.purchases.append({"facility_id": fid, "capability": cap, "per_week": wk, "eligible_counties": elig,
+                            "offer_share": round(share, 3), "cost_per_procedure": float(pp.get("cost_per_procedure", P.PRIVATE_COST_PER_COLONOSCOPY_EUR))})
+        s.notes.append(f"private purchase: {wk:g} {cap}/wk at {s.facilities[fid]['name']} for {', '.join(elig)} (offered to {share:.0%})")
     sf = params.get("screening_factor") or {}
     s.screening_factor = {c: float(sf.get(c, sf.get("*", 1.0))) for c in s.counties}
     af = float(params.get("arrival_factor", 1.0))

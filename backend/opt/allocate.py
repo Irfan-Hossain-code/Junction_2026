@@ -14,6 +14,7 @@ VERIFIED in simulation (stochastic queues), not trusted on its own.
 """
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 
 from ortools.linear_solver import pywraplp
@@ -34,6 +35,35 @@ def usage_prob(cap: str) -> dict:
     return {"screening": 0.0, "symptomatic": 0.0}
 
 
+def _sig(x: float) -> float:
+    return 1.0 / (1.0 + math.exp(-x))
+
+
+def expected_behaviour(snap: Snapshot, m: str, f: str, home: str) -> tuple[float, float]:
+    """(P(accept offer at f), P(attend at f)) averaged over archetype MEANS. Mirrors backend.sim.model
+    (Model.p_accept_alternative / p_attend) with equal waits assumed -> an expected-value approximation."""
+    county = snap.munis[m]["county"]
+    relief = P.TRANSPORT_SUPPORT_RELIEF if snap.transport.get(county) else 0.0
+    rem = bool(snap.reminders.get(county))
+    t_f, t_h = snap.travel.get(f"{m}|{f}", 60.0), snap.travel.get(f"{m}|{home}", 60.0)
+    tot = sum(a["share"] for a in P.ARCHETYPES.values())
+    acc = att = 0.0
+    for a in P.ARCHETYPES.values():
+        w = a["share"] / tot
+        if f == home:
+            pa = 1.0
+        else:
+            u = (-a["travel_aversion"] * (1 - relief) * max(0.0, t_f - t_h) / 60.0
+                 + (0.5 if t_f <= a["max_travel_min"] * (1 + relief) else -2.0))
+            base_acc = a["p_accept_alt"] + (1 - a["p_accept_alt"]) * math.exp(-max(0.0, t_f - t_h) / 30.0)
+            pa = base_acc * _sig(1.0 + u)
+        p_att = a["p_attend"] + ((1 - a["p_attend"]) * a["reminder_gain"] if rem else 0.0)
+        p_att -= P.TRAVEL_DNA_PENALTY_PER_HOUR * (1 - relief) * max(0.0, t_f / 60.0 - 1.0)
+        acc += w * pa
+        att += w * min(max(p_att, 0.05), 0.995)
+    return acc, att
+
+
 def demand(snap: Snapshot, cap: str) -> dict:
     up = usage_prob(cap)
     tot = sum(m["pop"] for m in snap.munis.values())
@@ -49,24 +79,50 @@ def demand(snap: Snapshot, cap: str) -> dict:
 def optimise(snap: Snapshot, cap: str = "colonoscopy", budget_units: int = 4, unit_per_week: float = 5.0,
              rho: float = 0.85, max_travel_min: float = 180.0, cross_yta_penalty_min: float = 30.0,
              w_over: float = 1000.0, w_eq: float = 2.0, w_trav: float = 1.0, w_move: float = 20.0,
-             time_limit_s: int = 20) -> dict:
+             time_limit_s: int = 20, behavioral: bool = False, restrict_counties: list | None = None,
+             w_decline: float = 60.0) -> dict:
+    """behavioral=True: expected-value approximation of the agent model inside the MIP.
+    a_mf = P(patient accepts an offer at f | travel), mixture over archetypes (same formula as the simulator,
+    waits assumed equal); declined demand returns to the home hospital; slots consumed = completed / P(attend)."""
     d = demand(snap, cap)
     D = sum(d.values())
     facs = [f for f in snap.facilities if f"{f}|{cap}" in snap.capacity and snap.capacity[f"{f}|{cap}"] > 0]
-    base = {m: max(snap.routing.get(f"{m}|{cap}", [[None, 1]]), key=lambda x: x[1])[0] for m in snap.munis}
+    base = {m: snap.home.get(f"{m}|{cap}") or max(snap.routing.get(f"{m}|{cap}", [[None, 1]]), key=lambda x: x[1])[0]
+            for m in snap.munis}
+    private_ok = defaultdict(set)                 # private providers only for counties with a purchasing contract
+    for pp in snap.purchases:
+        if pp["capability"] == cap:
+            for c in pp["eligible_counties"]:
+                private_ok[pp["facility_id"]].add(c)
+    acc, att = {}, {}
     s = pywraplp.Solver.CreateSolver("SCIP")
     s.SetTimeLimit(time_limit_s * 1000)
     x, cost = {}, {}
     for m in snap.munis:
         if d[m] <= 0:
             continue
+        county = snap.munis[m]["county"]
         for f in facs:
             t = snap.travel.get(f"{m}|{f}")
             if t is None or (t > max_travel_min and f != base[m]):
                 continue
-            friction = cross_yta_penalty_min if snap.facilities[f]["yta"] != snap.counties.get(snap.munis[m]["county"], {}).get("yta") else 0
+            if f != base[m] and restrict_counties and county not in restrict_counties:
+                continue
+            if snap.facilities[f]["kind"] == "private_clinic" and county not in private_ok[f]:
+                continue
+            friction = cross_yta_penalty_min if snap.facilities[f]["yta"] != snap.counties.get(county, {}).get("yta") else 0
             x[m, f] = s.NumVar(0, d[m], f"x[{m},{f}]")
             cost[m, f] = t + friction
+            if behavioral:
+                a_, att_ = expected_behaviour(snap, m, f, base[m])
+                # capacity already absorbs the PLANNING no-show rate -> only excess no-shows consume extra slots
+                acc[m, f], att[m, f] = a_, att_ / (1 - P.EXPECTED_DNA_FOR_PLANNING)
+            else:
+                acc[m, f], att[m, f] = 1.0, 1.0
+    if behavioral:   # expected travel: accepted offers travel to f, declined ones end up at home
+        for (m, f) in list(cost):
+            if f != base[m]:
+                cost[m, f] = acc[m, f] * cost[m, f] + (1 - acc[m, f]) * snap.travel.get(f"{m}|{base[m]}", cost[m, f])
     y = {f: s.IntVar(0, budget_units, f"y[{f}]") for f in facs}
     over = {f: s.NumVar(0, s.infinity(), f"over[{f}]") for f in facs}
     z = s.NumVar(0, s.infinity(), "z")
@@ -76,8 +132,14 @@ def optimise(snap: Snapshot, cap: str = "colonoscopy", budget_units: int = 4, un
         by_f[f].append(((m, f), v))
     for m, vs in by_m.items():
         s.Add(sum(vs) == d[m])
+    # behavioural load: accepted offers / P(attend) at f, plus declined offers falling back to each patient's home hospital
+    back = defaultdict(list)
+    for (m, f), v in x.items():
+        if f != base[m]:
+            back[base[m]].append(v * (1 - acc[m, f]) / max(att.get((m, base[m]), 1.0), 0.05))
     for f in facs:
-        s.Add(sum(v for _, v in by_f[f]) <= rho * (snap.capacity[f"{f}|{cap}"] + unit_per_week * y[f]) + over[f])
+        load = sum(v * acc[k] / max(att[k], 0.05) for k, v in by_f[f]) + sum(back[f])
+        s.Add(load <= rho * (snap.capacity[f"{f}|{cap}"] + unit_per_week * y[f]) + over[f])
     s.Add(sum(y.values()) <= budget_units)
     county_d = defaultdict(float)
     for m in by_m:
@@ -86,7 +148,9 @@ def optimise(snap: Snapshot, cap: str = "colonoscopy", budget_units: int = 4, un
         terms = [v * cost[k] for k, v in x.items() if snap.munis[k[0]]["county"] == c]
         s.Add(z * Dc >= sum(terms))
     move = sum(v for (m, f), v in x.items() if f != base[m])
-    s.Minimize(w_over * sum(over.values()) + w_eq * z + w_trav * sum(v * cost[k] for k, v in x.items()) / D + w_move * move / D)
+    declines = sum(v * (1 - acc[(m, f)]) for (m, f), v in x.items() if f != base[m])   # each costs a rebooking delay
+    s.Minimize(w_over * sum(over.values()) + w_eq * z + w_trav * sum(v * cost[k] for k, v in x.items()) / D
+               + w_move * move / D + w_decline * declines / D)
     status = s.Solve()
     if status not in (pywraplp.Solver.OPTIMAL, pywraplp.Solver.FEASIBLE):
         raise RuntimeError(f"solver status {status}")
@@ -102,7 +166,9 @@ def optimise(snap: Snapshot, cap: str = "colonoscopy", budget_units: int = 4, un
         if moved > 0.01:
             changes.append({"municipality": m, "name": snap.munis[m]["name"], "county": snap.munis[m]["county"],
                             "from": base[m], "to": [[f, round(sh, 3)] for f, sh in shares if f != base[m]],
-                            "share_moved": round(moved, 3), "demand_per_week": round(d[m], 3)})
+                            "share_moved": round(moved, 3), "demand_per_week": round(d[m], 3),
+                            "expected_acceptance": round(sum(sh * expected_behaviour(snap, m, f, base[m])[0]
+                                                             for f, sh in shares if f != base[m]) / moved, 3)})
     adds = [{"facility_id": f, "capability": cap, "units": int(round(y[f].solution_value())),
              "add_per_week": unit_per_week * int(round(y[f].solution_value()))} for f in facs if y[f].solution_value() > 0.5]
 
@@ -129,7 +195,12 @@ def optimise(snap: Snapshot, cap: str = "colonoscopy", budget_units: int = 4, un
                 acc[c][0] += d[m] * sh * snap.travel.get(f"{m}|{f}", 0)
                 acc[c][1] += d[m] * sh
         return {c: v[0] / v[1] for c, v in acc.items() if v[1] > 0}
+    moved_d = sum(c["demand_per_week"] * c["share_moved"] for c in changes)
+    exp_acc = (sum(c["demand_per_week"] * c["share_moved"] * c["expected_acceptance"] for c in changes) / moved_d) if moved_d else None
     return {
+        "behavioral": behavioral, "restrict_counties": restrict_counties,
+        "moved_per_week": round(moved_d, 2),
+        "expected_acceptance_of_moves": None if exp_acc is None else round(exp_acc, 3),
         "capability": cap, "status": "OPTIMAL" if status == pywraplp.Solver.OPTIMAL else "FEASIBLE",
         "objective": s.Objective().Value(), "solve_ms": s.wall_time(),
         "settings": {"budget_units": budget_units, "unit_per_week": unit_per_week, "rho": rho, "max_travel_min": max_travel_min,

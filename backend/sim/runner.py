@@ -22,17 +22,23 @@ MODEL_VERSION = "crc-des-0.3"
 
 
 def _one(args):
-    snap, seed, horizon, warmup = args
-    return score(Model(snap, seed=seed, horizon=horizon, warmup=warmup).run())
+    snap, seed, horizon, warmup, collect = args
+    return score(Model(snap, seed=seed, horizon=horizon, warmup=warmup, collect_patients=collect).run())
 
 
-def _ci(vals):
+PROB_KEYS = ("p_within_target", "rate", "rtt_hist", "utilisation_share")
+
+
+def _ci(vals, prob=False):
     a = np.asarray(vals, dtype=float)
     m = float(a.mean())
     if len(a) < 2:
         return m, None, None
     h = float(stats.t.ppf(0.975, len(a) - 1) * a.std(ddof=1) / np.sqrt(len(a)))
-    return m, m - h, m + h
+    lo, hi = m - h, m + h
+    if prob:                                   # proportions: CI never outside [0, 1]
+        lo, hi = max(0.0, lo), min(1.0, hi)
+    return m, lo, hi
 
 
 def aggregate(reps: list[dict]) -> list[dict]:
@@ -41,6 +47,8 @@ def aggregate(reps: list[dict]) -> list[dict]:
     kinds = {"region": "region", "facility": "facility", "edge": "edge"}
     for r in reps:
         for kind, scopes in r.items():
+            if kind not in kinds:
+                continue
             for sid, mets in scopes.items():
                 for k, v in mets.items():
                     acc[(kinds[kind] if sid != "national" else "national", sid, k)].append(v)
@@ -49,21 +57,25 @@ def aggregate(reps: list[dict]) -> list[dict]:
         # missing in some reps (e.g. no stalls) -> pad zeros for count/flow metrics only
         if len(vals) < len(reps) and (k.endswith(".n") or k == "flow_per_week"):
             vals = vals + [0.0] * (len(reps) - len(vals))
-        m, lo, hi = _ci(vals)
+        m, lo, hi = _ci(vals, prob=any(p in k for p in PROB_KEYS))
         rows.append({"scope_kind": kind, "scope_id": sid, "metric": k, "mean": m, "ci_low": lo, "ci_high": hi})
     return rows
 
 
 def run_snapshot(snap: Snapshot, reps: int = 4, seed: int = 1000, horizon: int = 365, warmup: int = 90,
-                 parallel: bool = True) -> tuple[list[dict], float]:
+                 parallel: bool = True, with_patients: bool = False):
+    """-> (metric rows, seconds) or (rows, seconds, sampled patients of replication 0) if with_patients."""
     t = time.time()
-    jobs = [(snap, seed + i, horizon, warmup) for i in range(reps)]
+    jobs = [(snap, seed + i, horizon, warmup, with_patients and i == 0) for i in range(reps)]
     if parallel and reps > 1:
-        with ProcessPoolExecutor(max_workers=min(reps, 6)) as ex:
+        with ProcessPoolExecutor(max_workers=min(reps, 4)) as ex:
             res = list(ex.map(_one, jobs))
     else:
         res = [_one(j) for j in jobs]
-    return aggregate(res), time.time() - t
+    rows = aggregate(res)
+    if with_patients:
+        return rows, time.time() - t, res[0].get("patients", [])
+    return rows, time.time() - t
 
 
 def assumptions(snap: Snapshot, scenario_params: dict) -> dict:
@@ -98,9 +110,16 @@ def run_scenario(conn, scenario_id, base: Snapshot | None = None, reps=4, seed=1
     base = base or build_snapshot(conn)
     snap = apply_scenario(base, sc[0] or {})
     started = datetime.now(timezone.utc)
-    rows, secs = run_snapshot(snap, reps, seed, horizon, warmup)
+    rows, secs, pats = run_snapshot(snap, reps, seed, horizon, warmup, with_patients=True)
     rid = persist(conn, scenario_id, snap, sc[0] or {}, rows, reps, seed, horizon, warmup, started)
-    return {"run_id": rid, "seconds": round(secs, 1), "metrics": len(rows)}
+    with conn.cursor() as cur:
+        cur.executemany("""INSERT INTO sim_patient(run_id,pid,route,county,municipality,archetype,attrs,journey,outcome)
+                           VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb)""",
+                        [(rid, p["pid"], p["route"], p["county"], p["municipality"], p["attrs"]["archetype"],
+                          json.dumps(p["attrs"]), json.dumps(p["events"], default=str),
+                          json.dumps({"clocks": p["clocks"], "facilities": p["facilities"], "dna": p["dna"], "lost": p["lost"],
+                                      "gp": p["gp"], "start_day": p["start_day"]}, default=str)) for p in pats])
+    return {"run_id": rid, "seconds": round(secs, 1), "metrics": len(rows), "patients_sampled": len(pats)}
 
 
 def ensure_baseline(conn) -> str:
