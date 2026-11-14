@@ -6,6 +6,10 @@ A national digital twin of Finland's colorectal cancer pathway. It combines real
 |---|---|---|
 | Backend API (FastAPI) | `backend/` | `documentation/backend/app_backend_routes.md` |
 | National twin UI (React + MapLibre + deck.gl) | `twin-ui/` | `twin-ui/README.md` |
+| Care-continuity app, patient + clinician (React) | `care-app/` | `care-app/README.md` |
+| Hosting (Modal, one URL for API + both apps) | `deploy/` | `deploy/README.md` |
+
+**Live demo:** https://shamshaque2103--cancerflow.modal.run (care app at `/app/care/`, national twin at `/app/twin/`, API docs at `/docs`)
 | Pathway definitions | `packs/colorectal.yaml` | `docs/CANCERFLOW.md` |
 | MPC layer (off by default) | `backend/mpc/` | `docs/MPC_SPEC.md` |
 | Demo script | | `docs/DEMO.md` |
