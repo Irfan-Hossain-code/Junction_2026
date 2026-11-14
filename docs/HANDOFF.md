@@ -23,6 +23,9 @@ uvicorn backend.api.main:app --reload --port 8000   # API docs: http://localhost
 - Event `id` is client-generated (UUID v4). Re-POSTing the same id is idempotent.
 - Simulation never writes to operational tables.
 
+## National twin UI
+`twin-ui/` (React/TS/MapLibre/deck.gl). Run `cd twin-ui && npm install && npm run dev` → http://localhost:5173 (API on :8000). Reads only `/twin/*`. Simulations take about 30 s and use 4 worker processes.
+
 ## Endpoints
 See `documentation/backend/app_backend_routes.md` (contracts + examples). Live OpenAPI at `/docs`. Generate TS types with `npx openapi-typescript http://localhost:8000/openapi.json -o src/api.d.ts`.
 

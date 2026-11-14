@@ -216,7 +216,8 @@ def build_context(conn, snap: Snapshot, scope: str, sid: Optional[str], run_id: 
         B = metrics_of(conn, base_run_id)
         breg = region_block(B, info)
         ctx["base"] = {"compliance": compliance(breg), "delays": delays(breg), "bottlenecks": stations_in_scope(snap, B, info)[:8],
-                       "national_compliance": compliance(B.get("national", {}).get("national", {}))}
+                       "national_compliance": compliance(B.get("national", {}).get("national", {})),
+                       "ranking": county_ranking(snap, B) if scope == "national" else None}
     ctx["recommendations"] = recommendations(snap, info, st, dl)
     return ctx
 

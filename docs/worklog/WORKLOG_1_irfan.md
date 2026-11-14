@@ -7,12 +7,12 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
 | Area | Status |
 |---|---|
 | Backend | **API working** (pathways, events, alerts, worklist, facilities, regions, demo clock, WS). 24 tests pass |
-| Frontend / integration | Shams can integrate now: `docs/HANDOFF.md` lists the tasks and demo logins. Routes in `documentation/backend/app_backend_routes.md` |
+| Frontend / integration | **Twin UI working** (`twin-ui/`, http://localhost:5173). Shams: care app against the same API (`docs/HANDOFF.md`) |
 | Database | Aiven PG 18 + PostGIS, migrations 001–002. Real reference data loaded. 600 synthetic pathways + 4 demo stories |
 | Simulation | **Done**: SimPy DES, replications + CI, stored runs, `/twin/*` API |
 | Optimization | **Done**: OR-Tools MIP (flows + capacity units, equity), verified in sim |
 | Blockers | None |
-| Next priorities | 1) twin frontend (TS) 2) demo script 3) source remaining HYPOTHESIS capabilities |
+| Next priorities | 1) demo script + rehearsal 2) visual polish 3) source remaining HYPOTHESIS capabilities |
 
 ---
 
@@ -56,3 +56,11 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
 - Tests: 30/30 pass
 - Impact on Shams: none breaking. Optional: show "Simulated impact of monitoring" from `/twin/compare`.
 - Next: twin frontend (map + network + scenario panel)
+
+### 2026-11-14 21:00 — Claude (irfan) — National twin frontend (twin-ui/)
+- Summary: React + TS + MapLibre + deck.gl command centre per the tech lead's sketch: map (counties, hospitals, flows with particles, health centres), Original / Modified / Δ toggle (camera + selection preserved), grounded Nemotron situation analysis with deterministic fallback, compliance panel, delays panel, Intervention Studio (3 recommendations + NL → controls → real SimPy run → auto-switch to Modified).
+- Backend: `/twin/context`, `/twin/summary`, `/twin/interpret`, `/twin/simulate` (`backend/api/twin_ai.py`, `backend/services/{twin_context,llm}.py`). Sim scoring adds per-stage dwell + RTT histogram. Nemotron runs with `enable_thinking: false` (0.8–4 s instead of 3–20 s). The grounding check rejects LLM text that contains numbers not in the facts (verified: it caught an ungrounded "28").
+- Verified in Chrome: national → click North Karelia → Modified (27 % → 57 %, bottleneck moves colonoscopy → MDT) → typed custom intervention → Nemotron parsed to +16 slots, re-route, monitoring → simulated in 35 s → NK 27 % → 41 %, national 83.4 → 84.9 %.
+- Runs: baseline `190a5f4c…`, demo scenario "Demo: optimised colonoscopy (4 units) + monitoring" `6a6fc36d…`.
+- Impact on Shams: none breaking. Both UIs share the API; monitoring in the twin is the simulated value of his app.
+- Next: demo script, polish, verify remaining HYPOTHESIS capabilities.
