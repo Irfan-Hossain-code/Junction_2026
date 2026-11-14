@@ -3,6 +3,7 @@ import { AgentDetail, AgentSummary, Alarm, CAP_LABEL, Context, HcFlow, Network, 
 import MapView, { LayersOn, MapMode, legendFor } from "./MapView";
 import { AIPanel, CompliancePanel, DelayPanel, InterventionStudio, Tag } from "./Panels";
 import SelectionCard from "./SelectionCard";
+import Optimiser from "./Optimiser";
 
 type View = "original" | "modified" | "diff";
 const CAPS = ["colonoscopy", "ct_imaging", "mdt_crc", "crc_surgery", "oncology", "radiotherapy"];
@@ -32,6 +33,7 @@ export default function App() {
   const [loadingSum, setLoadingSum] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ctlOpen, setCtlOpen] = useState(false);
+  const [optOpen, setOptOpen] = useState(false);
   const [privateClinics, setPrivateClinics] = useState<any[]>([]);
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
@@ -149,6 +151,8 @@ export default function App() {
     <div className="app">
       <div className="topbar">
         <div className="brand"><span className="dot" />CancerFlow<small>National colorectal cancer pathway twin · Finland</small></div>
+        <button className="btn opt-btn" onClick={() => setOptOpen(true)}>National optimiser</button>
+        {optOpen && <Optimiser onClose={() => setOptOpen(false)} />}
         <div className="spacer" />
         {headline ? (
           <div className="delta-chip">

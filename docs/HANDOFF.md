@@ -32,6 +32,9 @@ Hybrid agent-based + SimPy: behavioural patient agents (offers, declines, no-sho
 ## MPC layer (experimental, OFF by default)
 `backend/mpc/`: lexicographic receding-horizon MIP, recommendation-only. Enable with `CANCERFLOW_MPC=1` → `GET /mpc/status`, `POST /mpc/step`. Spec: `docs/MPC_SPEC.md`.
 
+## Brain (end-to-end pathway optimiser, same flag)
+`backend/mpc/pathway/`: multi-stage lexicographic MIP + baselines + stochastic replay + validator + counterfactual benchmark. With `CANCERFLOW_MPC=1`: `GET /mpc/brain/benchmark`, `POST /mpc/brain/explain`, `GET /mpc/brain/patient/{pid}` (care app: original vs recommended pathway, actions need approval). Docs: `docs/BRAIN.md`.
+
 ## Endpoints
 See `documentation/backend/app_backend_routes.md` (contracts + examples). Live OpenAPI at `/docs`. Generate TS types with `npx openapi-typescript http://localhost:8000/openapi.json -o src/api.d.ts`.
 

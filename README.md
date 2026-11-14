@@ -12,6 +12,7 @@ A national digital twin of Finland's colorectal cancer pathway. It combines real
 **Live demo:** https://shamshaque2103--cancerflow.modal.run (care app at `/app/care/`, national twin at `/app/twin/`, API docs at `/docs`)
 | Pathway definitions | `packs/colorectal.yaml` | `docs/CANCERFLOW.md` |
 | MPC layer (off by default) | `backend/mpc/` | `docs/MPC_SPEC.md` |
+| End-to-end pathway optimiser ("brain") | `backend/mpc/pathway/` | `docs/BRAIN.md` |
 | Demo script | | `docs/DEMO.md` |
 | Team coordination | | `docs/HANDOFF.md`, `docs/worklog/` |
 
@@ -74,9 +75,18 @@ curl localhost:8000/mpc/status
 - Transfers come back as `requires_authorisation`. Urgent cases may be marked `escalate_on_call`.
 - Design, maths and remaining work: `docs/MPC_SPEC.md`.
 
+## 6b. The brain: end-to-end pathway optimiser (same flag)
+```bash
+python -m backend.mpc.pathway.benchmark          # recompute the counterfactual benchmark (~3 min, single process)
+CANCERFLOW_MPC=1 uvicorn backend.api.main:app --port 8000
+curl localhost:8000/mpc/brain/benchmark          # cached comparison: baseline, greedy, diagnostics-first, A/B/C, investment
+curl -X POST localhost:8000/mpc/brain/explain    # grounded Nemotron explanation
+```
+In the twin UI, click **National optimiser** in the top bar. Design, results and limitations: `docs/BRAIN.md`.
+
 ## 7. Tests
 ```bash
-python -m pytest backend/tests -q            # 44 tests
+python -m pytest backend/tests -q            # 55 tests
 python -m pytest backend/tests/test_mpc.py -q   # MPC only (synthetic, no DB)
 ```
 The schema and API tests run against the shared DB inside a transaction that is rolled back.

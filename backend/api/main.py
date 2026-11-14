@@ -328,4 +328,6 @@ from backend.mpc.coordinator import enabled as _mpc_enabled  # noqa: E402
 
 if _mpc_enabled():
     from backend.mpc.api import router as mpc_router  # noqa: E402
+    from backend.mpc.pathway.api import router as brain_router  # noqa: E402
     app.include_router(mpc_router)
+    app.include_router(brain_router)

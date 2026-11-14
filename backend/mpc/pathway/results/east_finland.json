@@ -1,0 +1,2994 @@
+{
+ "instance": {
+  "name": "East Finland illustrative pathway instance",
+  "seed": 7,
+  "tags": {
+   "places": "OBSERVED (OSM)",
+   "capacities/probabilities/costs": "ASSUMPTION (illustrative)",
+   "patients": "SYNTHETIC agents (national behaviour model)"
+  },
+  "assumptions": {
+   "p_biopsy": 0.7,
+   "p_cancer_given_histology": 0.3,
+   "pathology_turnaround_days": 5,
+   "ship_lag_days": 2,
+   "pathology_per_day_shared": 2,
+   "investment_eur_per_week": {
+    "pathology_lab_e": 3000.0,
+    "colonoscopy_pkks": 2500.0,
+    "surgery_pkks": 4000.0
+   }
+  },
+  "digest": "dc2084c73d7342db",
+  "patients": 60,
+  "urgent": 27,
+  "horizon_days": 63,
+  "providers": {
+   "PKKS": {
+    "id": "PKKS",
+    "name": "North Karelia Central Hospital (Joensuu)",
+    "region": "North Karelia",
+    "kind": "public"
+   },
+   "KYS": {
+    "id": "KYS",
+    "name": "Kuopio University Hospital",
+    "region": "North Savo",
+    "kind": "public"
+   },
+   "SAV": {
+    "id": "SAV",
+    "name": "Savonlinna Hospital",
+    "region": "South Savo",
+    "kind": "public"
+   },
+   "LAB_E": {
+    "id": "LAB_E",
+    "name": "Eastern Finland pathology (shared service)",
+    "region": "North Savo",
+    "kind": "public"
+   },
+   "LAB_C": {
+    "id": "LAB_C",
+    "name": "Central Finland pathology (Jyv\u00e4skyl\u00e4)",
+    "region": "Central Finland",
+    "kind": "public"
+   }
+  }
+ },
+ "evaluation": {
+  "replications": 30,
+  "seed": 7,
+  "method": "stochastic replay with common random numbers per patient",
+  "material_improvement_threshold": 0.2
+ },
+ "strategies": {
+  "baseline_fifo": {
+   "label": "Baseline: first come first served, home providers",
+   "solver_status": "heuristic",
+   "solve_ms": 0.0,
+   "notes": [],
+   "predicted_tiers": {},
+   "constraint_violations": [],
+   "kpis": {
+    "pct_within_target": {
+     "mean": 28.27,
+     "ci95": [
+      25.69,
+      30.85
+     ]
+    },
+    "breaches": {
+     "mean": 16.57,
+     "ci95": [
+      15.32,
+      17.82
+     ]
+    },
+    "urgent_breaches": {
+     "mean": 6.47,
+     "ci95": [
+      5.65,
+      7.28
+     ]
+    },
+    "severe_delays_over_14d": {
+     "mean": 0.37,
+     "ci95": [
+      -0.07,
+      0.8
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 198.71,
+     "ci95": [
+      159.98,
+      237.45
+     ]
+    },
+    "mean_colonoscopy_day": {
+     "mean": 4.77,
+     "ci95": [
+      4.64,
+      4.91
+     ]
+    },
+    "mean_diagnosis_day": {
+     "mean": 19.17,
+     "ci95": [
+      18.95,
+      19.39
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 22.39,
+     "ci95": [
+      21.46,
+      23.31
+     ]
+    },
+    "regional_gap_pp": {
+     "mean": 26.43,
+     "ci95": [
+      21.77,
+      31.09
+     ]
+    },
+    "transfers": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "patient_travel_hours": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "routed_samples": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "staff_relocation_weeks": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "no_shows": {
+     "mean": 3.13,
+     "ci95": [
+      2.39,
+      3.88
+     ]
+    },
+    "lost_to_follow_up": {
+     "mean": 0.03,
+     "ci95": [
+      -0.03,
+      0.1
+     ]
+    },
+    "overbooked_slots": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "pct_within_by_region": {
+     "North Karelia": 19.1,
+     "North Savo": 34.5,
+     "South Savo": 34.9
+    }
+   },
+   "moves": []
+  },
+  "priority_greedy": {
+   "label": "Priority-aware greedy (urgent first, earliest deadline), home providers",
+   "solver_status": "heuristic",
+   "solve_ms": 0.0,
+   "notes": [],
+   "predicted_tiers": {},
+   "constraint_violations": [],
+   "kpis": {
+    "pct_within_target": {
+     "mean": 44.27,
+     "ci95": [
+      41.37,
+      47.18
+     ]
+    },
+    "breaches": {
+     "mean": 12.83,
+     "ci95": [
+      11.83,
+      13.83
+     ]
+    },
+    "urgent_breaches": {
+     "mean": 0.83,
+     "ci95": [
+      0.38,
+      1.28
+     ]
+    },
+    "severe_delays_over_14d": {
+     "mean": 3.23,
+     "ci95": [
+      2.61,
+      3.86
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 144.52,
+     "ci95": [
+      125.96,
+      163.09
+     ]
+    },
+    "mean_colonoscopy_day": {
+     "mean": 4.84,
+     "ci95": [
+      4.68,
+      5.01
+     ]
+    },
+    "mean_diagnosis_day": {
+     "mean": 19.38,
+     "ci95": [
+      19.15,
+      19.61
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 23.59,
+     "ci95": [
+      22.74,
+      24.45
+     ]
+    },
+    "regional_gap_pp": {
+     "mean": 32.17,
+     "ci95": [
+      24.74,
+      39.61
+     ]
+    },
+    "transfers": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "patient_travel_hours": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "routed_samples": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "staff_relocation_weeks": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "no_shows": {
+     "mean": 3.13,
+     "ci95": [
+      2.39,
+      3.88
+     ]
+    },
+    "lost_to_follow_up": {
+     "mean": 0.03,
+     "ci95": [
+      -0.03,
+      0.1
+     ]
+    },
+    "overbooked_slots": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "pct_within_by_region": {
+     "North Karelia": 37.4,
+     "North Savo": 44.1,
+     "South Savo": 63.9
+    }
+   },
+   "moves": []
+  },
+  "diagnostics_first": {
+   "label": "Conventional: endoscopy units minimise their own appointment dates (transfers allowed), lab FIFO",
+   "solver_status": "optimal",
+   "solve_ms": 494,
+   "notes": [],
+   "predicted_tiers": {
+    "diagnostic_appointments": 168.0
+   },
+   "constraint_violations": [],
+   "kpis": {
+    "pct_within_target": {
+     "mean": 27.98,
+     "ci95": [
+      25.37,
+      30.59
+     ]
+    },
+    "breaches": {
+     "mean": 16.63,
+     "ci95": [
+      15.38,
+      17.89
+     ]
+    },
+    "urgent_breaches": {
+     "mean": 6.47,
+     "ci95": [
+      5.65,
+      7.28
+     ]
+    },
+    "severe_delays_over_14d": {
+     "mean": 0.37,
+     "ci95": [
+      -0.07,
+      0.8
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 200.74,
+     "ci95": [
+      161.73,
+      239.75
+     ]
+    },
+    "mean_colonoscopy_day": {
+     "mean": 3.49,
+     "ci95": [
+      3.29,
+      3.7
+     ]
+    },
+    "mean_diagnosis_day": {
+     "mean": 19.33,
+     "ci95": [
+      19.11,
+      19.55
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 22.42,
+     "ci95": [
+      21.5,
+      23.35
+     ]
+    },
+    "regional_gap_pp": {
+     "mean": 26.57,
+     "ci95": [
+      22.0,
+      31.14
+     ]
+    },
+    "transfers": {
+     "mean": 3.1,
+     "ci95": [
+      2.72,
+      3.48
+     ]
+    },
+    "patient_travel_hours": {
+     "mean": 5.84,
+     "ci95": [
+      5.13,
+      6.56
+     ]
+    },
+    "routed_samples": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "staff_relocation_weeks": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "no_shows": {
+     "mean": 3.2,
+     "ci95": [
+      2.47,
+      3.93
+     ]
+    },
+    "lost_to_follow_up": {
+     "mean": 0.03,
+     "ci95": [
+      -0.03,
+      0.1
+     ]
+    },
+    "overbooked_slots": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "pct_within_by_region": {
+     "North Karelia": 18.1,
+     "North Savo": 34.5,
+     "South Savo": 34.9
+    }
+   },
+   "moves": []
+  },
+  "A_local_pathway": {
+   "label": "End-to-end pathway, home providers only",
+   "solver_status": "partial",
+   "solve_ms": 30742,
+   "notes": [
+    "tier equity: feasible, not proven optimal within time"
+   ],
+   "predicted_tiers": {
+    "urgent_lateness": 68.7,
+    "severe_lateness": 8.568,
+    "breaches": 9.22,
+    "weighted_lateness": 92.4623,
+    "equity": 15.0081,
+    "burden": 0.0,
+    "cost": 0.0
+   },
+   "constraint_violations": [],
+   "kpis": {
+    "pct_within_target": {
+     "mean": 48.31,
+     "ci95": [
+      45.33,
+      51.28
+     ]
+    },
+    "breaches": {
+     "mean": 11.93,
+     "ci95": [
+      10.9,
+      12.97
+     ]
+    },
+    "urgent_breaches": {
+     "mean": 0.8,
+     "ci95": [
+      0.39,
+      1.21
+     ]
+    },
+    "severe_delays_over_14d": {
+     "mean": 3.2,
+     "ci95": [
+      2.55,
+      3.85
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 140.19,
+     "ci95": [
+      121.87,
+      158.52
+     ]
+    },
+    "mean_colonoscopy_day": {
+     "mean": 4.97,
+     "ci95": [
+      4.83,
+      5.11
+     ]
+    },
+    "mean_diagnosis_day": {
+     "mean": 19.09,
+     "ci95": [
+      18.83,
+      19.34
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 23.37,
+     "ci95": [
+      22.54,
+      24.21
+     ]
+    },
+    "regional_gap_pp": {
+     "mean": 34.8,
+     "ci95": [
+      27.79,
+      41.81
+     ]
+    },
+    "transfers": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "patient_travel_hours": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "routed_samples": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "staff_relocation_weeks": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "no_shows": {
+     "mean": 3.13,
+     "ci95": [
+      2.39,
+      3.88
+     ]
+    },
+    "lost_to_follow_up": {
+     "mean": 0.03,
+     "ci95": [
+      -0.03,
+      0.1
+     ]
+    },
+    "overbooked_slots": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "pct_within_by_region": {
+     "North Karelia": 37.4,
+     "North Savo": 51.4,
+     "South Savo": 65.8
+    }
+   },
+   "moves": []
+  },
+  "B_national_pathway": {
+   "label": "End-to-end pathway + eligible patient transfers + sample routing (existing resources)",
+   "solver_status": "optimal",
+   "solve_ms": 29311,
+   "notes": [],
+   "predicted_tiers": {
+    "urgent_lateness": 28.7,
+    "severe_lateness": 0.0,
+    "breaches": 5.71,
+    "weighted_lateness": 45.8672,
+    "equity": 1.212,
+    "burden": 10.9533,
+    "cost": 0.0
+   },
+   "constraint_violations": [],
+   "kpis": {
+    "pct_within_target": {
+     "mean": 53.94,
+     "ci95": [
+      51.32,
+      56.56
+     ]
+    },
+    "breaches": {
+     "mean": 10.67,
+     "ci95": [
+      9.71,
+      11.62
+     ]
+    },
+    "urgent_breaches": {
+     "mean": 0.7,
+     "ci95": [
+      0.42,
+      0.98
+     ]
+    },
+    "severe_delays_over_14d": {
+     "mean": 1.53,
+     "ci95": [
+      0.96,
+      2.11
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 103.1,
+     "ci95": [
+      87.83,
+      118.37
+     ]
+    },
+    "mean_colonoscopy_day": {
+     "mean": 4.53,
+     "ci95": [
+      4.34,
+      4.71
+     ]
+    },
+    "mean_diagnosis_day": {
+     "mean": 13.73,
+     "ci95": [
+      13.56,
+      13.9
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 20.84,
+     "ci95": [
+      20.03,
+      21.65
+     ]
+    },
+    "regional_gap_pp": {
+     "mean": 31.52,
+     "ci95": [
+      24.68,
+      38.35
+     ]
+    },
+    "transfers": {
+     "mean": 1.0,
+     "ci95": [
+      0.69,
+      1.31
+     ]
+    },
+    "patient_travel_hours": {
+     "mean": 1.62,
+     "ci95": [
+      1.08,
+      2.16
+     ]
+    },
+    "routed_samples": {
+     "mean": 12.83,
+     "ci95": [
+      12.3,
+      13.37
+     ]
+    },
+    "staff_relocation_weeks": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "no_shows": {
+     "mean": 3.13,
+     "ci95": [
+      2.39,
+      3.88
+     ]
+    },
+    "lost_to_follow_up": {
+     "mean": 0.03,
+     "ci95": [
+      -0.03,
+      0.1
+     ]
+    },
+    "overbooked_slots": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "pct_within_by_region": {
+     "North Karelia": 59.7,
+     "North Savo": 46.5,
+     "South Savo": 69.7
+    }
+   },
+   "moves": []
+  },
+  "C_resource_movement": {
+   "label": "B + relocation of an existing surgeon day (origin loses capacity)",
+   "solver_status": "optimal",
+   "solve_ms": 57757,
+   "notes": [],
+   "predicted_tiers": {
+    "urgent_lateness": 28.7,
+    "severe_lateness": 0.0,
+    "breaches": 5.23,
+    "weighted_lateness": 44.0765,
+    "equity": 0.8692,
+    "burden": 18.3192,
+    "cost": 0.0
+   },
+   "constraint_violations": [],
+   "kpis": {
+    "pct_within_target": {
+     "mean": 50.09,
+     "ci95": [
+      47.28,
+      52.89
+     ]
+    },
+    "breaches": {
+     "mean": 11.47,
+     "ci95": [
+      10.59,
+      12.35
+     ]
+    },
+    "urgent_breaches": {
+     "mean": 0.97,
+     "ci95": [
+      0.63,
+      1.3
+     ]
+    },
+    "severe_delays_over_14d": {
+     "mean": 1.53,
+     "ci95": [
+      0.75,
+      2.32
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 109.99,
+     "ci95": [
+      92.31,
+      127.67
+     ]
+    },
+    "mean_colonoscopy_day": {
+     "mean": 4.34,
+     "ci95": [
+      4.1,
+      4.57
+     ]
+    },
+    "mean_diagnosis_day": {
+     "mean": 13.41,
+     "ci95": [
+      13.21,
+      13.61
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 21.2,
+     "ci95": [
+      20.41,
+      21.99
+     ]
+    },
+    "regional_gap_pp": {
+     "mean": 28.64,
+     "ci95": [
+      21.32,
+      35.96
+     ]
+    },
+    "transfers": {
+     "mean": 2.1,
+     "ci95": [
+      1.69,
+      2.51
+     ]
+    },
+    "patient_travel_hours": {
+     "mean": 3.32,
+     "ci95": [
+      2.66,
+      3.98
+     ]
+    },
+    "routed_samples": {
+     "mean": 13.33,
+     "ci95": [
+      12.93,
+      13.74
+     ]
+    },
+    "staff_relocation_weeks": {
+     "mean": 1.0,
+     "ci95": [
+      1.0,
+      1.0
+     ]
+    },
+    "no_shows": {
+     "mean": 3.2,
+     "ci95": [
+      2.47,
+      3.93
+     ]
+    },
+    "lost_to_follow_up": {
+     "mean": 0.03,
+     "ci95": [
+      -0.03,
+      0.1
+     ]
+    },
+    "overbooked_slots": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "pct_within_by_region": {
+     "North Karelia": 51.1,
+     "North Savo": 49.5,
+     "South Savo": 50.3
+    }
+   },
+   "moves": [
+    {
+     "resource": "kys_visiting_surgeon",
+     "to": "PKKS",
+     "bucket_start": 21,
+     "units": 2
+    }
+   ]
+  }
+ },
+ "recommendation": {
+  "recommended_strategy": "B_national_pathway",
+  "label": "End-to-end pathway + eligible patient transfers + sample routing (existing resources)",
+  "why": "Best existing-resource plan by the lexicographic objective; resource movement is preferred only if it reduces weighted lateness >= 20 % more than patient/sample movement (hypothesis).",
+  "summary_actions": {
+   "offer_transfer": 7,
+   "reschedule": 113,
+   "route_sample": 16
+  },
+  "actions": [
+   {
+    "type": "reschedule",
+    "patient": "EF-001",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 21.0,
+    "to_day": 8.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-001",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-001",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 35.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-002",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-003",
+    "stage": "colonoscopy",
+    "at": "PKKS",
+    "from_day": 14.0,
+    "to_day": 11.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-003",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-003",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 35.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-003",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 42.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-004",
+    "stage": "colonoscopy",
+    "at": "PKKS",
+    "from_day": 9.0,
+    "to_day": 4.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-004",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 7.0,
+    "tentative": true,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-004",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "offer_transfer",
+    "patient": "EF-004",
+    "stage": "treatment",
+    "from": "PKKS",
+    "to": "KYS",
+    "planned_day": 21.0,
+    "tentative": true,
+    "p_accept": 0.49,
+    "status": "requires_authorisation"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-005",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 9.0,
+    "to_day": 14.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-005",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 14.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-006",
+    "stage": "colonoscopy",
+    "at": "PKKS",
+    "from_day": 7.0,
+    "to_day": 3.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-006",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 14.0,
+    "to_day": 8.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-006",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "offer_transfer",
+    "patient": "EF-006",
+    "stage": "treatment",
+    "from": "PKKS",
+    "to": "KYS",
+    "planned_day": 21.0,
+    "tentative": true,
+    "p_accept": 0.538,
+    "status": "requires_authorisation"
+   },
+   {
+    "type": "offer_transfer",
+    "patient": "EF-007",
+    "stage": "treatment",
+    "from": "PKKS",
+    "to": "KYS",
+    "planned_day": 21.0,
+    "tentative": true,
+    "p_accept": 0.417,
+    "status": "requires_authorisation"
+   },
+   {
+    "type": "offer_transfer",
+    "patient": "EF-008",
+    "stage": "colonoscopy",
+    "from": "PKKS",
+    "to": "SAV",
+    "planned_day": 0.0,
+    "tentative": false,
+    "p_accept": 0.635,
+    "status": "requires_authorisation"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-008",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 3.0,
+    "tentative": true,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-008",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 21.0,
+    "to_day": 8.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "offer_transfer",
+    "patient": "EF-008",
+    "stage": "treatment",
+    "from": "PKKS",
+    "to": "KYS",
+    "planned_day": 21.0,
+    "tentative": true,
+    "p_accept": 0.598,
+    "status": "requires_authorisation"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-009",
+    "stage": "colonoscopy",
+    "at": "PKKS",
+    "from_day": 1.0,
+    "to_day": 14.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-009",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 8.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-009",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 14.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-009",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 21.0,
+    "to_day": 35.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-011",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 14.0,
+    "to_day": 3.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-011",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 21.0,
+    "to_day": 8.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-011",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-012",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 8.0,
+    "to_day": 14.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-012",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 14.0,
+    "to_day": 21.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-013",
+    "stage": "colonoscopy",
+    "at": "PKKS",
+    "from_day": 3.0,
+    "to_day": 0.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-013",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 3.0,
+    "tentative": true,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-013",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 21.0,
+    "to_day": 8.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-013",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-014",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-014",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-014",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 35.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-015",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 1.0,
+    "tentative": false,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-015",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-016",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 7.0,
+    "to_day": 3.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-016",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 14.0,
+    "to_day": 8.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-016",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-017",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 0.0,
+    "tentative": false,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-017",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-017",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 35.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-018",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-018",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-018",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 35.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "offer_transfer",
+    "patient": "EF-020",
+    "stage": "mdt",
+    "from": "PKKS",
+    "to": "KYS",
+    "planned_day": 3.0,
+    "tentative": false,
+    "p_accept": 0.587,
+    "status": "requires_authorisation"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-020",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 14.0,
+    "to_day": 7.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-021",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 4.0,
+    "to_day": 1.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-021",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 14.0,
+    "to_day": 8.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-021",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-022",
+    "stage": "colonoscopy",
+    "at": "PKKS",
+    "from_day": 10.0,
+    "to_day": 7.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-022",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-022",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-022",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 35.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-024",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-025",
+    "stage": "colonoscopy",
+    "at": "PKKS",
+    "from_day": 14.0,
+    "to_day": 8.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-025",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 21.0,
+    "to_day": 9.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-025",
+    "stage": "mdt",
+    "at": "PKKS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-025",
+    "stage": "treatment",
+    "at": "PKKS",
+    "from_day": 35.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-026",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 14.0,
+    "to_day": 7.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-027",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 8.0,
+    "tentative": true,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-027",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-027",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-028",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-028",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-028",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 35.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-029",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-029",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 35.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "offer_transfer",
+    "patient": "EF-029",
+    "stage": "treatment",
+    "from": "KYS",
+    "to": "PKKS",
+    "planned_day": 28.0,
+    "tentative": true,
+    "p_accept": 0.553,
+    "status": "requires_authorisation"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-030",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 9.0,
+    "tentative": true,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-030",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 35.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-030",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 42.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-031",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 4.0,
+    "tentative": true,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-032",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 3.0,
+    "to_day": 10.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-032",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 14.0,
+    "to_day": 28.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-033",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 0.0,
+    "tentative": false,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-033",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 10.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-033",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-034",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-034",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-034",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 35.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-037",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 28.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-038",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 8.0,
+    "tentative": true,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-038",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-038",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-039",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 14.0,
+    "to_day": 0.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-039",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 10.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-039",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-040",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 14.0,
+    "to_day": 4.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-040",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 10.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-040",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-041",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-041",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 35.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-041",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 42.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-042",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 10.0,
+    "to_day": 21.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-043",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 3.0,
+    "to_day": 7.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-043",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 10.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-044",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 2.0,
+    "tentative": false,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-046",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 9.0,
+    "tentative": true,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-046",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-046",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-048",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 4.0,
+    "tentative": false,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-049",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-049",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 35.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-049",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 42.0,
+    "to_day": 35.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-051",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 0.0,
+    "to_day": 10.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-051",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 10.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-051",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-052",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 4.0,
+    "to_day": 1.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-052",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-053",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 1.0,
+    "tentative": false,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-053",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 10.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-053",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-054",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 11.0,
+    "to_day": 4.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-054",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 10.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-054",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-055",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 7.0,
+    "tentative": true,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-055",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-055",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-056",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-056",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 35.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-056",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 42.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-058",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 21.0,
+    "to_day": 11.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-058",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-058",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 35.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "route_sample",
+    "patient": "EF-059",
+    "stage": "pathology",
+    "from": "LAB_E",
+    "to": "LAB_C",
+    "planned_day": 2.0,
+    "tentative": false,
+    "p_accept": null,
+    "status": "requires_coordinator_approval"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-059",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 21.0,
+    "to_day": 10.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-059",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 14.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-060",
+    "stage": "pathology",
+    "at": "LAB_E",
+    "from_day": 21.0,
+    "to_day": 11.0,
+    "tentative": false,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-060",
+    "stage": "mdt",
+    "at": "KYS",
+    "from_day": 28.0,
+    "to_day": 21.0,
+    "tentative": true,
+    "status": "recommended"
+   },
+   {
+    "type": "reschedule",
+    "patient": "EF-060",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 35.0,
+    "to_day": 28.0,
+    "tentative": true,
+    "status": "recommended"
+   }
+  ],
+  "rejected_alternatives": {
+   "baseline_fifo": [
+    "more urgent breaches (6.47 vs 0.7)",
+    "more target breaches (16.57 vs 10.67)",
+    "higher weighted lateness (198.71 vs 103.1)"
+   ],
+   "priority_greedy": [
+    "more urgent breaches (0.83 vs 0.7)",
+    "more target breaches (12.83 vs 10.67)",
+    "higher weighted lateness (144.52 vs 103.1)"
+   ],
+   "diagnostics_first": [
+    "more urgent breaches (6.47 vs 0.7)",
+    "more target breaches (16.63 vs 10.67)",
+    "higher weighted lateness (200.74 vs 103.1)"
+   ],
+   "A_local_pathway": [
+    "more urgent breaches (0.8 vs 0.7)",
+    "more target breaches (11.93 vs 10.67)",
+    "higher weighted lateness (140.19 vs 103.1)",
+    "tier equity: feasible, not proven optimal within time"
+   ],
+   "C_resource_movement": [
+    "more urgent breaches (0.97 vs 0.7)",
+    "more target breaches (11.47 vs 10.67)",
+    "higher weighted lateness (109.99 vs 103.1)",
+    "its optimiser prediction did not survive stochastic replay (simulation validation)"
+   ]
+  },
+  "alternatives_considered": {
+   "baseline_fifo": {
+    "pct_within_target": {
+     "mean": 28.27,
+     "ci95": [
+      25.69,
+      30.85
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 198.71,
+     "ci95": [
+      159.98,
+      237.45
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 22.39,
+     "ci95": [
+      21.46,
+      23.31
+     ]
+    }
+   },
+   "priority_greedy": {
+    "pct_within_target": {
+     "mean": 44.27,
+     "ci95": [
+      41.37,
+      47.18
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 144.52,
+     "ci95": [
+      125.96,
+      163.09
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 23.59,
+     "ci95": [
+      22.74,
+      24.45
+     ]
+    }
+   },
+   "diagnostics_first": {
+    "pct_within_target": {
+     "mean": 27.98,
+     "ci95": [
+      25.37,
+      30.59
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 200.74,
+     "ci95": [
+      161.73,
+      239.75
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 22.42,
+     "ci95": [
+      21.5,
+      23.35
+     ]
+    }
+   },
+   "A_local_pathway": {
+    "pct_within_target": {
+     "mean": 48.31,
+     "ci95": [
+      45.33,
+      51.28
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 140.19,
+     "ci95": [
+      121.87,
+      158.52
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 23.37,
+     "ci95": [
+      22.54,
+      24.21
+     ]
+    }
+   },
+   "B_national_pathway": {
+    "pct_within_target": {
+     "mean": 53.94,
+     "ci95": [
+      51.32,
+      56.56
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 103.1,
+     "ci95": [
+      87.83,
+      118.37
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 20.84,
+     "ci95": [
+      20.03,
+      21.65
+     ]
+    }
+   },
+   "C_resource_movement": {
+    "pct_within_target": {
+     "mean": 50.09,
+     "ci95": [
+      47.28,
+      52.89
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 109.99,
+     "ci95": [
+      92.31,
+      127.67
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 21.2,
+     "ci95": [
+      20.41,
+      21.99
+     ]
+    }
+   }
+  },
+  "constraint_checks": {
+   "baseline_fifo": true,
+   "priority_greedy": true,
+   "diagnostics_first": true,
+   "A_local_pathway": true,
+   "B_national_pathway": true,
+   "C_resource_movement": true
+  },
+  "human_approval": "Every action is a recommendation: transfers and relocations need authorisation, patients may decline."
+ },
+ "bottlenecks_after_best_plan": [
+  {
+   "provider": "Kuopio University Hospital",
+   "provider_id": "KYS",
+   "capability": "treatment",
+   "planned_utilisation": 0.808,
+   "capacity_in_window": 19,
+   "window_days": 31,
+   "binding": false
+  },
+  {
+   "provider": "North Karelia Central Hospital (Joensuu)",
+   "provider_id": "PKKS",
+   "capability": "treatment",
+   "planned_utilisation": 0.768,
+   "capacity_in_window": 10,
+   "window_days": 31,
+   "binding": false
+  },
+  {
+   "provider": "Eastern Finland pathology (shared service)",
+   "provider_id": "LAB_E",
+   "capability": "pathology",
+   "planned_utilisation": 0.613,
+   "capacity_in_window": 46,
+   "window_days": 31,
+   "binding": false
+  },
+  {
+   "provider": "Kuopio University Hospital",
+   "provider_id": "KYS",
+   "capability": "mdt",
+   "planned_utilisation": 0.498,
+   "capacity_in_window": 32,
+   "window_days": 31,
+   "binding": false
+  },
+  {
+   "provider": "North Karelia Central Hospital (Joensuu)",
+   "provider_id": "PKKS",
+   "capability": "colonoscopy",
+   "planned_utilisation": 0.478,
+   "capacity_in_window": 23,
+   "window_days": 31,
+   "binding": false
+  },
+  {
+   "provider": "Central Finland pathology (Jyv\u00e4skyl\u00e4)",
+   "provider_id": "LAB_C",
+   "capability": "pathology",
+   "planned_utilisation": 0.289,
+   "capacity_in_window": 46,
+   "window_days": 31,
+   "binding": false
+  },
+  {
+   "provider": "North Karelia Central Hospital (Joensuu)",
+   "provider_id": "PKKS",
+   "capability": "mdt",
+   "planned_utilisation": 0.251,
+   "capacity_in_window": 30,
+   "window_days": 31,
+   "binding": false
+  },
+  {
+   "provider": "Savonlinna Hospital",
+   "provider_id": "SAV",
+   "capability": "colonoscopy",
+   "planned_utilisation": 0.174,
+   "capacity_in_window": 23,
+   "window_days": 31,
+   "binding": false
+  },
+  {
+   "provider": "Kuopio University Hospital",
+   "provider_id": "KYS",
+   "capability": "colonoscopy",
+   "planned_utilisation": 0.145,
+   "capacity_in_window": 69,
+   "window_days": 31,
+   "binding": false
+  }
+ ],
+ "investment_pass": [
+  {
+   "option_evaluated": "surgery_pkks",
+   "option": "+1/wk treatment at North Karelia Central Hospital (Joensuu)",
+   "budget_eur": 36000,
+   "chosen_investments": {
+    "surgery_pkks": 1
+   },
+   "spent_eur": 36000,
+   "weighted_lateness_reduction": 26.7,
+   "breaches_avoided": 1.4,
+   "breaches_avoided_per_10k_eur": 0.389,
+   "kpis": {
+    "pct_within_target": {
+     "mean": 59.9,
+     "ci95": [
+      56.72,
+      63.08
+     ]
+    },
+    "breaches": {
+     "mean": 9.27,
+     "ci95": [
+      8.29,
+      10.24
+     ]
+    },
+    "urgent_breaches": {
+     "mean": 0.7,
+     "ci95": [
+      0.44,
+      0.96
+     ]
+    },
+    "severe_delays_over_14d": {
+     "mean": 0.83,
+     "ci95": [
+      0.38,
+      1.28
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 76.37,
+     "ci95": [
+      61.87,
+      90.88
+     ]
+    },
+    "mean_colonoscopy_day": {
+     "mean": 4.32,
+     "ci95": [
+      4.09,
+      4.54
+     ]
+    },
+    "mean_diagnosis_day": {
+     "mean": 13.61,
+     "ci95": [
+      13.41,
+      13.82
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 19.28,
+     "ci95": [
+      18.54,
+      20.01
+     ]
+    },
+    "regional_gap_pp": {
+     "mean": 34.96,
+     "ci95": [
+      29.65,
+      40.27
+     ]
+    },
+    "transfers": {
+     "mean": 1.47,
+     "ci95": [
+      1.1,
+      1.83
+     ]
+    },
+    "patient_travel_hours": {
+     "mean": 2.36,
+     "ci95": [
+      1.75,
+      2.97
+     ]
+    },
+    "routed_samples": {
+     "mean": 12.73,
+     "ci95": [
+      12.25,
+      13.21
+     ]
+    },
+    "staff_relocation_weeks": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "no_shows": {
+     "mean": 3.2,
+     "ci95": [
+      2.47,
+      3.93
+     ]
+    },
+    "lost_to_follow_up": {
+     "mean": 0.03,
+     "ci95": [
+      -0.03,
+      0.1
+     ]
+    },
+    "overbooked_slots": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "pct_within_by_region": {
+     "North Karelia": 70.9,
+     "North Savo": 49.4,
+     "South Savo": 74.2
+    }
+   },
+   "constraint_violations": []
+  },
+  {
+   "option_evaluated": "pathology_lab_e",
+   "option": "+5/wk pathology at Eastern Finland pathology (shared service)",
+   "budget_eur": 27000,
+   "chosen_investments": {
+    "pathology_lab_e": 1
+   },
+   "spent_eur": 27000,
+   "weighted_lateness_reduction": 14.2,
+   "breaches_avoided": 0.4,
+   "breaches_avoided_per_10k_eur": 0.148,
+   "kpis": {
+    "pct_within_target": {
+     "mean": 55.7,
+     "ci95": [
+      52.78,
+      58.61
+     ]
+    },
+    "breaches": {
+     "mean": 10.27,
+     "ci95": [
+      9.28,
+      11.26
+     ]
+    },
+    "urgent_breaches": {
+     "mean": 0.33,
+     "ci95": [
+      0.07,
+      0.6
+     ]
+    },
+    "severe_delays_over_14d": {
+     "mean": 1.27,
+     "ci95": [
+      0.72,
+      1.81
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 88.91,
+     "ci95": [
+      74.83,
+      102.98
+     ]
+    },
+    "mean_colonoscopy_day": {
+     "mean": 4.4,
+     "ci95": [
+      4.17,
+      4.63
+     ]
+    },
+    "mean_diagnosis_day": {
+     "mean": 12.91,
+     "ci95": [
+      12.78,
+      13.03
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 20.56,
+     "ci95": [
+      19.74,
+      21.38
+     ]
+    },
+    "regional_gap_pp": {
+     "mean": 29.65,
+     "ci95": [
+      22.99,
+      36.32
+     ]
+    },
+    "transfers": {
+     "mean": 1.4,
+     "ci95": [
+      1.01,
+      1.79
+     ]
+    },
+    "patient_travel_hours": {
+     "mean": 2.26,
+     "ci95": [
+      1.6,
+      2.93
+     ]
+    },
+    "routed_samples": {
+     "mean": 6.33,
+     "ci95": [
+      5.98,
+      6.69
+     ]
+    },
+    "staff_relocation_weeks": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "no_shows": {
+     "mean": 3.2,
+     "ci95": [
+      2.47,
+      3.93
+     ]
+    },
+    "lost_to_follow_up": {
+     "mean": 0.03,
+     "ci95": [
+      -0.03,
+      0.1
+     ]
+    },
+    "overbooked_slots": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "pct_within_by_region": {
+     "North Karelia": 60.6,
+     "North Savo": 49.4,
+     "South Savo": 69.7
+    }
+   },
+   "constraint_violations": []
+  },
+  {
+   "option_evaluated": "colonoscopy_pkks",
+   "option": "+5/wk colonoscopy at North Karelia Central Hospital (Joensuu)",
+   "budget_eur": 22500,
+   "chosen_investments": {},
+   "spent_eur": 0,
+   "weighted_lateness_reduction": 0.0,
+   "breaches_avoided": 0.0,
+   "breaches_avoided_per_10k_eur": 0.0,
+   "kpis": {
+    "pct_within_target": {
+     "mean": 53.94,
+     "ci95": [
+      51.32,
+      56.56
+     ]
+    },
+    "breaches": {
+     "mean": 10.67,
+     "ci95": [
+      9.71,
+      11.62
+     ]
+    },
+    "urgent_breaches": {
+     "mean": 0.7,
+     "ci95": [
+      0.42,
+      0.98
+     ]
+    },
+    "severe_delays_over_14d": {
+     "mean": 1.53,
+     "ci95": [
+      0.96,
+      2.11
+     ]
+    },
+    "weighted_lateness_days": {
+     "mean": 103.1,
+     "ci95": [
+      87.83,
+      118.37
+     ]
+    },
+    "mean_colonoscopy_day": {
+     "mean": 4.53,
+     "ci95": [
+      4.34,
+      4.71
+     ]
+    },
+    "mean_diagnosis_day": {
+     "mean": 13.73,
+     "ci95": [
+      13.56,
+      13.9
+     ]
+    },
+    "mean_treatment_day": {
+     "mean": 20.84,
+     "ci95": [
+      20.03,
+      21.65
+     ]
+    },
+    "regional_gap_pp": {
+     "mean": 31.52,
+     "ci95": [
+      24.68,
+      38.35
+     ]
+    },
+    "transfers": {
+     "mean": 1.0,
+     "ci95": [
+      0.69,
+      1.31
+     ]
+    },
+    "patient_travel_hours": {
+     "mean": 1.62,
+     "ci95": [
+      1.08,
+      2.16
+     ]
+    },
+    "routed_samples": {
+     "mean": 12.83,
+     "ci95": [
+      12.3,
+      13.37
+     ]
+    },
+    "staff_relocation_weeks": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "no_shows": {
+     "mean": 3.13,
+     "ci95": [
+      2.39,
+      3.88
+     ]
+    },
+    "lost_to_follow_up": {
+     "mean": 0.03,
+     "ci95": [
+      -0.03,
+      0.1
+     ]
+    },
+    "overbooked_slots": {
+     "mean": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "pct_within_by_region": {
+     "North Karelia": 59.7,
+     "North Savo": 46.5,
+     "South Savo": 69.7
+    }
+   },
+   "constraint_violations": []
+  }
+ ],
+ "patient_story": {
+  "pid": "EF-026",
+  "priority": "urgent",
+  "region": "North Savo",
+  "deadline_day": 13.9,
+  "diagnosis_known": true,
+  "original_plan": [
+   {
+    "stage": "mdt",
+    "provider": "KYS",
+    "planned_day": 3.0,
+    "tentative": false
+   },
+   {
+    "stage": "treatment",
+    "provider": "KYS",
+    "planned_day": 14.0,
+    "tentative": false
+   }
+  ],
+  "recommended_plan": [
+   {
+    "stage": "mdt",
+    "provider": "KYS",
+    "planned_day": 3.0,
+    "tentative": false
+   },
+   {
+    "stage": "treatment",
+    "provider": "KYS",
+    "planned_day": 7.0,
+    "tentative": false
+   }
+  ],
+  "original_outcome": {
+   "p_needs_treatment": 1.0,
+   "treatment_day_mean": 14.3,
+   "treatment_day_p10_p90": [
+    14.0,
+    15.0
+   ],
+   "diag_day_mean": null
+  },
+  "recommended_outcome": {
+   "p_needs_treatment": 1.0,
+   "treatment_day_mean": 7.2,
+   "treatment_day_p10_p90": [
+    7.0,
+    7.0
+   ],
+   "diag_day_mean": null
+  },
+  "actions": [
+   {
+    "type": "reschedule",
+    "patient": "EF-026",
+    "stage": "treatment",
+    "at": "KYS",
+    "from_day": 14.0,
+    "to_day": 7.0,
+    "tentative": false,
+    "status": "recommended"
+   }
+  ],
+  "tag": "SYNTHETIC patient, SIMULATED outcome"
+ },
+ "runtime_s": 168.4,
+ "tags": {
+  "outcomes": "SIMULATED",
+  "patients": "SYNTHETIC",
+  "capacities/costs/probabilities": "ASSUMPTION (illustrative)"
+ }
+}
