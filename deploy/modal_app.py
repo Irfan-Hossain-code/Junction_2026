@@ -57,6 +57,7 @@ LANDING = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     min_containers=1,     # always warm: no cold start for judges
     max_containers=1,     # WS /stream broadcasts from in-process memory; one container keeps live updates consistent
     timeout=900,
+    region="eu",          # the Aiven database is in Frankfurt; us-east added ~1 s of round trips per API call
 )
 @modal.concurrent(max_inputs=200)
 @modal.asgi_app(label="cancerflow")
@@ -66,8 +67,23 @@ def web():
     sys.path.insert(0, REMOTE)
     from fastapi.responses import HTMLResponse, RedirectResponse
     from fastapi.staticfiles import StaticFiles
+    from starlette.middleware.gzip import GZipMiddleware
 
     from backend.api.main import app as api
+
+    # Compress JS/CSS/JSON (map bundle ~1 MB, county GeoJSON ~340 KB): big win on mobile networks.
+    api.add_middleware(GZipMiddleware, minimum_size=1024)
+
+    # Vite asset filenames are content-hashed, so browsers may cache them forever; HTML stays revalidated.
+    @api.middleware("http")
+    async def cache_headers(request, call_next):
+        resp = await call_next(request)
+        p = request.url.path
+        if p.startswith("/app/") and "/assets/" in p:
+            resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        elif p.startswith("/app/") or p == "/":
+            resp.headers["Cache-Control"] = "no-cache"
+        return resp
 
     @api.get("/", include_in_schema=False)
     def landing():
