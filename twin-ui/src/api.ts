@@ -27,6 +27,7 @@ export type Scenario = { id: string; name: string; description: string; is_basel
 export type Compliance = {
   p_within_target: number | null; ci: [number | null, number | null] | null; cohort_n_per_year: number | null;
   exceeding_per_year: number | null; fit_to_colonoscopy_p_within: number | null; target_days: number; target_tag: string;
+  behaviour?: { dna_rate: number | null; alt_decline_rate: number | null; alt_offers_per_week: number | null; lost_rate: number | null };
 };
 export type Delays = {
   median_days: number | null; p90_days: number | null; median_ci: [number, number] | null;
@@ -53,6 +54,7 @@ export type Context = {
   national_compliance: Compliance;
   base?: { compliance: Compliance; delays: Delays; bottlenecks: Station[]; national_compliance: Compliance };
   recommendations: Recommendation[];
+  anomalies?: Alarm[];
 };
 export type Summary = { mode: "llm" | "fallback"; text: string; facts: any; rejected: { reason: string; numbers: string[] } | null; model?: string };
 export type Interpretation = {
@@ -60,6 +62,24 @@ export type Interpretation = {
   unsupported: string[]; explanation: string; assumptions: Record<string, number>; simulatable: boolean;
 };
 export type SimulateResult = { scenario_id: string; run_id: string; base_run_id: string; seconds: number; headline: Record<string, any> };
+
+export type Alarm = {
+  id: string; type: string; severity: "critical" | "warning" | "info"; title: string; capability?: string;
+  location: { kind: string; facility_id?: string; county_id?: string; name: string; lon?: number; lat?: number };
+  nodes: string[]; counties?: string[]; metric: string; value: number; threshold: number; evidence: any;
+  duration: string; suggestion: string; tag: string;
+};
+export type AgentSummary = {
+  pid: number; route: string; county: string; archetype: string; urgent: boolean; age: number; lon: number; lat: number;
+  lost: boolean; dna: number; declined: number; missed: number; rtt_status: string | null; rtt_days: number | null;
+};
+export type AgentDetail = {
+  patient: { pid: number; route: string; county: string; municipality: string; archetype: string; attrs: any; journey: any[]; outcome: any; run_id: string };
+  compare: AgentDetail["patient"] | null;
+  facilities: Record<string, { name: string; kind: string; lon: number; lat: number }>;
+  home: { municipality: string; lon: number; lat: number };
+};
+export type HcFlow = { hc: string; facility: string; flow_per_week: number; hc_name: string; from: [number, number]; to: [number, number]; county: string };
 
 export type Scope = "national" | "county" | "facility";
 export type Selection = { scope: Scope; id?: string };
@@ -91,6 +111,13 @@ export const api = {
   simulate: (name: string, params: any, reps = 4) =>
     j<SimulateResult>("/twin/simulate", { method: "POST", body: JSON.stringify({ name, params, reps }) }),
   assumptions: () => j<any>("/twin/assumptions"),
+  privateClinics: () => j<any[]>("/facilities?kind=private_clinic"),
+  anomalies: (run: string, base?: string | null) => j<{ alarms: Alarm[]; total: number }>("/twin/anomalies" + q({ run_id: run, base_run_id: base ?? undefined })),
+  agents: (run: string, county: string) => j<{ patients: AgentSummary[] }>("/twin/patients" + q({ run_id: run, county, limit: "400" })),
+  agent: (run: string, pid: number, compare?: string | null) => j<AgentDetail>(`/twin/patients/${run}/${pid}` + q({ compare_run: compare ?? undefined })),
+  explainAgent: (run: string, pid: number, compare?: string | null) =>
+    j<{ mode: string; text: string; rejected?: any }>(`/twin/patients/${run}/${pid}/explain` + q({ compare_run: compare ?? undefined }), { method: "POST" }),
+  hcFlows: (run: string, county: string) => j<{ flows: HcFlow[] }>("/twin/hc_flows" + q({ run_id: run, county })),
 };
 
 // ---------------------------------------------------------------- helpers
@@ -111,6 +138,11 @@ export function mergeParams(list: any[]): any {
     if (p.routing_set) out.routing_set = { ...(out.routing_set || {}), ...p.routing_set };
     if (p.screening_factor) out.screening_factor = { ...(out.screening_factor || {}), ...p.screening_factor };
     if (p.monitoring) out.monitoring = true;
+    for (const k of ["reminders", "transport_support"]) {
+      if (p[k] === true || out[k] === true) { if (p[k]) out[k] = true; }
+      else if (Array.isArray(p[k])) out[k] = [...new Set([...(out[k] || []), ...p[k]])];
+    }
+    if (p.private_purchase) out.private_purchase = [...(out.private_purchase || []), ...p.private_purchase];
   }
   return out;
 }

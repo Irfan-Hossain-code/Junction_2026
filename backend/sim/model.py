@@ -73,8 +73,10 @@ class PatientRec:
     route: str
     muni: str
     county: str
-    rng: np.random.Generator
+    rng: np.random.Generator                       # attributes + delays (draw count independent of scenario)
     attrs: dict
+    rng_c: np.random.Generator = None              # clinical: cancer, treatment mix (never touched by interventions)
+    rng_b: np.random.Generator = None              # behaviour: routing pick, offers, attendance, rebooking
     hist: list = field(default_factory=list)       # (stage, day)
     facilities: dict = field(default_factory=dict) # capability -> facility actually used
     stalls: list = field(default_factory=list)     # (stage, days)
@@ -146,11 +148,13 @@ class Model:
     def delay(self, p: PatientRec, stage, admin_only=False):
         med, scale = P.DURATIONS.get(stage, (3, None))
         d = self.ln(p, med * self.mult(p.county, scale) * (ADMIN_FRACTION if admin_only else 1.0))
-        if stage in P.CRACK_P and p.rng.random() < P.CRACK_P[stage]:
+        cracked = p.rng.random() < P.CRACK_P.get(stage, 0.0)
+        unmonitored_stall = self.ln(p, P.STALL_MEDIAN_DAYS_UNMONITORED)   # always drawn -> streams stay paired
+        if stage in P.CRACK_P and cracked:
             if self.s.monitoring and stage in self.dwell:
                 stall = max(0.0, self.dwell[stage] - d) + P.ALERT_RESPONSE_DAYS
             else:
-                stall = self.ln(p, P.STALL_MEDIAN_DAYS_UNMONITORED)
+                stall = unmonitored_stall
             p.stalls.append((stage, stall))
             self.log(p, "stall", stage=stage, days=round(stall, 1), detected_by_monitoring=bool(self.s.monitoring and stage in self.dwell))
             d += stall
@@ -167,7 +171,7 @@ class Model:
         if len(opts) == 1:
             return opts[0][0]
         w = np.cumsum([o[1] for o in opts])
-        return opts[_draw(w / w[-1], p.rng.random())][0]
+        return opts[_draw(w / w[-1], p.rng_b.random())][0]
 
     def travel(self, p, fac):
         return self.s.travel.get(f"{p.muni}|{fac}", 60.0)
@@ -209,7 +213,7 @@ class Model:
             attended = True
             if behavioural:
                 pa = self.p_attend(p, st.fac)
-                attended = bool(p.rng.random() < pa)
+                attended = bool(p.rng_b.random() < pa)
                 p.n_appts += 1
                 p.n_dna += 0 if attended else 1
                 if in_window:
@@ -246,7 +250,7 @@ class Model:
         fac = self.pick(p, cap)
         if fac and home and fac != home and f"{home}|{cap}" in self.st:
             pacc, t_f, w_f, t_h, w_h = self.p_accept_alternative(p, fac, home)
-            ok = bool(p.rng.random() < pacc)
+            ok = bool(p.rng_b.random() < pacc)
             p.n_offers += 1
             p.n_declined += 0 if ok else 1
             st_f = self.st.get(f"{fac}|{cap}")
@@ -256,7 +260,7 @@ class Model:
             self.log(p, "offer", facility=fac, home=home, travel_min=round(t_f), home_travel_min=round(t_h),
                      est_wait_days=round(w_f, 1), home_wait_days=round(w_h, 1), p_accept=round(pacc, 3), accepted=ok)
             if not ok:
-                yield self.env.timeout(self.ln(p, P.REBOOK_AFTER_DECLINE_DAYS))
+                yield self.env.timeout(float(p.rng_b.lognormal(np.log(P.REBOOK_AFTER_DECLINE_DAYS), P.SIGMA)))
                 fac = home
         st = self.st.get(f"{fac}|{cap}") if fac else None
         if st is None:
@@ -273,7 +277,7 @@ class Model:
                 p.lost = True
                 self.log(p, "lost_to_follow_up", after_dna=p.dna)
                 return False
-            gap = self.ln(p, P.REBOOK_AFTER_DNA_DAYS)
+            gap = float(p.rng_b.lognormal(np.log(P.REBOOK_AFTER_DNA_DAYS), P.SIGMA))
             if self.s.monitoring:      # CancerFlow alert: missed appointment triggers proactive rebooking call
                 gap = min(gap, P.ALERT_RESPONSE_DAYS + 3)
             self.log(p, "rebook", days=round(gap, 1))
@@ -297,7 +301,7 @@ class Model:
         ok = yield from self.book_colonoscopy(p)
         if not ok:
             return
-        if p.rng.random() >= P.P_CANCER[p.route]:
+        if p.rng_c.random() >= P.P_CANCER[p.route]:
             self.enter(p, "CANCER_EXCLUDED")
             return
         self.enter(p, "HISTOLOGY", p.facilities.get("colonoscopy"))
@@ -308,7 +312,7 @@ class Model:
         yield self.delay(p, "STAGING", admin_only=True)
         yield from self.use(p, "mdt_crc", "MDT_DECISION")
         yield self.delay(p, "MDT_DECISION", admin_only=True)
-        r, acc = p.rng.random(), 0.0
+        r, acc = p.rng_c.random(), 0.0
         stage, cap = P.TREATMENT_MIX[-1][0], P.TREATMENT_MIX[-1][1]
         for s_, c_, prob in P.TREATMENT_MIX:
             acc += prob
@@ -334,7 +338,9 @@ class Model:
                 continue
             pid = self.next_pid = self.next_pid + 1
             prng = np.random.default_rng([self.seed, 1000 + pid])
-            p = PatientRec(pid, route, m, county, prng, sample_agent(prng, route))
+            p = PatientRec(pid, route, m, county, prng, sample_agent(prng, route),
+                           rng_c=np.random.default_rng([self.seed, 1000 + pid, 1]),
+                           rng_b=np.random.default_rng([self.seed, 1000 + pid, 2]))
             p.sample = self.collect and pid % P.SAMPLE_EVERY == 0
             self.patients.append(p)
             self.env.process(self.patient(p))

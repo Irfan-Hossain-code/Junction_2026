@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CAP_LABEL, Context, Network, Scenario, Selection, Summary, api, pct, shortCounty } from "./api";
-import MapView, { MapMode, legendFor } from "./MapView";
+import { AgentDetail, AgentSummary, Alarm, CAP_LABEL, Context, HcFlow, Network, Scenario, Selection, Summary, api, pct, shortCounty } from "./api";
+import MapView, { LayersOn, MapMode, legendFor } from "./MapView";
 import { AIPanel, CompliancePanel, DelayPanel, InterventionStudio, Tag } from "./Panels";
 import SelectionCard from "./SelectionCard";
 
@@ -32,6 +32,17 @@ export default function App() {
   const [loadingSum, setLoadingSum] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ctlOpen, setCtlOpen] = useState(false);
+  const [privateClinics, setPrivateClinics] = useState<any[]>([]);
+  const [alarms, setAlarms] = useState<Alarm[]>([]);
+  const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
+  const [agents, setAgents] = useState<AgentSummary[]>([]);
+  const [agentPid, setAgentPid] = useState<number | null>(null);
+  const [agent, setAgent] = useState<AgentDetail | null>(null);
+  const [agentLoading, setAgentLoading] = useState(false);
+  const [explain, setExplain] = useState<any>(null);
+  const [hcFlows, setHcFlows] = useState<HcFlow[]>([]);
+  const [aiTab, setAiTab] = useState<"analysis" | "alarms" | "patient">("analysis");
+  const [layersOn, setLayersOn] = useState<LayersOn>({ primary: true, private: false, patients: true, alarms: true });
   const netCache = useCache<Network>();
 
   const baseline = scenarios.find(s => s.is_baseline);
@@ -51,6 +62,7 @@ export default function App() {
   useEffect(() => {
     api.geo().then(setGeo).catch(e => setError(`Cannot reach the CancerFlow API: ${e.message}`));
     api.healthCentres().then(setHcs).catch(() => {});
+    api.privateClinics().then(setPrivateClinics).catch(() => {});
     loadScenarios().catch(e => setError(`Cannot reach the CancerFlow API: ${e.message}`));
   }, []);
 
@@ -75,6 +87,39 @@ export default function App() {
   }, [selection.scope, selection.id, activeRun, compareBase]);
 
   useEffect(() => { if (view === "diff") setMapMode("diff"); else if (mapMode === "diff") setMapMode("sim"); }, [view]);
+
+  // network alarms (whole network for the map; scoped list comes with the context)
+  useEffect(() => {
+    if (!activeRun) return;
+    api.anomalies(activeRun, compareBase).then(r => setAlarms(r.alarms)).catch(() => setAlarms([]));
+  }, [activeRun, compareBase]);
+  const selCounty = selection.scope === "county" ? selection.id : selection.scope === "facility" ? net?.facilities.find(f => f.id === selection.id)?.county : undefined;
+  // patient agents + primary-care flows at regional zoom
+  useEffect(() => {
+    if (!activeRun || !selCounty) { setAgents([]); setHcFlows([]); return; }
+    api.agents(activeRun, selCounty).then(r => setAgents(r.patients)).catch(() => setAgents([]));
+    api.hcFlows(activeRun, selCounty).then(r => setHcFlows(r.flows)).catch(() => setHcFlows([]));
+  }, [activeRun, selCounty]);
+  // selected agent: same pid in the other scenario (common random numbers) for comparison
+  const otherRun = view === "original" ? modRun : baseRun;
+  useEffect(() => {
+    if (agentPid == null || !activeRun) { setAgent(null); return; }
+    setAgentLoading(true); setExplain(null);
+    api.agent(activeRun, agentPid, otherRun && otherRun !== activeRun ? otherRun : null)
+      .then(setAgent).catch(() => setAgent(null)).finally(() => setAgentLoading(false));
+  }, [agentPid, activeRun, otherRun]);
+  const onExplain = () => {
+    if (agentPid == null || !activeRun) return;
+    setExplain("loading");
+    api.explainAgent(activeRun, agentPid, otherRun && otherRun !== activeRun ? otherRun : null).then(setExplain).catch(() => setExplain(null));
+  };
+  const onSelectAgent = (pid: number) => { setAgentPid(pid); setAiTab("patient"); };
+  const onSelectAlarm = (a: Alarm) => {
+    setSelectedAlarm(s => (s?.id === a.id ? null : a)); setAiTab("alarms");
+    if (a.location.kind === "county" && a.location.county_id) setSelection({ scope: "county", id: a.location.county_id });
+    else if (a.location.facility_id) setSelection({ scope: "facility", id: a.location.facility_id });
+  };
+  const scopedAlarms = ctx?.anomalies ?? alarms;
 
   const onSimulated = async (runId: string, scenarioId: string) => {
     await loadScenarios(scenarioId);
@@ -110,7 +155,7 @@ export default function App() {
             <Tag t="SIMULATED" />
             <span>Finland within 42 d: <b className="num">{pct(headline.a)} → {pct(headline.b)}</b> <b className={headline.b >= headline.a ? "up" : "down"}>({headline.b >= headline.a ? "+" : ""}{(100 * (headline.b - headline.a)).toFixed(1)} pp)</b></span>
             {headline.local && <span>· {headline.local.nm}: <b className="num">{pct(headline.local.a, 0)} → {pct(headline.local.b, 0)}</b></span>}
-          </div>) : <span className="meta">Original (baseline) scenario · pathway pack colorectal v1 · model crc-des-0.3</span>}
+          </div>) : <span className="meta">Original (baseline) scenario · pathway pack colorectal v1 · model crc-abm-0.4 (behavioural agents)</span>}
         <div className="spacer" />
         <span className="meta" title={mod?.name}>{mod ? `Modified = ${mod.name.slice(0, 60)}${mod.name.length > 60 ? "…" : ""}` : "no modified scenario yet"}</span>
       </div>
@@ -119,7 +164,9 @@ export default function App() {
       <div className="grid">
         <div className="area-map" style={{ position: "relative" }}>
           <MapView geo={geo} net={net} baseNet={baseNet} healthCentres={hcs} selection={selection} onSelect={setSelection}
-            mode={mapMode} capability={capability} loading={loadingNet || !net} />
+            mode={mapMode} capability={capability} loading={loadingNet || !net}
+            privateClinics={privateClinics} alarms={alarms} selectedAlarm={selectedAlarm} onSelectAlarm={onSelectAlarm}
+            agents={agents} agent={agent} onSelectAgent={onSelectAgent} hcFlows={hcFlows} layersOn={layersOn} />
 
           <div className="overlay crumbs">
             <button onClick={() => setSelection({ scope: "national" })}>Finland</button>
@@ -145,8 +192,8 @@ export default function App() {
               </select>
             </div>)}
 
-          <SelectionCard selection={selection} net={net} baseNet={view !== "original" ? baseNet : null} ctx={ctx}
-            onClose={() => setSelection({ scope: "national" })} onSelect={setSelection} />
+          {!(agent && aiTab === "patient") && <SelectionCard selection={selection} net={net} baseNet={view !== "original" ? baseNet : null} ctx={ctx}
+            onClose={() => setSelection({ scope: "national" })} onSelect={setSelection} />}
 
           <div className={`overlay layer-ctl ${ctlOpen ? "" : "min"}`}>
             <button className="toggle-ctl" onClick={() => setCtlOpen(o => !o)}>{ctlOpen ? "▾ Layers & legend" : `▸ Layers · ${CAP_LABEL[capability]}`}</button>
@@ -160,6 +207,10 @@ export default function App() {
             </div>
             <div className="row"><span className="muted" style={{ width: 54 }}>Network</span>
               {CAPS.map(c => <button key={c} className={`chip ${capability === c ? "on" : ""}`} onClick={() => setCapability(c)}>{CAP_LABEL[c]}</button>)}
+            </div>
+            <div className="row"><span className="muted" style={{ width: 54 }}>Show</span>
+              {([["primary", "Primary care"], ["private", "Private clinics"], ["patients", "Patient agents"], ["alarms", "Alarms"]] as const).map(([k, l]) =>
+                <button key={k} className={`chip ${layersOn[k] ? "on" : ""}`} onClick={() => setLayersOn(s => ({ ...s, [k]: !s[k] }))}>{l}</button>)}
             </div>
             </>}
             <div>
@@ -176,7 +227,9 @@ export default function App() {
           </div>
         </div>
 
-        <AIPanel ctx={ctx} summary={summary} loading={loadingSum} view={view === "original" ? "Original" : view === "modified" ? "Modified" : "Difference"} />
+        <AIPanel ctx={ctx} summary={summary} loading={loadingSum} view={view === "original" ? "Original" : view === "modified" ? "Modified" : "Difference"}
+          tab={aiTab} setTab={setAiTab} alarms={scopedAlarms} selectedAlarm={selectedAlarm} onAlarm={onSelectAlarm}
+          agent={agent} agentLoading={agentLoading} explain={explain} onExplain={onExplain} />
         <CompliancePanel ctx={ctx} onSelect={setSelection} view={view === "original" ? "Original" : "Modified"} />
         <DelayPanel ctx={ctx} />
         <InterventionStudio ctx={ctx} selection={selection} onSimulated={onSimulated} />

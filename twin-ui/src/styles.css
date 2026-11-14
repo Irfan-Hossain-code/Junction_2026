@@ -188,3 +188,32 @@ pre.facts { font: 11px/1.4 var(--mono); color: var(--text-2); white-space: pre-w
 .progress > i { display: block; height: 100%; background: linear-gradient(90deg, #38bdf8, #2dd4bf); transition: width .4s linear; }
 .err { color: var(--bad); font-size: 12px; margin-top: 6px; }
 .muted { color: var(--muted); }
+
+/* ---------------------------------------------------------------- behavioural agents / alarms */
+.panel-h.tabs { gap: 2px; padding: 5px 8px; }
+.panel-h.tabs > button { background: none; border: 0; padding: 5px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
+  letter-spacing: .5px; text-transform: uppercase; color: var(--muted); }
+.panel-h.tabs > button.on { color: var(--text); background: var(--panel-2); box-shadow: inset 0 -2px 0 var(--accent); }
+.badge { display: inline-block; min-width: 16px; padding: 0 4px; border-radius: 8px; background: var(--border-2); color: var(--text); font-size: 10px; text-align: center; margin-left: 3px; }
+.badge.crit { background: var(--bad); }
+.alarm { border: 1px solid var(--border-2); border-left: 3px solid var(--warn); border-radius: 8px; padding: 7px 9px; margin-bottom: 6px; cursor: pointer; background: var(--panel-2); }
+.alarm.critical { border-left-color: var(--bad); } .alarm.info { border-left-color: var(--hyp); }
+.alarm.on { border-color: var(--warn); background: rgba(245,165,36,.06); }
+.alarm .at { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--text-2); font-weight: 600; }
+.alarm .ati { font-size: 12.5px; margin-top: 2px; }
+.alarm .ad { margin-top: 6px; font-size: 11.5px; color: var(--text-2); display: flex; flex-direction: column; gap: 2px; }
+.alarm .sug { color: var(--good); margin-top: 3px; }
+.sev { text-transform: uppercase; font-size: 9.5px; font-weight: 700; letter-spacing: .6px; padding: 0 5px; border-radius: 3px; color: #04121f; background: var(--warn); }
+.sev.critical { background: var(--bad); } .sev.info { background: var(--hyp); }
+.agent-h { margin-bottom: 6px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip.warn { border-color: var(--warn); color: var(--warn); }
+.journey { border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; margin-top: 6px; background: #0b1324; }
+.journey .jt { font-size: 11.5px; font-weight: 600; margin-bottom: 4px; }
+.journey ol { list-style: none; margin: 0; padding: 0; font-size: 11.5px; display: flex; flex-direction: column; gap: 2px; }
+.journey li { display: flex; gap: 6px; } .journey li .d { color: var(--muted); width: 34px; flex: none; }
+.journey li.offer, .journey li.attendance { color: #dbe5f3; } .journey li.stall { color: var(--warn); }
+.explain { margin-top: 8px; font-size: 12.5px; line-height: 1.55; background: rgba(56,189,248,.05); border: 1px solid var(--border-2); border-radius: 8px; padding: 8px; }
+.particle-key { bottom: 12px; right: 12px; background: rgba(9,16,30,.85); border: 1px solid var(--border-2); border-radius: 8px; padding: 5px 9px;
+  font-size: 11px; color: var(--text-2); display: flex; flex-direction: column; gap: 2px; backdrop-filter: blur(6px); }
+.particle-key i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }

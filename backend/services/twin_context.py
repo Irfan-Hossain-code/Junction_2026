@@ -11,7 +11,7 @@ from typing import Any, Optional
 
 from backend.opt.allocate import optimise
 from backend.pathways.pack import get_pack
-from backend.sim import params as P
+from backend.sim import params as P  # noqa: F811
 from backend.sim.snapshot import Snapshot
 
 PACK = get_pack("colorectal")
@@ -69,6 +69,9 @@ def compliance(reg: dict) -> dict:
     return {"p_within_target": p, "ci": _ci(reg, "referral_to_treatment.p_within_target"), "cohort_n_per_year": n,
             "exceeding_per_year": None if p is None or n is None else n * (1 - p),
             "fit_to_colonoscopy_p_within": _v(reg, "fit_positive_to_colonoscopy.p_within_target"),
+            "behaviour": {"dna_rate": _v(reg, "behaviour.dna_rate"), "alt_decline_rate": _v(reg, "behaviour.alt_decline_rate"),
+                          "alt_offers_per_week": _v(reg, "behaviour.alt_offers_per_week"), "lost_rate": _v(reg, "behaviour.lost_rate"),
+                          "tag": "SIMULATED (behavioural agents)"},
             "target_days": TARGET, "target_tag": "REFERENCE (FI-1, 6 weeks)", "tag": "SIMULATED"}
 
 
@@ -147,8 +150,14 @@ def live(conn, info) -> dict:
     return {"active_pathways": a, "open_alerts": b, "critical_alerts": c, "tag": "SYNTHETIC operational data"}
 
 
-def recommendations(snap: Snapshot, info: dict, stations: list[dict], dl: dict) -> list[dict]:
+def recommendations(snap: Snapshot, info: dict, stations: list[dict], dl: dict, comp: dict | None = None) -> list[dict]:
+    """Data-triggered interventions; each carries runnable scenario params. Behavioural ones only appear when the
+    simulated behaviour metric that motivates them is actually elevated."""
+    from backend.sim.snapshot import apply_scenario
     recs = []
+    beh = (comp or {}).get("behaviour") or {}
+    counties = [info["county"]] if info.get("county") else list(snap.counties)
+    scope_param = counties if info.get("county") else True
     stall, stalls = dl.get("stall_days_mean"), dl.get("stalls_per_year")
     recs.append({
         "id": "monitoring", "title": "Detect stalled steps automatically",
@@ -156,27 +165,47 @@ def recommendations(snap: Snapshot, info: dict, stations: list[dict], dl: dict) 
         "rationale": (f"Stalled steps wait on average {stall:.0f} days before anyone acts ({stalls:.0f} per year in this cohort, SIMULATED)."
                       if stall and stalls else "Stalled referrals and missing follow-ups are detected only when patients chase them."),
         "params": {"monitoring": True}, "controls": []})
+    dna = beh.get("dna_rate") or 0
+    if dna >= 0.06:
+        recs.append({
+            "id": "reminders", "title": "Proactive reminders & follow-up calls",
+            "action": "Reminder + confirmation contact before every colonoscopy appointment",
+            "rationale": f"{100 * dna:.1f} % of colonoscopy appointments are missed and each no-show burns a slot; "
+                         f"{100 * (beh.get('lost_rate') or 0):.1f} % of patients are lost to follow-up (SIMULATED agents).",
+            "params": {"reminders": scope_param}, "controls": []})
     top = next((s for s in stations if s["capability"] in ("colonoscopy", "crc_surgery", "mdt_crc", "ct_imaging", "oncology", "radiotherapy")), None)
     if top:
         cap = top["capability"]
-        plan = optimise(snap, cap, budget_units=0, max_travel_min=180)
-        if info["scope"] == "national":
-            munis = set(snap.munis)
-        elif info["scope"] == "county":
-            munis = {m for m, v in snap.munis.items() if v["county"] == info["county"]}
-        else:
+        restrict = [info["county"]] if info.get("county") else None
+        tsnap = apply_scenario(snap, {"transport_support": restrict or True})
+        plan = optimise(tsnap, cap, budget_units=0, max_travel_min=180, behavioral=True, restrict_counties=restrict)
+        if info["scope"] == "facility":
             munis = {m for m in snap.munis if any(f == info["id"] for f, _ in snap.routing.get(f"{m}|{cap}", []))}
-        changes = [c for c in plan["routing_changes"] if c["municipality"] in munis or c["from"] == top["facility_id"]]
+            changes = [c for c in plan["routing_changes"] if c["municipality"] in munis or c["from"] == top["facility_id"]]
+        else:
+            changes = plan["routing_changes"]
         rs = {f"{c['municipality']}|{cap}": plan["scenario_params"]["routing_set"][f"{c['municipality']}|{cap}"] for c in changes}
         if rs:
             dest = sorted({f for c in changes for f, _ in c["to"]})
+            acc = plan.get("expected_acceptance_of_moves")
             recs.append({
-                "id": "reroute", "title": f"Redistribute {CAP_LABEL[cap]} referrals",
-                "action": f"Re-route {len(changes)} municipalities' {CAP_LABEL[cap]} referrals to "
-                          + ", ".join(snap.facilities[d]["name"] for d in dest[:3]),
-                "rationale": f"OR-Tools allocation keeps every hospital at or below 85 % utilisation within 180 min travel; "
-                             f"{top['facility']} {CAP_LABEL[cap]} is at {100 * (top['utilisation'] or 0):.0f} % (SIMULATED).",
-                "params": {"routing_set": rs}, "controls": []})
+                "id": "reroute", "title": f"Behaviour-aware re-routing of {CAP_LABEL[cap]} + transport support",
+                "action": f"Offer {len(changes)} municipalities' {CAP_LABEL[cap]} patients slots at "
+                          + ", ".join(snap.facilities[d]["name"] for d in dest[:3]) + ", with transport support",
+                "rationale": f"OR-Tools plan that accounts for patient acceptance (expected {100 * (acc or 0):.0f} % accept, with transport "
+                             f"support) and no-shows; {top['facility']} {CAP_LABEL[cap]} is at {100 * (top['utilisation'] or 0):.0f} % (SIMULATED).",
+                "params": {"routing_set": rs, "transport_support": restrict or True}, "controls": []})
+    pilot = P.PRIVATE_PILOT_FACILITY
+    if pilot in snap.facilities and info.get("county") == snap.facilities[pilot]["county"]:
+        recs.append({
+            "id": "private", "title": f"Purchase colonoscopies from {snap.facilities[pilot]['name']} (pilot)",
+            "action": "Service purchase: ~100 colonoscopies/month from an eligible local private provider",
+            "rationale": f"Local capacity in the same town: little extra travel, so high expected acceptance. SYNTHETIC pilot: assumed "
+                         f"capacity, cost {P.PRIVATE_COST_PER_COLONOSCOPY_EUR} EUR/procedure (ASSUMPTION).",
+            "params": {"private_purchase": [{"facility_id": pilot, "capability": "colonoscopy", "per_week": 23, "eligible_counties": [info["county"]]}]},
+            "controls": [{"path": "private_purchase.0.per_week", "label": "Purchased colonoscopies / week", "min": 5, "max": 50, "step": 1, "value": 23}]})
+    if top:
+        cap = top["capability"]
         recs.append({
             "id": "capacity", "title": f"Add {CAP_LABEL[cap]} capacity at {top['facility'].split(' (')[0]}",
             "action": f"Add weekly {CAP_LABEL[cap]} slots at {top['facility']}",
@@ -184,7 +213,7 @@ def recommendations(snap: Snapshot, info: dict, stations: list[dict], dl: dict) 
                          f"{top['capacity_per_week'] or 0:.1f} slots/week (SYNTHETIC capacity, SIMULATED load).",
             "params": {"capacity": [{"facility_id": top["facility_id"], "capability": cap, "add_per_week": 5}]},
             "controls": [{"path": "capacity.0.add_per_week", "label": "Added slots / week", "min": 1, "max": 20, "step": 1, "value": 5}]})
-    return recs[:3]
+    return recs[:5]
 
 
 def primary_issue(info, comp, dl, stations) -> dict:
@@ -218,7 +247,16 @@ def build_context(conn, snap: Snapshot, scope: str, sid: Optional[str], run_id: 
         ctx["base"] = {"compliance": compliance(breg), "delays": delays(breg), "bottlenecks": stations_in_scope(snap, B, info)[:8],
                        "national_compliance": compliance(B.get("national", {}).get("national", {})),
                        "ranking": county_ranking(snap, B) if scope == "national" else None}
-    ctx["recommendations"] = recommendations(snap, info, st, dl)
+    ctx["recommendations"] = recommendations(snap, info, st, dl, comp)
+    from backend.services.anomalies import detect
+    alarms = detect(snap, M, metrics_of(conn, base_run_id) if base_run_id and base_run_id != run_id else None)
+    if info["scope"] == "county":
+        alarms = [a for a in alarms if a["location"].get("county_id") == info["county"] or info["county"] in a.get("counties", [])
+                  or any(snap.facilities.get(n, {}).get("county") == info["county"] for n in a.get("nodes", []))]
+    elif info["scope"] == "facility":
+        alarms = [a for a in alarms if info["id"] in a.get("nodes", [])]
+    ctx["anomalies"] = alarms[:12]
+    ctx["outcome_scope"] = ("regional outcomes for patients living in " + (info.get("county_name") or "")) if info["scope"] == "facility" else info["name"]
     return ctx
 
 
@@ -250,6 +288,11 @@ def facts_for_llm(ctx: dict) -> dict:
          "OBSERVED_statistics": {k: f"{v['value']} ({v['year']}, {v['source']})" for k, v in ctx["observed"].items()},
          "SYNTHETIC_live_operations": {k: v for k, v in ctx["live"].items() if k != "tag"},
          "reference_target": "42 days referral-to-treatment (Finnish 6-week recommendation, FI-1)"}
+    b = ctx["compliance"].get("behaviour") or {}
+    f["SIMULATED_patient_behaviour"] = {"pct_appointments_missed": r(100 * b["dna_rate"]) if b.get("dna_rate") is not None else None,
+                                        "pct_alternative_offers_declined": r(100 * b["alt_decline_rate"]) if b.get("alt_offers_per_week") else None,
+                                        "pct_lost_to_follow_up": r(100 * b["lost_rate"]) if b.get("lost_rate") is not None else None}
+    f["SIMULATED_network_alarms"] = [a["title"] for a in ctx.get("anomalies", [])[:3]]
     if ctx.get("ranking"):
         f["SIMULATED_worst_counties"] = [{"county": x["name"], "pct_within_42d": r(100 * x["p_within_target"])} for x in ctx["ranking"][:3]]
         f["SIMULATED_best_counties"] = [{"county": x["name"], "pct_within_42d": r(100 * x["p_within_target"])} for x in ctx["ranking"][-2:]]

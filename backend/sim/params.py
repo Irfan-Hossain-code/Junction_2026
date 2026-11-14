@@ -78,7 +78,7 @@ REBOOK_AFTER_DNA_DAYS = 14.0       # median days to rebook after a missed appoin
 MAX_DNA_BEFORE_LOST = 2            # after this many no-shows the patient is lost to follow-up (without monitoring)
 TRAVEL_DNA_PENALTY_PER_HOUR = 0.03 # attendance drops 3 pp per hour of travel beyond the first hour
 TRANSPORT_SUPPORT_RELIEF = 0.6     # transport support removes 60 % of the perceived travel burden
-SAMPLE_EVERY = 40                  # store every 40th patient's full journey (replication 0) for inspection
+SAMPLE_EVERY = 10                  # store every 10th patient's full journey (replication 0) for inspection
 
 # private purchasing pilot (SYNTHETIC)
 PRIVATE_COST_PER_COLONOSCOPY_EUR = 650   # ASSUMPTION for the purchasing scenario

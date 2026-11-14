@@ -59,3 +59,23 @@ def test_monitoring_shortens_stalls():
     base = score(Model(tiny(cap_b=60, cap_a=60), seed=5, horizon=300, warmup=60).run())["region"]["national"]
     mon = score(Model(apply_scenario(tiny(cap_b=60, cap_a=60), {"monitoring": True}), seed=5, horizon=300, warmup=60).run())["region"]["national"]
     assert mon["stall_days.mean"] < base["stall_days.mean"] / 2
+
+
+def test_common_random_numbers_keep_clinical_outcomes_paired():
+    """An intervention may change behaviour/timing but never who has cancer (paired comparison)."""
+    def outcomes(params):
+        m = Model(apply_scenario(tiny(cap_a=8.0, cap_b=40.0), params), seed=11, horizon=200, warmup=30).run()
+        return {p.pid: ("CANCER_CONFIRMED" in [s for s, _ in p.hist], p.attrs["archetype"], p.attrs["age"]) for p in m.patients
+                if any(s == "COLONOSCOPY" for s, _ in p.hist)}
+    a = outcomes({})
+    b = outcomes({"monitoring": True, "reminders": True, "transport_support": True,
+                  "routing": [{"from_county": "c1", "capability": "colonoscopy", "to_facility": "B", "share": 0.5}]})
+    common = set(a) & set(b)
+    assert len(common) > 200
+    assert all(a[k] == b[k] for k in common)
+
+
+def test_behavioural_agents_decline_distant_offers_more():
+    s = apply_scenario(tiny(cap_a=8.0, cap_b=60.0), {"routing": [{"from_county": "c1", "capability": "colonoscopy", "to_facility": "B", "share": 0.6}]})
+    r = score(Model(s, seed=3, horizon=250, warmup=40).run())["region"]["c1"]
+    assert r["behaviour.alt_decline_rate"] > 0.3          # 90-min detour: many decline

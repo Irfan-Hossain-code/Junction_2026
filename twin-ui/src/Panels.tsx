@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Context, Interpretation, Recommendation, Selection, Summary, api, mergeParams, num, pct, shortCounty } from "./api";
+import { AgentDetail, Alarm, Context, Interpretation, Recommendation, Selection, Summary, api, mergeParams, num, pct, shortCounty } from "./api";
 
 export const Tag = ({ t }: { t: string }) => <span className={`tag ${t}`}>{t.toLowerCase()}</span>;
 
@@ -11,19 +11,29 @@ function Delta({ a, b, pp = false, invert = false, d = 1, unit }: { a?: number |
   return <span className={good ? "up" : "down"}> {x > 0 ? "+" : ""}{x.toFixed(d)}{unit ?? (pp ? " pp" : " d")}</span>;
 }
 
-// ---------------------------------------------------------------- AI situation summary
-export function AIPanel({ ctx, summary, loading, view }: { ctx: Context | null; summary: Summary | null; loading: boolean; view: string }) {
+// ---------------------------------------------------------------- AI situation summary (+ alarms, patient inspector)
+type AITab = "analysis" | "alarms" | "patient";
+
+export function AIPanel({ ctx, summary, loading, view, tab, setTab, alarms, selectedAlarm, onAlarm, agent, agentLoading, explain, onExplain }: {
+  ctx: Context | null; summary: Summary | null; loading: boolean; view: string; tab: AITab; setTab: (t: AITab) => void;
+  alarms: Alarm[]; selectedAlarm: Alarm | null; onAlarm: (a: Alarm) => void;
+  agent: AgentDetail | null; agentLoading: boolean; explain: { mode: string; text: string } | null | "loading"; onExplain: () => void;
+}) {
   const paras = (summary?.text || "").split(/\n+/).filter(Boolean);
+  const crit = alarms.filter(a => a.severity === "critical").length;
   return (
     <div className="panel area-ai">
-      <div className="panel-h">
-        <h3>Situation analysis</h3>
-        <span className="ctx">· {ctx?.context.name ? shortCounty(ctx.context.name) : "Finland"} · {view}</span>
+      <div className="panel-h tabs">
+        <button className={tab === "analysis" ? "on" : ""} onClick={() => setTab("analysis")}>Analysis</button>
+        <button className={tab === "alarms" ? "on" : ""} onClick={() => setTab("alarms")}>Network alarms <span className={`badge ${crit ? "crit" : ""}`}>{alarms.length}</span></button>
+        <button className={tab === "patient" ? "on" : ""} onClick={() => setTab("patient")}>Patient agent{agent ? ` #${agent.patient.pid}` : ""}</button>
         <div className="right">
-          {summary && (summary.mode === "llm" ? <span className="tag LLM">nemotron · grounded</span> : <span className="tag FALLBACK">deterministic</span>)}
+          {tab === "analysis" && summary && (summary.mode === "llm" ? <span className="tag LLM">nemotron · grounded</span> : <span className="tag FALLBACK">deterministic</span>)}
         </div>
       </div>
-      <div className="panel-b">
+      {tab === "alarms" && <AlarmList alarms={alarms} selected={selectedAlarm} onAlarm={onAlarm} />}
+      {tab === "patient" && <AgentInspector agent={agent} loading={agentLoading} explain={explain} onExplain={onExplain} view={view} />}
+      {tab === "analysis" && <div className="panel-b">
         {ctx && <div className="ai-issue"><b style={{ color: "var(--warn)" }}>Primary issue · </b>{ctx.primary_issue.headline} <Tag t="SIMULATED" /></div>}
         {loading || !summary ? (<>{[90, 100, 95, 70, 98, 85, 60].map((w, i) => <div key={i} className="skeleton" style={{ width: `${w}%` }} />)}</>)
           : <div className="ai-text">{paras.map((p, i) => <p key={i}>{p}</p>)}</div>}
@@ -33,15 +43,88 @@ export function AIPanel({ ctx, summary, loading, view }: { ctx: Context | null; 
           </div>)}
         {summary && (
           <details style={{ marginTop: 8 }}>
-            <summary>Grounding: the only facts the AI was allowed to use</summary>
+            <summary>Show grounding data (the only facts the AI may use)</summary>
             <pre className="facts">{JSON.stringify(summary.facts, null, 1)}</pre>
           </details>)}
-      </div>
+      </div>}
       <div className="ai-foot">
         <Tag t="OBSERVED" /> THL statistics <Tag t="SIMULATED" /> SimPy model output <Tag t="SYNTHETIC" /> demo patients &amp; capacity <Tag t="REFERENCE" /> 42-day target
       </div>
     </div>
   );
+}
+
+const ALARM_LABEL: Record<string, string> = {
+  sustained_overload: "Sustained overload", growing_queue: "Growing queue", high_nonattendance: "High non-attendance",
+  capacity_not_accepted: "Capacity not accepted", regional_imbalance: "Regional imbalance", stalled_transition: "Stalled transition",
+  lost_to_follow_up: "Lost to follow-up", downstream_bottleneck: "Downstream bottleneck", throughput_drop: "Throughput drop",
+};
+
+function AlarmList({ alarms, selected, onAlarm }: { alarms: Alarm[]; selected: Alarm | null; onAlarm: (a: Alarm) => void }) {
+  return (
+    <div className="panel-b">
+      {alarms.length === 0 && <div className="muted">No network alarm thresholds are crossed in this scenario and context.</div>}
+      {alarms.map(a => (
+        <div key={a.id} className={`alarm ${a.severity} ${selected?.id === a.id ? "on" : ""}`} onClick={() => onAlarm(a)}>
+          <div className="at"><span className={`sev ${a.severity}`}>{a.severity}</span>{ALARM_LABEL[a.type] || a.type} <Tag t="SIMULATED" /></div>
+          <div className="ati">{a.title}</div>
+          {selected?.id === a.id && (
+            <div className="ad">
+              <div><b>Trigger:</b> {a.metric} = {typeof a.value === "number" ? a.value : String(a.value)} (threshold {a.threshold})</div>
+              <div><b>Evidence:</b> {Object.entries(a.evidence).map(([k, v]) => `${k.replace(/_/g, " ")}: ${typeof v === "object" ? JSON.stringify(v) : v}`).join(" · ")}</div>
+              <div><b>Duration:</b> {a.duration}</div>
+              <div className="sug">→ {a.suggestion}</div>
+            </div>)}
+        </div>))}
+    </div>);
+}
+
+const ARCH_LABEL: Record<string, string> = { engaged_flexible: "Engaged & flexible", travel_constrained: "Travel-constrained", low_follow_through: "Low follow-through" };
+const STAGE_SHORT = (s: string) => s.replace(/_/g, " ").toLowerCase();
+
+function Journey({ p, fac, title }: { p: any; fac: AgentDetail["facilities"]; title: string }) {
+  const nm = (id?: string) => (id ? (fac[id]?.name || id).replace(/\s*\(.*\)/, "") : "");
+  const rtt = p.outcome?.clocks?.referral_to_treatment;
+  return (
+    <div className="journey">
+      <div className="jt">{title} {rtt?.days != null ? <b className={rtt.status === "met" ? "up" : "down"}>· referral → treatment {rtt.days} d ({rtt.status})</b> : p.outcome?.lost ? <b className="down">· lost to follow-up</b> : <span className="muted">· no treatment clock</span>}</div>
+      <ol>
+        {p.journey.map((e: any, i: number) => (
+          <li key={i} className={e.kind}>
+            <span className="d num">d{Math.round(e.t)}</span>
+            {e.kind === "stage" && <>{STAGE_SHORT(e.stage)}{e.facility && <span className="muted"> · {nm(e.facility)}</span>}</>}
+            {e.kind === "offer" && <>offered {nm(e.facility)} ({e.travel_min} min, ~{e.est_wait_days} d wait) vs home {nm(e.home)} ({e.home_travel_min} min, ~{e.home_wait_days} d): p(accept) {e.p_accept} → <b className={e.accepted ? "up" : "down"}>{e.accepted ? "accepted" : "declined"}</b></>}
+            {e.kind === "attendance" && <>appointment at {nm(e.facility)}: p(attend) {e.p_attend}{e.reminder ? " (reminded)" : ""} → <b className={e.attended ? "up" : "down"}>{e.attended ? "attended" : "no-show, slot wasted"}</b></>}
+            {e.kind === "rebook" && <>rebooked, +{e.days} d</>}
+            {e.kind === "stall" && <>step "{STAGE_SHORT(e.stage)}" stalled {e.days} d {e.detected_by_monitoring ? <span className="up">(caught by monitoring)</span> : <span className="down">(unnoticed)</span>}</>}
+            {e.kind === "lost_to_follow_up" && <b className="down">lost to follow-up after {e.after_dna} missed appointments</b>}
+          </li>))}
+      </ol>
+    </div>);
+}
+
+function AgentInspector({ agent, loading, explain, onExplain, view }: { agent: AgentDetail | null; loading: boolean; explain: any; onExplain: () => void; view: string }) {
+  if (loading) return <div className="panel-b"><div className="skeleton" /><div className="skeleton" /></div>;
+  if (!agent) return <div className="panel-b muted">Select a county, then click a patient dot on the map. Dots are sampled synthetic patient agents (1 in 10); colour = outcome (teal met / red missed target / dark red lost), amber ring = declined an offer or missed an appointment.</div>;
+  const a = agent.patient.attrs;
+  return (
+    <div className="panel-b">
+      <div className="agent-h">
+        <b>Synthetic patient #{agent.patient.pid}</b> <Tag t="SIMULATED" /> <span className="muted">fictional agent · home {agent.home.municipality}</span>
+      </div>
+      <div className="chips">
+        <span className="chip on">{ARCH_LABEL[a.archetype] || a.archetype}</span><span className="chip">{a.age} y</span>
+        <span className="chip">{a.symptom.replace(/_/g, " ")}</span><span className={`chip ${a.urgent ? "warn" : ""}`}>{a.urgent ? "urgent referral" : "standard"}</span>
+        <span className="chip">travel tolerance ~{Math.round(a.max_travel_min)} min</span><span className="chip">p(attend) {a.p_attend}</span>
+        <span className="chip">p(accept other provider) {a.p_accept_alt}</span>
+      </div>
+      <div className="muted" style={{ fontSize: 10.5, margin: "3px 0 6px" }}>Behavioural parameters are illustrative ASSUMPTIONS drawn around an archetype, not medical facts. Urgency comes from the symptom category, not demographics.</div>
+      <Journey p={agent.patient} fac={agent.facilities} title={`This scenario (${view})`} />
+      {agent.compare && <Journey p={agent.compare} fac={agent.facilities} title="Same patient, other scenario (common random numbers)" />}
+      <button className="btn" style={{ marginTop: 6 }} onClick={onExplain} disabled={explain === "loading"}>{explain === "loading" ? "Explaining…" : "Why did this happen?"}</button>
+      {explain && explain !== "loading" && (
+        <div className="explain"><span className={`tag ${explain.mode === "llm" ? "LLM" : "FALLBACK"}`}>{explain.mode === "llm" ? "nemotron · from recorded decisions" : "deterministic"}</span> {explain.text}</div>)}
+    </div>);
 }
 
 // ---------------------------------------------------------------- compliance vs target
@@ -75,7 +158,7 @@ export function CompliancePanel({ ctx, onSelect, view }: { ctx: Context | null; 
   }, [ctx]);
   return (
     <div className="panel area-comp">
-      <div className="panel-h"><h3>Target compliance</h3><span className="ctx">· {ctx ? shortCounty(ctx.context.county_name || ctx.context.name) : ""}</span>
+      <div className="panel-h"><h3>Target compliance</h3><span className="ctx">· {ctx ? (ctx.context.scope === "facility" ? `regional: patients of ${shortCounty(ctx.context.county_name || "")}` : shortCounty(ctx.context.name)) : ""}</span>
         <div className="right"><Tag t="SIMULATED" /></div></div>
       <div className="panel-b">
         {!ctx ? <div className="skeleton" /> : (<>
@@ -89,6 +172,14 @@ export function CompliancePanel({ ctx, onSelect, view }: { ctx: Context | null; 
                 <span className="k">FIT+ → colonoscopy ≤ 28 d</span><span className="v num">{pct(c!.fit_to_colonoscopy_p_within)}{b && <Delta a={b.fit_to_colonoscopy_p_within} b={c!.fit_to_colonoscopy_p_within} pp />}</span>
                 {ctx.context.scope !== "national" && <><span className="k">Finland (same scenario)</span><span className="v num">{pct(ctx.national_compliance.p_within_target)}</span></>}
               </div>
+              {c!.behaviour && c!.behaviour.dna_rate != null && (<>
+                <div className="section-l" style={{ marginTop: 4 }}>Patient follow-through <Tag t="SIMULATED" /></div>
+                <div className="kv">
+                  <span className="k">Missed appointments</span><span className="v num">{pct(c!.behaviour.dna_rate)}{b?.behaviour && <Delta a={b.behaviour.dna_rate} b={c!.behaviour.dna_rate} pp invert />}</span>
+                  {(c!.behaviour.alt_offers_per_week ?? 0) > 0.05 && <><span className="k">Offers at other providers declined</span><span className="v num">{pct(c!.behaviour.alt_decline_rate, 0)}</span></>}
+                  <span className="k">Lost to follow-up</span><span className="v num">{pct(c!.behaviour.lost_rate)}{b?.behaviour && <Delta a={b.behaviour.lost_rate} b={c!.behaviour.lost_rate} pp invert />}</span>
+                </div>
+              </>)}
               {b && <div className="muted" style={{ fontSize: 11 }}>white tick = original scenario</div>}
             </div>
           </div>

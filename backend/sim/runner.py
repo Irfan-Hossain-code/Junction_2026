@@ -18,7 +18,7 @@ from backend.sim import params as P
 from backend.sim.model import Model, score
 from backend.sim.snapshot import Snapshot, apply_scenario, build_snapshot
 
-MODEL_VERSION = "crc-des-0.3"
+MODEL_VERSION = "crc-abm-0.4"
 
 
 def _one(args):

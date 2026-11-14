@@ -52,7 +52,7 @@ class SummaryIn(BaseModel):
 _summary_cache: dict[str, dict] = {}
 
 SUMMARY_SYSTEM = """You are CancerFlow's analyst for Finnish cancer-care decision-makers.
-Write a situation summary of at most 120 words in plain English (no markdown, no headings, no bullet points).
+Write an executive situation summary: at most 75 words, 3-4 short sentences, plain English (no markdown, no lists). Lead with the single most important finding.
 RULES:
 - Use ONLY numbers that appear in the FACTS JSON. Never invent, estimate, round differently or extrapolate numbers.
 - Say "simulated" for SIMULATED_* values and "observed" for OBSERVED_statistics; SYNTHETIC_* is demo data.

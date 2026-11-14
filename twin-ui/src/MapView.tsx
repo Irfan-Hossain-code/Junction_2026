@@ -4,7 +4,13 @@ import { FlyToInterpolator, WebMercatorViewport } from "@deck.gl/core";
 import { GeoJsonLayer, PathLayer, ScatterplotLayer, TextLayer } from "@deck.gl/layers";
 import { Map } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { CAP_LABEL, FacilityNode, Network, Selection, num, pct, shortCounty } from "./api";
+import { AgentDetail, AgentSummary, Alarm, CAP_LABEL, FacilityNode, HcFlow, Network, Selection, num, pct, shortCounty } from "./api";
+
+export type LayersOn = { primary: boolean; private: boolean; patients: boolean; alarms: boolean };
+const niceUnit = (x: number) => [0.25, 0.5, 1, 2, 5, 10, 20, 50].find(u => u >= x) ?? 100;
+const SEV: Record<string, number[]> = { critical: [239, 83, 80], warning: [245, 165, 36], info: [148, 163, 184] };
+const outcomeColor = (a: AgentSummary): number[] =>
+  a.lost ? [148, 60, 60] : a.rtt_status === "met" ? [45, 212, 191] : a.rtt_status === "missed" ? [239, 83, 80] : [120, 140, 170];
 
 const STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json";
 const FIN_BOUNDS: [[number, number], [number, number]] = [[19.8, 59.6], [31.6, 70.1]];
@@ -72,9 +78,12 @@ export function capUtil(f: FacilityNode, cap: string) {
 type Props = {
   geo: any; net: Network | null; baseNet: Network | null; healthCentres: any[];
   selection: Selection; onSelect: (s: Selection) => void; mode: MapMode; capability: string; loading: boolean;
+  privateClinics: any[]; alarms: Alarm[]; selectedAlarm: Alarm | null; onSelectAlarm: (a: Alarm) => void;
+  agents: AgentSummary[]; agent: AgentDetail | null; onSelectAgent: (pid: number) => void; hcFlows: HcFlow[]; layersOn: LayersOn;
 };
 
-export default function MapView({ geo, net, baseNet, healthCentres, selection, onSelect, mode, capability, loading }: Props) {
+export default function MapView({ geo, net, baseNet, healthCentres, selection, onSelect, mode, capability, loading,
+  privateClinics, alarms, selectedAlarm, onSelectAlarm, agents, agent, onSelectAgent, hcFlows, layersOn }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 900, height: 600 });
   const [viewState, setViewState] = useState<any>({ longitude: 25.6, latitude: 64.9, zoom: 4.2, pitch: 0, bearing: 0 });
@@ -146,6 +155,35 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
   }, [net, counties, facilities]);
   const flowsOn = (f: any) => !selCounty || f.from_county === selCounty || (selection.scope === "facility" && f.to_facility === selection.id);
 
+  // particle scale: one particle = `unit` simulated referrals / week (shown in the legend badge)
+  const visibleFlow = flows.filter(flowsOn).reduce((s, f: any) => s + f.flow_per_week, 0);
+  const unit = niceUnit(visibleFlow / 260);
+  const hcPaths = useMemo(() => (layersOn.primary && selCounty ? hcFlows : []).filter(f => f.flow_per_week >= 0.05).map(f => ({
+    ...f, path: curve(f.from, f.to, 0.1, 16), seed: (f.hc.length * 31 + f.hc.charCodeAt(f.hc.length - 1)) % 100 / 100,
+  })), [hcFlows, layersOn.primary, selCounty]);
+  const hcUnit = niceUnit(hcPaths.reduce((s, f) => s + f.flow_per_week, 0) / 120);
+  const alarmPos = (a: Alarm): [number, number] | null => {
+    if (a.location.lon != null) return [a.location.lon!, a.location.lat!];
+    const c = counties[a.location.county_id || ""];
+    return c ? [c.lon, c.lat] : null;
+  };
+  const hiNodes = new Set(selectedAlarm ? selectedAlarm.nodes : []);
+  const hiCounties = new Set(selectedAlarm ? [...(selectedAlarm.counties || []), ...(selectedAlarm.location.kind === "county" ? [selectedAlarm.location.county_id] : [])] : []);
+  const journey = useMemo(() => {
+    if (!agent) return [];
+    const pts = (p: AgentDetail["patient"]) => {
+      const seq: [number, number][] = [[agent.home.lon, agent.home.lat]];
+      for (const e of p.journey) {
+        const f = e.facility && agent.facilities[e.facility];
+        if (f && (e.kind === "stage" || e.kind === "attendance") && (seq[seq.length - 1][0] !== f.lon || seq[seq.length - 1][1] !== f.lat)) seq.push([f.lon, f.lat]);
+      }
+      return seq;
+    };
+    const out = [{ id: "current", path: pts(agent.patient), color: [255, 255, 255, 230] }];
+    if (agent.compare) out.push({ id: "compare", path: pts(agent.compare), color: [167, 139, 250, 200] });
+    return out;
+  }, [agent]);
+
   const layers = useMemo(() => {
     if (!geo) return [];
     const hospitals = (net?.facilities || []).filter(f => f.kind !== "health_center");
@@ -158,15 +196,35 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
           const a = selCounty ? (f.id === selCounty ? 170 : 60) : 135;
           return [...rgb, a] as RGBA;
         },
-        getLineColor: (f: any) => (f.id === selCounty ? [125, 211, 252, 255] : [90, 130, 180, 110]),
-        getLineWidth: (f: any) => (f.id === selCounty ? 2.5 : 0.8), lineWidthUnits: "pixels",
-        updateTriggers: { getFillColor: [mode, net?.run_id, baseNet?.run_id, selCounty], getLineColor: [selCounty], getLineWidth: [selCounty] },
+        getLineColor: (f: any) => (hiCounties.has(f.id) ? [245, 165, 36, 255] : f.id === selCounty ? [125, 211, 252, 255] : [90, 130, 180, 110]),
+        getLineWidth: (f: any) => (hiCounties.has(f.id) ? 3.5 : f.id === selCounty ? 2.5 : 0.8), lineWidthUnits: "pixels",
+        updateTriggers: { getFillColor: [mode, net?.run_id, baseNet?.run_id, selCounty], getLineColor: [selCounty, selectedAlarm?.id], getLineWidth: [selCounty, selectedAlarm?.id] },
         transitions: { getFillColor: 600 },
         onClick: (i: any) => onSelect({ scope: "county", id: i.object.id }),
       }),
       new ScatterplotLayer({
-        id: "health-centres", data: healthCentres, getPosition: (d: any) => [d.lon, d.lat], getRadius: 900,
-        radiusMinPixels: 1.1, radiusMaxPixels: 3, getFillColor: [148, 170, 205, 110], pickable: false,
+        id: "health-centres", data: layersOn.primary ? healthCentres : [], getPosition: (d: any) => [d.lon, d.lat], getRadius: 900,
+        radiusMinPixels: selCounty ? 2 : 1.1, radiusMaxPixels: 4,
+        getFillColor: (d: any) => (selCounty && d.region_id === selCounty ? [125, 211, 252, 220] : [148, 170, 205, 110]), pickable: true,
+        updateTriggers: { getFillColor: [selCounty] },
+      }),
+      new ScatterplotLayer({
+        id: "private-clinics", data: layersOn.private ? privateClinics : [], getPosition: (d: any) => [d.lon, d.lat], getRadius: 800,
+        radiusMinPixels: 1.4, radiusMaxPixels: 3.5, getFillColor: [192, 132, 252, 150], pickable: true,
+      }),
+      new PathLayer({
+        id: "hc-flows", data: hcPaths, getPath: (d: any) => d.path, widthUnits: "pixels",
+        getWidth: (d: any) => Math.max(0.7, Math.min(4, Math.sqrt(d.flow_per_week) * 1.6)), getColor: [125, 211, 252, 110], pickable: true,
+      }),
+      new ScatterplotLayer({
+        id: "hc-particles",
+        data: hcPaths.flatMap((f: any) => {
+          const k = Math.max(1, Math.min(8, Math.round(f.flow_per_week / hcUnit)));
+          return Array.from({ length: k }, (_, i) => ({ f, off: i / k }));
+        }),
+        getPosition: (d: any) => along(d.f.path, ((tick / 3500) * (0.7 + d.f.seed) + d.off + d.f.seed) % 1),
+        getRadius: 1, radiusUnits: "pixels", radiusMinPixels: 1.5, getFillColor: [186, 230, 253, 230],
+        updateTriggers: { getPosition: [tick] },
       }),
       new PathLayer({
         id: "flows", data: flows, getPath: (d: any) => d.path, widthUnits: "pixels",
@@ -179,7 +237,7 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
       new ScatterplotLayer({
         id: "particles",
         data: flows.filter(flowsOn).flatMap((f: any) => {
-          const k = Math.max(1, Math.min(4, Math.round(f.flow_per_week / 3)));
+          const k = Math.max(1, Math.min(24, Math.round(f.flow_per_week / unit)));
           return Array.from({ length: k }, (_, i) => ({ f, off: i / k }));
         }),
         getPosition: (d: any) => along(d.f.path, ((tick / 4000) * (0.6 + d.f.seed) + d.off + d.f.seed) % 1),
@@ -213,6 +271,36 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
         transitions: { getFillColor: 600, getRadius: 600 },
         onClick: (i: any) => onSelect({ scope: "facility", id: i.object.id }),
       }),
+      new ScatterplotLayer({
+        id: "alarm-highlight", data: (net?.facilities || []).filter(f => hiNodes.has(f.id)), getPosition: (d: FacilityNode) => [d.lon, d.lat],
+        stroked: true, filled: false, getRadius: 14000, radiusMinPixels: 16, lineWidthMinPixels: 2.5, getLineColor: [245, 165, 36, 255],
+      }),
+      new ScatterplotLayer({
+        id: "agents", data: layersOn.patients ? agents : [], pickable: true, getPosition: (d: AgentSummary) => [d.lon, d.lat],
+        getRadius: 1, radiusUnits: "pixels", radiusMinPixels: 3, stroked: true, lineWidthMinPixels: 1,
+        getFillColor: (d: AgentSummary) => [...outcomeColor(d), 230] as RGBA,
+        getLineColor: (d: AgentSummary) => (agent && d.pid === agent.patient.pid ? [255, 255, 255, 255] : d.declined || d.missed ? [245, 165, 36, 255] : [8, 14, 26, 200]),
+        getLineWidth: (d: AgentSummary) => (agent && d.pid === agent.patient.pid ? 3 : 1), lineWidthUnits: "pixels",
+        updateTriggers: { getLineColor: [agent?.patient.pid], getLineWidth: [agent?.patient.pid] },
+        onClick: (i: any) => onSelectAgent(i.object.pid),
+      }),
+      new PathLayer({
+        id: "journey", data: journey, getPath: (d: any) => d.path, getColor: (d: any) => d.color, widthUnits: "pixels",
+        getWidth: (d: any) => (d.id === "current" ? 3 : 2), jointRounded: true, capRounded: true,
+      }),
+      new ScatterplotLayer({
+        id: "alarms", data: layersOn.alarms ? alarms.filter(a => alarmPos(a)) : [], pickable: true,
+        getPosition: (a: Alarm) => alarmPos(a)!, getRadius: 1, radiusUnits: "pixels",
+        radiusMinPixels: 9, stroked: true, lineWidthMinPixels: 2,
+        getFillColor: (a: Alarm) => [...SEV[a.severity], selectedAlarm?.id === a.id ? 255 : 200] as RGBA,
+        getLineColor: (a: Alarm) => (selectedAlarm?.id === a.id ? [255, 255, 255, 255] : [8, 14, 26, 255]),
+        getPixelOffset: [14, -14], updateTriggers: { getFillColor: [selectedAlarm?.id], getLineColor: [selectedAlarm?.id] },
+        onClick: (i: any) => onSelectAlarm(i.object),
+      }),
+      new TextLayer({
+        id: "alarm-glyph", data: layersOn.alarms ? alarms.filter(a => alarmPos(a)) : [], getPosition: (a: Alarm) => alarmPos(a)!,
+        getText: () => "!", getSize: 13, getColor: [10, 14, 24, 255], fontWeight: 800, getPixelOffset: [14, -14], fontFamily: "Inter, sans-serif",
+      }),
       new TextLayer({
         id: "labels", data: viewState.zoom >= 5.4 ? hospitals.filter(h => h.kind !== "regional_hospital" || viewState.zoom >= 6.5) : [],
         getPosition: (d: FacilityNode) => [d.lon, d.lat], getText: (d: FacilityNode) => d.name.replace(/\s*\(.*\)/, ""),
@@ -220,7 +308,8 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
         outlineWidth: 3, outlineColor: [5, 10, 20, 255], fontSettings: { sdf: true },
       }),
     ];
-  }, [geo, net, baseNet, healthCentres, flows, tick, mode, selection.scope, selection.id, selCounty, capability, viewState.zoom >= 5.4, viewState.zoom >= 6.5]);
+  }, [geo, net, baseNet, healthCentres, privateClinics, flows, hcPaths, tick, mode, selection.scope, selection.id, selCounty, capability,
+    viewState.zoom >= 5.4, viewState.zoom >= 6.5, alarms, selectedAlarm, agents, agent, journey, layersOn, unit, hcUnit]);
 
   const tooltip = ({ object, layer }: any) => {
     if (!object) return null;
@@ -238,6 +327,11 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
     if (layer.id === "flows") {
       return { html: `${shortCounty(counties[object.from_county]?.name || object.from_county)} → ${facilities[object.to_facility]?.name}<br/>${object.flow_per_week.toFixed(1)} patients/week (${CAP_LABEL[object.capability]}, simulated)`, style };
     }
+    if (layer.id === "hc-flows") return { html: `GP referrals: ${object.hc_name} → ${facilities[object.facility]?.name || object.facility}<br/>${object.flow_per_week.toFixed(2)} /week (simulated)`, style };
+    if (layer.id === "health-centres") return { html: `${object.name}<br/><span style="color:#8da2c0">health centre · primary care (OSM)</span>`, style };
+    if (layer.id === "private-clinics") return { html: `${object.name}<br/><span style="color:#8da2c0">private / occupational first contact (OSM) · not routed by default</span>`, style };
+    if (layer.id === "alarms") return { html: `<b style="color:${object.severity === "critical" ? "#ef5350" : "#f5a524"}">${object.severity.toUpperCase()}</b> · ${object.title}<br/><span style="color:#8da2c0">click for evidence</span>`, style };
+    if (layer.id === "agents") return { html: `Synthetic patient #${object.pid} · ${object.archetype.replace(/_/g, " ")}, ${object.age} y${object.urgent ? " · urgent" : ""}<br/>${object.lost ? "lost to follow-up" : object.rtt_days != null ? `referral → treatment ${object.rtt_days} d (${object.rtt_status})` : "no treatment needed / in progress"}${object.declined ? ` · declined ${object.declined} offer(s)` : ""}${object.missed ? ` · missed ${object.missed}` : ""}`, style };
     return null;
   };
 
@@ -249,6 +343,11 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
         <Map mapStyle={STYLE} attributionControl={false} />
       </DeckGL>
       {loading && <div className="overlay loading-veil"><div className="spinner" /></div>}
+      <div className="overlay particle-key">
+        <span><i style={{ background: "#96f5e6" }} /> 1 particle ≈ {unit} simulated {CAP_LABEL[capability].toLowerCase()} referrals/week</span>
+        {hcPaths.length > 0 && <span><i style={{ background: "#bae6fd" }} /> 1 particle ≈ {hcUnit} GP referrals/week</span>}
+        {layersOn.patients && agents.length > 0 && <span><i style={{ background: "#2dd4bf" }} /> {agents.length} sampled synthetic patients (1 in 10)</span>}
+      </div>
     </div>
   );
 }
