@@ -1,5 +1,5 @@
 import { FormEvent, useMemo, useState } from "react";
-import { api, PathwaySummary } from "../api";
+import { Alert, api, PathwaySummary } from "../api";
 import { useAuth } from "../auth";
 import { AlertCard, ErrorNote, Header, SevBadge, Spinner, Tag } from "../components";
 import { daysBetween, go, plural, ROUTE_LABEL, sevRank, useLive } from "../lib";
@@ -9,17 +9,29 @@ type Filter = "all" | "alerts" | "critical";
 /** Clinician worklist: alerts first, then every active pathway at the user's facility. */
 export default function DoctorWorklist() {
   const { user } = useAuth();
-  const wl = useLive(() => api.worklist(), [user?.id], (m) => ["event", "pathway_created", "clock", "alerts_rescanned"].includes(m.kind));
+  // My unit's alerts come from /worklist. "Waiting on other units" = alerts on MY patients' pathways that another
+  // unit is responsible for: the handovers (e.g. referral sent, never received) where patients fall through the cracks.
+  const wl = useLive(async () => {
+    const [w, all] = await Promise.all([api.worklist(), api.openAlerts()]);
+    const mine = new Set(w.pathways.map((p) => p.id));
+    const others = all.filter((a) => a.pathway_id && mine.has(a.pathway_id) && a.responsible_facility_id !== user?.facility_id);
+    return { ...w, others };
+  }, [user?.id], (m) => ["event", "pathway_created", "clock", "alerts_rescanned"].includes(m.kind));
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [alertTab, setAlertTab] = useState<"mine" | "others">("mine");
   const [acking, setAcking] = useState<string | null>(null);
   const [ackErr, setAckErr] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
 
-  const alerts = useMemo(() => (wl.data?.alerts || [])
+  const sortAlerts = (xs: Alert[]) => xs
     .filter((a) => a.status !== "resolved")
     .sort((a, b) => sevRank(b.severity) - sevRank(a.severity) || Number(a.status === "acknowledged") - Number(b.status === "acknowledged")
-      || a.raised_at.localeCompare(b.raised_at)), [wl.data]);
+      || a.raised_at.localeCompare(b.raised_at));
+  const myAlerts = useMemo(() => sortAlerts(wl.data?.alerts || []), [wl.data]);
+  const otherAlerts = useMemo(() => sortAlerts(wl.data?.others || []), [wl.data]);
+  const alerts = myAlerts;
+  const shownAlerts = alertTab === "mine" ? myAlerts : otherAlerts;
 
   const pathways = useMemo(() => {
     const ql = q.trim().toLowerCase();
@@ -58,20 +70,33 @@ export default function DoctorWorklist() {
             <div className="stats">
               <Stat label="Critical alerts" value={nCrit} tone={nCrit ? "bad" : ""} />
               <Stat label="Warnings" value={nWarn} tone={nWarn ? "warn" : ""} />
+              <Stat label="Waiting on other units" value={otherAlerts.length} tone={otherAlerts.length ? "warn" : ""} />
               <Stat label="Active pathways" value={wl.data.pathways.length} />
-              <Stat label="Pathways with alerts" value={wl.data.pathways.filter((p) => p.open_alerts > 0).length} />
             </div>
 
             <div className="wl-grid">
               <section className="panel">
-                <div className="panel-h"><h3>Needs attention</h3><span className="ctx">{plural(alerts.length, "open alert")}</span></div>
+                <div className="panel-h">
+                  <h3>Needs attention</h3>
+                  <div className="seg small right">
+                    <button className={alertTab === "mine" ? "on" : ""} onClick={() => setAlertTab("mine")}>My unit ({myAlerts.length})</button>
+                    <button className={alertTab === "others" ? "on" : ""} onClick={() => setAlertTab("others")}>Waiting on others ({otherAlerts.length})</button>
+                  </div>
+                </div>
                 <div className="panel-b alerts-col">
+                  <p className="muted small tab-hint">
+                    {alertTab === "mine"
+                      ? "Overdue steps your unit is responsible for."
+                      : "Your patients, stuck at another unit. Chase the handover before it becomes a gap."}
+                  </p>
                   {ackErr && <ErrorNote msg={ackErr} />}
-                  {alerts.length === 0 && <p className="muted">Nothing overdue. Every pathway is progressing within its thresholds.</p>}
-                  {alerts.map((a) => (
-                    <AlertCard key={a.id} a={a} busy={acking === a.id}
+                  {shownAlerts.length === 0 && (
+                    <p className="muted">{alertTab === "mine" ? "Nothing overdue for your unit." : "No patient of yours is waiting on another unit."}</p>
+                  )}
+                  {shownAlerts.map((a) => (
+                    <AlertCard key={a.id} a={a} now={now} busy={acking === a.id}
                                onOpen={a.pathway_id ? () => go(`/p/${a.pathway_id}`) : undefined}
-                               onAck={() => ack(a.id)} />
+                               onAck={alertTab === "mine" ? () => ack(a.id) : undefined} />
                   ))}
                 </div>
               </section>

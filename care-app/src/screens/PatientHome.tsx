@@ -2,7 +2,9 @@ import { useState } from "react";
 import { api, PathwayState, uuid } from "../api";
 import { useAuth } from "../auth";
 import { ClockBar, ErrorNote, Header, Spinner, Tag, Timeline } from "../components";
-import { fmtDay, PATIENT_ACTION, PHASES, phaseOf, relDays, STAGE_EXPLAIN, useLive, useStageLabel } from "../lib";
+import { fmtDay, PATIENT_ACTION, PHASES, phaseOf, relDays, roleLabel, sevRank, STAGE_EXPLAIN, useFacilityName, useLive, useStageLabel } from "../lib";
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Patient view: phone-first, calm, plain language. */
 export default function PatientHome() {
@@ -39,6 +41,7 @@ export default function PatientHome() {
 
 function PatientPathway({ id }: { id: string }) {
   const stageLabel = useStageLabel();
+  const facName = useFacilityName();
   const st = useLive(() => api.pathway(id), [id],
     (m) => (m.kind === "event" && m.pathway_id === id) || m.kind === "clock" || m.kind === "alerts_rescanned");
   const [msg, setMsg] = useState("");
@@ -54,7 +57,9 @@ function PatientPathway({ id }: { id: string }) {
   const cur = s.current_stage;
   const phase = phaseOf(cur?.id);
   const closed = s.status === "closed";
-  const openAlerts = s.alerts.filter((a) => a.status !== "resolved");
+  // The most urgent open alert decides who the patient is told is handling it.
+  const lead = s.alerts.filter((a) => a.status !== "resolved")
+    .sort((a, b) => sevRank(b.severity) - sevRank(a.severity) || (a.due_at ?? "").localeCompare(b.due_at ?? ""))[0];
   const upcoming = s.appointments.filter((a) => a.status === "booked" && a.scheduled_for >= now)
     .sort((a, b) => a.scheduled_for.localeCompare(b.scheduled_for));
   const myActions = s.allowed_next.filter((n) => n.actors.includes("patient") && PATIENT_ACTION[n.id]);
@@ -89,10 +94,14 @@ function PatientPathway({ id }: { id: string }) {
       </section>
 
       {/* reassurance when something is late: the system has already told the care team */}
-      {openAlerts.length > 0 && !closed && (
+      {lead && !closed && (
         <section className="card notice">
           <b>A step is taking longer than expected</b>
-          <p>Your care team has been notified automatically and should contact you. If you haven't heard from them in the next few days, call your clinic.</p>
+          <p>
+            <b className="who-acts">{cap(roleLabel(lead.responsible_role, "patient"))}</b>
+            {facName(lead.responsible_facility_id) && <> at <b className="who-acts">{facName(lead.responsible_facility_id)}</b></>}
+            {" "}has been notified automatically and should contact you. If you haven't heard from them in the next few days, call your clinic.
+          </p>
         </section>
       )}
 

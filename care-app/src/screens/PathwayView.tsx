@@ -173,7 +173,7 @@ function OpenAlerts({ s, busy, onAck }: { s: PathwayState; busy: boolean; onAck:
   return (
     <section className="panel">
       <div className="panel-h"><h3>Alerts</h3><span className="ctx">resolve automatically when the next step is recorded</span></div>
-      <div className="panel-b">{open.map((a) => <AlertCard key={a.id} a={a} busy={busy} onAck={() => onAck(a.id)} />)}</div>
+      <div className="panel-b">{open.map((a) => <AlertCard key={a.id} a={a} now={s.as_of} busy={busy} onAck={() => onAck(a.id)} />)}</div>
     </section>
   );
 }

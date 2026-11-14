@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { api, Alert, Clock, onLiveStatus, PathwayEvent, Severity } from "./api";
 import { useAuth } from "./auth";
-import { daysBetween, fmtDate, relDays } from "./lib";
+import { daysBetween, fmtDate, plural, relDays, roleLabel, useFacilityName } from "./lib";
 
 // ------------------------------------------------------------------ small pieces
 export function Tag({ t, title }: { t: string; title?: string }) {
@@ -140,10 +140,43 @@ export function ClockBar({ c, now, plain = false }: { c: Clock; now: string; pla
 }
 
 // ------------------------------------------------------------------ alerts
-export function AlertCard({ a, onAck, onOpen, busy }: {
-  a: Alert; onAck?: () => void; onOpen?: () => void; busy?: boolean;
+/** "Screening nurse · North Karelia Central Hospital · overdue by 12 days": who must act, where, and by when. */
+export function Responsible({ a, now }: { a: Alert; now?: string }) {
+  const { user } = useAuth();
+  const facName = useFacilityName();
+  const where = facName(a.responsible_facility_id) || a.responsible_facility_id;
+  const mine = !!a.responsible_facility_id && a.responsible_facility_id === user?.facility_id;
+  const days = a.due_at && now ? Math.floor(daysBetween(a.due_at, now)) : null;
+  return (
+    <div className={`resp ${mine ? "mine" : "other"}`}>
+      <span className="resp-ico" aria-hidden>👤</span>
+      <span>
+        <b>{roleLabel(a.responsible_role, "staff")}</b>
+        {where && <> · {where}</>}
+        {mine && <span className="resp-you">your unit</span>}
+        {days != null && (
+          <span className={days > 0 ? "resp-late" : "muted"}>
+            {" · "}{days > 0 ? `overdue by ${plural(days, "day")}` : days === 0 ? "due today" : `due in ${plural(-days, "day")}`}
+          </span>
+        )}
+      </span>
+    </div>
+  );
+}
+
+// Backend alert text carries provenance like "(REFERENCE, FI-1)" or "(threshold 5 d, HYPOTHESIS)".
+// That stays in the data and the pack; on screen it's clutter, so strip it.
+const TAGS = "REFERENCE|HYPOTHESIS|EXTERNAL_PROXY|OBSERVED|DERIVED|CALIBRATED|SIMULATED|SYNTHETIC";
+export function cleanAlertMessage(m: string): string {
+  return m
+    .replace(new RegExp(`\\s*\\((?:${TAGS})(?:,\\s*[A-Z0-9_-]+)*\\)`, "g"), "")   // "(REFERENCE, FI-1)" → ""
+    .replace(new RegExp(`,\\s*(?:${TAGS})(?:,\\s*[A-Z0-9_-]+)*\\)`, "g"), ")")      // "(threshold 5 d, HYPOTHESIS)" → "(threshold 5 d)"
+    .replace(/\s+\./g, ".");
+}
+
+export function AlertCard({ a, onAck, onOpen, busy, now }: {
+  a: Alert; onAck?: () => void; onOpen?: () => void; busy?: boolean; now?: string;
 }) {
-  const ev = a.evidence || {};
   return (
     <div className={`alert ${a.severity} ${a.status}`}>
       <div className="alert-top">
@@ -152,10 +185,8 @@ export function AlertCard({ a, onAck, onOpen, busy }: {
         {a.status === "acknowledged" && <span className="muted small">acknowledged</span>}
         <span className="muted small right">raised {fmtDate(a.raised_at)}</span>
       </div>
-      <div className="alert-msg">{a.message}</div>
-      {ev.threshold?.tag && (
-        <div className="muted small">Threshold {ev.threshold.value} d <Tag t={ev.threshold.tag} title={ev.threshold.source} /></div>
-      )}
+      <div className="alert-msg">{cleanAlertMessage(a.message)}</div>
+      <Responsible a={a} now={now} />
       {(onOpen || (onAck && a.status === "open")) && (
         <div className="row">
           {onOpen && <button className="btn small" onClick={onOpen}>Open pathway</button>}
