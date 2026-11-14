@@ -45,6 +45,7 @@ LANDING = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <div class="grid">
  <a class="card" href="app/care/"><b>Care app &rarr;</b>Patients and clinicians: where each pathway stands, what is overdue, what happens next.</a>
  <a class="card" href="app/twin/"><b>National twin &rarr;</b>Counties, hospitals and patient flows, with simulation and intervention studio.</a>
+ <a class="card" href="app/care/#/demo"><b>Side-by-side demo &rarr;</b>Clinician and patient phone on one screen, updating live.</a>
 </div>
 <small>All patients are synthetic demo data. API docs: <a href="docs">/docs</a></small>
 </main></body></html>"""

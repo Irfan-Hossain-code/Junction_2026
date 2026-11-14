@@ -3,11 +3,16 @@ import { api, setApiUser, User } from "./api";
 
 // Demo auth: no passwords. The chosen user id is sent as X-User-Id on every request.
 const KEY = "cancerflow.care.user";
+// `?as=<user id>` pins this window to one user without touching saved login. The side-by-side demo
+// page uses it so its doctor and patient frames (same origin, shared localStorage) don't overwrite each other.
+const FORCED = new URLSearchParams(location.search).get("as");
 
 function readStored(): string | null {
+  if (FORCED) return FORCED;
   try { return localStorage.getItem(KEY); } catch { return null; }
 }
 function writeStored(id: string | null) {
+  if (FORCED) return;
   try { id ? localStorage.setItem(KEY, id) : localStorage.removeItem(KEY); } catch { /* storage blocked */ }
 }
 

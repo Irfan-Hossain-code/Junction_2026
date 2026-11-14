@@ -52,7 +52,10 @@ export default function Login() {
           <button role="tab" aria-selected={role === "doctor"} className={role === "doctor" ? "on" : ""} onClick={() => setRole("doctor")}>Clinician</button>
         </div>
 
-        <p className="small muted">Demo login, no password. All people here are <Tag t="SYNTHETIC" /> demo data.</p>
+        <p className="small muted">
+          Demo login, no password. All people here are <Tag t="SYNTHETIC" /> demo data.{" "}
+          <a href="#/demo" className="linkish">Open the side-by-side demo →</a>
+        </p>
 
         {(users?.length ?? 0) > 8 && (
           <input className="input" placeholder="Search by name or unit…" value={q} onChange={(e) => setQ(e.target.value)} />

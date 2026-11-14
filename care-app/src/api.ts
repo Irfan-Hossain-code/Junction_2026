@@ -113,6 +113,7 @@ export const api = {
   login: (user_id: string) => req<{ user: User }>("POST", "/auth/login", { user_id }),
   me: () => req<User>("GET", "/me"),
   myPathways: () => req<PathwaySummary[]>("GET", "/me/pathways"),
+  patientPathways: (patientId: string) => req<PathwaySummary[]>("GET", `/patients/${encodeURIComponent(patientId)}/pathways`),
   worklist: () => req<{ pathways: PathwaySummary[]; alerts: Alert[] }>("GET", "/worklist"),
   pathway: (id: string) => req<PathwayState>("GET", `/pathways/${id}`),
   /** `eventId` should be generated once per user action so retries stay idempotent. */
