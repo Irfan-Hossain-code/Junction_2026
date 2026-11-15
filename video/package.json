@@ -1,0 +1,27 @@
+{
+  "name": "cancerflow-demo-video",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Remotion project for the CancerFlow Junction 2026 demo video (animated scenes + full assembly).",
+  "scripts": {
+    "assets": "node scripts/scan-assets.mjs",
+    "prestudio": "node scripts/scan-assets.mjs",
+    "studio": "remotion studio",
+    "prerender": "node scripts/scan-assets.mjs",
+    "render": "sh scripts/render.sh Full out/cancerflow-demo.mp4",
+    "render:scene": "sh scripts/render.sh",
+    "still": "sh scripts/render.sh --still",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.530",
+    "@remotion/google-fonts": "4.0.530",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.530"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "typescript": "5.6.3"
+  }
+}
