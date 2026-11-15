@@ -1,0 +1,21 @@
+{
+  "baseline": 73.4,
+  "disruption": 36.6,
+  "recovery": 53.3,
+  "metric": "Patients starting treatment within the target time (Finland)",
+  "source": "National twin, stored runs: Twin 1 · Baseline / Twin 2 · Disruption / Twin 3 · MPC Recovery. Synthetic patients and capacity; simulated outcomes.",
+  "runs": {
+    "baseline": {
+      "scenario": "Twin 1 · Baseline: normal Finland",
+      "run": "97b815cf-56f6-4fb4-8d29-340f8dda0199"
+    },
+    "disruption": {
+      "scenario": "Twin 2 · Disruption: Southern Finland demand surge (SYNTHETIC)",
+      "run": "e40f3f53-64c6-4c4c-9cd8-d4a724220f61"
+    },
+    "recovery": {
+      "scenario": "Twin 3 · MPC Recovery: CancerFlow response to the Southern surge",
+      "run": "7bbb7d22-2174-4876-9e50-e6a3d151d05d"
+    }
+  }
+}
