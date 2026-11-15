@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / ".env")
+load_dotenv(ROOT / ".env.local")   # ElevenLabs CLI writes ELEVENLABS_API_KEY here (gitignored)
 
 
 def connect(**kw) -> psycopg.Connection:

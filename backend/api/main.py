@@ -323,6 +323,10 @@ from backend.api.care import router as care_router  # noqa: E402  (care app ↔ 
 
 app.include_router(care_router)
 
+from backend.api.ops import router as ops_router  # noqa: E402  (shared operations layer: disruptions, interventions, voice)
+
+app.include_router(ops_router)
+
 # ------------------------------------------------------------------ experimental MPC layer (feature flag, default OFF)
 from backend.mpc.coordinator import enabled as _mpc_enabled  # noqa: E402
 
