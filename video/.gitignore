@@ -1,0 +1,8 @@
+node_modules/
+out/
+.local-libs/
+
+# large media: recordings and voice-over stay local
+public/clips/*.mp4
+public/audio/*.mp3
+public/audio/*.wav

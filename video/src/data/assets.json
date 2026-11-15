@@ -1,0 +1,15 @@
+{
+  "clips": [
+    "s1-intro.mp4",
+    "s4-part1.mp4",
+    "s4-part2.mp4",
+    "s8-ending.mp4"
+  ],
+  "audio": [
+    "vo-part1.mp3",
+    "vo-part2.mp3"
+  ],
+  "screens": [
+    "phone-00-start.png"
+  ]
+}

@@ -1,0 +1,266 @@
+{
+  "source": "ops_story_event run 19 + pathway 99df8d5a-3239-5e21-87bb-07a5bfe4fdcc (read-only export)",
+  "run": 19,
+  "tags": {
+    "patients": "SYNTHETIC",
+    "outcomes": "SIMULATED"
+  },
+  "people": {
+    "patient": "Emma Nieminen",
+    "gp": "Dr. Anna Kettunen (GP, Niinivaara)",
+    "specialist": "Dr. Ville Hakkarainen (gastroenterology)",
+    "admin": "Donny Lehtonen (regional care coordinator)"
+  },
+  "places": {
+    "gp": "Niinivaara health station, Joensuu",
+    "home": "North Karelia Central Hospital (PKKS), Joensuu",
+    "disrupted_resource": "Endoscopy Unit 2"
+  },
+  "outage": {
+    "resource": "Endoscopy Unit 2",
+    "hours": 48,
+    "affected": 8,
+    "urgent": 4,
+    "others": [
+      {
+        "name": "Pekka Hyvönen",
+        "muni": "Lieksa",
+        "priority": "urgent"
+      },
+      {
+        "name": "Sari Karjalainen",
+        "muni": "Kitee",
+        "priority": "standard"
+      },
+      {
+        "name": "Jari Turunen",
+        "muni": "Outokumpu",
+        "priority": "urgent"
+      },
+      {
+        "name": "Aili Räsänen",
+        "muni": "Ilomantsi",
+        "priority": "standard"
+      },
+      {
+        "name": "Mikko Pesonen",
+        "muni": "Joensuu",
+        "priority": "standard"
+      },
+      {
+        "name": "Leena Ikonen",
+        "muni": "Kontiolahti",
+        "priority": "standard"
+      },
+      {
+        "name": "Tapio Kärkkäinen",
+        "muni": "Nurmes",
+        "priority": "urgent"
+      }
+    ]
+  },
+  "appointments": [
+    {
+      "id": "5d597f2b-53bb-5d4a-a13e-1ba2bafe8447",
+      "stage": "GP_VISIT",
+      "status": "attended",
+      "at": "2026-11-16T10:00:00+02:00",
+      "facility": "Niinivaara health station",
+      "facility_id": "fi-hc-osm-n10101862641"
+    },
+    {
+      "id": "4593cdd2-347c-5694-bd97-2b74a60422d0",
+      "stage": "SPECIALIST_ASSESSMENT",
+      "status": "attended",
+      "at": "2026-11-19T13:00:00+02:00",
+      "facility": "Joensuu (PKKS)",
+      "facility_id": "fi-hosp-pkks"
+    },
+    {
+      "id": "d489dfe2-1aa2-5c16-8254-c673b6aaae11",
+      "stage": "COLONOSCOPY",
+      "status": "missed",
+      "at": "2026-11-21T11:30:00+02:00",
+      "facility": "Savonlinna",
+      "facility_id": "fi-hosp-savonlinna"
+    },
+    {
+      "id": "34fd367e-ac9e-50ee-b60a-99bbf3bcc360",
+      "stage": "COLONOSCOPY",
+      "status": "cancelled",
+      "at": "2026-11-22T08:00:00+02:00",
+      "facility": "Joensuu (PKKS)",
+      "facility_id": "fi-hosp-pkks"
+    },
+    {
+      "id": "fa0c260f-327a-5a6e-bcf6-904202508bac",
+      "stage": "COLONOSCOPY",
+      "status": "attended",
+      "at": "2026-11-29T11:30:00+02:00",
+      "facility": "Joensuu (PKKS)",
+      "facility_id": "fi-hosp-pkks"
+    },
+    {
+      "id": "90987261-eade-590a-9d0e-9d621be64020",
+      "stage": "STAGING",
+      "status": "attended",
+      "at": "2026-12-06T08:00:00+02:00",
+      "facility": "Joensuu (PKKS)",
+      "facility_id": "fi-hosp-pkks"
+    },
+    {
+      "id": "c0810762-216a-5a34-af92-04a3a12aae1b",
+      "stage": "SURGERY",
+      "status": "attended",
+      "at": "2026-12-17T08:00:00+02:00",
+      "facility": "Joensuu (PKKS)",
+      "facility_id": "fi-hosp-pkks"
+    }
+  ],
+  "rebook_after_outage": {
+    "facility": "Savonlinna",
+    "resource": "Savonlinna Endoscopy",
+    "at": "2026-11-21T11:30:00+02:00",
+    "travel_min": 104.0
+  },
+  "replacement_slots_evaluated": 3,
+  "missed_at": "2026-11-21T15:30:08.195310+02:00",
+  "steps": [
+    {
+      "key": "book_gp",
+      "label": "Emma books a GP appointment",
+      "actor": "patient",
+      "event": "appointment.booked",
+      "sim_at": "2026-11-15T09:00:10.909108+02:00",
+      "message": "Emma reported symptoms and booked a GP appointment for Mon 16 Nov 10:00."
+    },
+    {
+      "key": "attend_gp",
+      "label": "GP visit → urgent referral",
+      "actor": "clinician",
+      "event": "referral.created",
+      "sim_at": "2026-11-16T10:30:09.246975+02:00",
+      "message": "GP visit done. Urgent referral sent to North Karelia Central Hospital; CancerFlow now monitors it."
+    },
+    {
+      "key": "referral_received",
+      "label": "Hospital receives referral, books specialist",
+      "actor": "clinician",
+      "event": "referral.received",
+      "sim_at": "2026-11-17T09:00:11.201176+02:00",
+      "message": "Hospital received the referral and booked a specialist appointment (Thu 19 Nov 13:00)."
+    },
+    {
+      "key": "reminder",
+      "label": "Reminder: unconfirmed appointment",
+      "actor": "system",
+      "event": "appointment.confirmation_requested",
+      "sim_at": "2026-11-18T18:00:07.320977+02:00",
+      "message": "Emma hasn't confirmed: reminder sent to her phone."
+    },
+    {
+      "key": "confirm_specialist",
+      "label": "Emma confirms (patient app)",
+      "actor": "patient",
+      "event": "appointment.confirmed",
+      "sim_at": "2026-11-18T18:00:09.648532+02:00",
+      "message": "Emma confirmed the specialist appointment (normally done by tapping Confirm in her app)."
+    },
+    {
+      "key": "attend_specialist",
+      "label": "Specialist → colonoscopy in 3 days",
+      "actor": "clinician",
+      "event": "procedure.requested",
+      "sim_at": "2026-11-19T13:30:09.786983+02:00",
+      "message": "Specialist requested a colonoscopy within 3 days: booked Sun 22 Nov 08:00, Endoscopy Unit 2."
+    },
+    {
+      "key": "disruption",
+      "label": "Endoscopy Unit 2 offline (48 h)",
+      "actor": "system",
+      "event": "resource.outage_started",
+      "sim_at": "2026-11-21T07:30:19.304098+02:00",
+      "message": null
+    },
+    {
+      "key": "recover",
+      "label": "Donny approves a recovery plan",
+      "actor": "admin",
+      "event": "admin.recovery_approved",
+      "sim_at": "2026-11-21T07:30:19.854631+02:00",
+      "message": null
+    },
+    {
+      "key": "confirm_new",
+      "label": "Emma confirms her new time",
+      "actor": "patient",
+      "event": "appointment.confirmed",
+      "sim_at": "2026-11-21T07:30:59.361981+02:00",
+      "message": "Emma confirmed her new colonoscopy time (Sat 21 Nov 11:30)."
+    },
+    {
+      "key": "pre_procedure",
+      "label": "Pre-procedure check-in request",
+      "actor": "system",
+      "event": "appointment.checkin_requested",
+      "sim_at": "2026-11-20T18:00:07.920366+02:00",
+      "message": "Pre-procedure check-in request sent. (Emma does not answer.)"
+    },
+    {
+      "key": "miss",
+      "label": "Emma misses the appointment",
+      "actor": "patient",
+      "event": "appointment.missed",
+      "sim_at": "2026-11-21T15:30:09.834185+02:00",
+      "message": "Emma Nieminen missed the appointment: care team alerted, 3 replacement slots evaluated (awaiting clinician)."
+    },
+    {
+      "key": "followup_rebook",
+      "label": "Care team authorises a new slot",
+      "actor": "clinician",
+      "event": "appointment.rescheduled",
+      "sim_at": "2026-11-21T15:30:12.996109+02:00",
+      "message": "Clinician authorised a new slot: Joensuu (PKKS), Sun 29 Nov 11:30; Emma notified."
+    },
+    {
+      "key": "attend_colonoscopy",
+      "label": "Colonoscopy + biopsies",
+      "actor": "clinician",
+      "event": "procedure.completed",
+      "sim_at": "2026-11-29T12:00:11.608181+02:00",
+      "message": "Colonoscopy done (Joensuu (PKKS)): biopsies sent to pathology."
+    },
+    {
+      "key": "histology",
+      "label": "Result recorded, staging booked",
+      "actor": "clinician",
+      "event": "pathology.result_recorded",
+      "sim_at": "2026-12-04T11:00:12.037628+02:00",
+      "message": "Clinician recorded the histology result (cancer confirmed); staging MRI booked."
+    },
+    {
+      "key": "staging",
+      "label": "Staging MRI + CT",
+      "actor": "clinician",
+      "event": "staging.completed",
+      "sim_at": "2026-12-06T15:00:08.624531+02:00",
+      "message": "Staging MRI and CT done."
+    },
+    {
+      "key": "mdt",
+      "label": "MDT treatment decision",
+      "actor": "clinician",
+      "event": "mdt.decision_recorded",
+      "sim_at": "2026-12-08T14:00:08.825917+02:00",
+      "message": "MDT decision recorded by clinicians (surgery); operation booked Thu 17 Dec 08:00."
+    },
+    {
+      "key": "treatment",
+      "label": "Treatment starts",
+      "actor": "clinician",
+      "event": "treatment.started",
+      "sim_at": "2026-12-17T12:00:09.947433+02:00",
+      "message": "Treatment started: surgery on story day 32, 31 days after referral."
+    }
+  ]
+}

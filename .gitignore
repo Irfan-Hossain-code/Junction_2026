@@ -13,3 +13,7 @@ __pycache__/
 node_modules/
 dist/
 *.tsbuildinfo
+
+# raw presentation recordings (large)
+presentation video/
+*Zone.Identifier
