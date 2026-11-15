@@ -112,3 +112,12 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
 - Tests: 60/60 (`backend/tests/test_ops.py` new, DB-free). Verified in Chrome: disruption → call (voice agent quoted backend numbers) → chat challenge → approval → Emma's phone notification.
 - Impact on Shams: care app additions are additive (Inbox component, two buttons). No existing route changed.
 - Outstanding: Modal secrets + deploy (needs approval); specialist-shortage disruption only listed (planned).
+
+### 2026-11-15 — Claude (irfan) — Three living twins + decision-support assistant
+- Summary:
+  - SimPy now supports a county `demand_surge`, which is no-op without it (model `crc-abm-0.5`). `backend/sim/twins.py` generates Baseline / Disruption (Southern surge) / MPC Recovery sequentially in a single process. Results: 73.4 % / 36.6 % / 53.3 % within 42 d.
+  - Map selector replaced: Baseline | Disruption | MPC Recovery + Δ, with history under Advanced. The Δ view colours hospitals by change in utilisation and hides absolute-load pulses; that pulse was why Raahe "glowed red".
+  - The Analysis chat is now `/twin/chat`: Nemotron first, Claude Haiku fallback, deterministic last. It is decision support: it recommends; approval is only for execution. It answers "why" with mechanisms, uses history, twin, area and alarm context, and labels out-of-county bottlenecks with their referral relationship.
+  - "Ask CancerFlow about this alarm" button. "⚙ Evaluate with MPC" runs `/twin/evaluate` (optimiser estimate, not simulated).
+- Finding: North Ostrobothnia's 7 operational alerts vs 0 network alarms is expected. The 7 are care-app clock/dwell alerts on 15 synthetic patients; network alarms are thresholds on simulated hospital metrics, and overload needs ≥ 95 % while Raahe is at 94 %. Both are now explained in the Alarms tab and to the assistant.
+- Tests: 60/60. Verified in Chrome: twin switching, Δ map, Recovery chat answer grounded in the optimiser plan.

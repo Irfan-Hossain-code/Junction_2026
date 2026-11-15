@@ -32,6 +32,23 @@ cd care-app && npx vite --port 5174                     # http://localhost:5174/
 
 **Typical numbers** (current seed): within 42 days, **before breakdown ≈ 95 %**, **no action ≈ 42 %**, **CancerFlow plan ≈ 78 %**. The 50/50 split scores about 65 % (*worse*). They are simulated and recomputed live, so quote what the screen shows.
 
+## The three living twins (national map)
+Selector on the map: **Baseline | Disruption | MPC Recovery** (+ **Δ** toggle). Old runs are under *Advanced · simulation history*.
+
+| Twin | What it is | Finland within 42 d (simulated) |
+|---|---|---|
+| Baseline | Normal Finland, no interventions | 73.4 % |
+| Disruption | **SYNTHETIC** referral surge: Helsinki, Vantaa-Kerava, Uusimaa ×1.6, Pirkanmaa ×1.4. Same capacity | 36.6 % (Lohja, Hyvinkää, Jorvi, HUS colonoscopy at 100 %) |
+| MPC Recovery | Same surge + CancerFlow response: stall monitoring, reminders in surge counties, behaviour-aware re-routing of ~223 colonoscopy referrals/week over existing capacity | 53.3 % (Jorvi, HUS still at 100 %: remaining bottleneck) |
+
+- **Fair comparison:** model `crc-abm-0.5`, same snapshot, seed 1000, 4 replications, 365 d horizon + 90 d warm-up. Disruption and Recovery share the same arrival stream.
+- **Regenerate:** `python -m backend.sim.twins`, single process, about 8 min. It never touches operational data.
+- **Recovery** uses the brain's national flow layer: the OR-Tools behaviour-aware optimiser. Resource redistribution is not modelled at national level. Investment is only *recommended* where overload remains, and is not simulated.
+- **Δ view:** hospitals coloured by the change in utilisation versus the comparison twin. Absolute-load pulses and alarm markers are hidden there.
+- **Demo questions:**
+  - Disruption: "Why is Southern Finland suddenly overloaded?"
+  - Recovery: "What did CancerFlow change?", "Which bottlenecks remain?", "Should we invest?" Use **⚙ Evaluate with MPC** for an optimiser estimate.
+
 ## Fallbacks
 - **Voice fails** (no mic or no network): use **Talk to CancerFlow** in Operations. It uses the same `/ops/command` and the same proposal.
 - **Claude unavailable:** rule parser for approve/reject/explain and "half to X and Y". Patient messages use templates.

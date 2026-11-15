@@ -178,7 +178,8 @@ export default function App() {
             {headline.local && <span>· {headline.local.nm}: <b className="num">{pct(headline.local.a, 0)} → {pct(headline.local.b, 0)}</b></span>}
           </div>) : <span className="meta">Original (baseline) scenario · pathway pack colorectal v1 · model crc-abm-0.4 (behavioural agents)</span>}
         <div className="spacer" />
-        <span className="meta" title={mod?.name}>{mod ? `Modified = ${mod.name.slice(0, 60)}${mod.name.length > 60 ? "…" : ""}` : "no modified scenario yet"}</span>
+        <span className="meta">{twin === "baseline" ? "Twin 1 · Baseline (reference)" : twin === "disruption" ? "Twin 2 · Disruption vs Baseline"
+          : twin === "recovery" ? "Twin 3 · MPC Recovery vs Disruption" : `History: ${(mod?.name || "").slice(0, 50)}`}</span>
       </div>
       {error && <div style={{ position: "fixed", bottom: 12, left: "50%", transform: "translateX(-50%)", zIndex: 99, background: "#3b1418", border: "1px solid var(--bad)", padding: "8px 14px", borderRadius: 8 }}
         onClick={() => setError(null)}>{error} (click to dismiss)</div>}
@@ -248,6 +249,8 @@ export default function App() {
               </div>
               <div className="legend-labels"><span>{legend.lo}</span><span>{legend.hi}</span></div>
               <div className="muted" style={{ fontSize: 10.5 }}>{legend.label} {mapMode.startsWith("obs") ? <Tag t="OBSERVED" /> : <Tag t="SIMULATED" />}</div>
+              {mapMode === "diff" && <div className="muted" style={{ fontSize: 10.5 }}>● hospital = change in utilisation vs {twin === "recovery" ? "Disruption" : "Baseline"}:
+                <span style={{ color: "var(--good)" }}> relieved</span> / <span style={{ color: "var(--bad)" }}>more loaded</span> / grey ±3 pp</div>}
               {ctlOpen && <div className="muted" style={{ fontSize: 10.5, marginTop: 3 }}>
                 ● hospital: size = synthetic {CAP_LABEL[capability].toLowerCase()} capacity, colour = utilisation (<span style={{ color: "var(--accent)" }}>ok</span> / <span style={{ color: "var(--warn)" }}>&gt;80%</span> / <span style={{ color: "var(--bad)" }}>&gt;93%</span>) ·
                 <span style={{ color: "var(--teal)" }}> ━</span> in-county / <span style={{ color: "var(--warn)" }}>━</span> cross-county flow · · health centre (OSM)

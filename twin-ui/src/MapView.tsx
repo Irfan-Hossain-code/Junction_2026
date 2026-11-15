@@ -310,14 +310,15 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
         updateTriggers: { getPosition: [tick] },
       }),
       new ScatterplotLayer({
-        id: "hospital-glow", data: hospitals, getPosition: (d: FacilityNode) => [d.lon, d.lat],
+        id: "hospital-glow", data: mode === "diff" ? [] : hospitals, getPosition: (d: FacilityNode) => [d.lon, d.lat],
         getRadius: (d: FacilityNode) => 5500 + 2600 * Math.sqrt(capUtil(d, capability)?.capacity_per_week ?? 1),
         radiusMinPixels: 9, getFillColor: (d: FacilityNode) => [...utilColor(capUtil(d, capability)?.sim.utilisation?.mean), 45] as RGBA,
         updateTriggers: { getFillColor: [net?.run_id, capability], getRadius: [net?.run_id, capability] }, transitions: { getFillColor: 600, getRadius: 600 },
       }),
       new ScatterplotLayer({
         id: "hospital-pulse",
-        data: hospitals.filter(d => (capUtil(d, capability)?.sim.utilisation?.mean ?? 0) > 0.93 || d.live.critical_alerts > 0),
+        // absolute-load pulse is meaningless in the Difference view (that is what made Raahe "glow red" there)
+        data: mode === "diff" ? [] : hospitals.filter(d => (capUtil(d, capability)?.sim.utilisation?.mean ?? 0) > 0.93 || d.live.critical_alerts > 0),
         getPosition: (d: FacilityNode) => [d.lon, d.lat], stroked: true, filled: false, lineWidthMinPixels: 1.5,
         getRadius: () => 6000 + ((tick / 18) % 60) * 450, radiusMinPixels: 8,
         getLineColor: () => [239, 83, 80, Math.max(0, 220 - ((tick / 18) % 60) * 3.6)],
@@ -364,7 +365,7 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
         getWidth: (d: any) => (d.id === "current" ? 3 : 2), jointRounded: true, capRounded: true,
       }),
       new ScatterplotLayer({
-        id: "alarms", data: layersOn.alarms ? alarms.filter(a => alarmPos(a)) : [], pickable: true,
+        id: "alarms", data: layersOn.alarms && mode !== "diff" ? alarms.filter(a => alarmPos(a)) : [], pickable: true,
         getPosition: (a: Alarm) => alarmPos(a)!, getRadius: 1, radiusUnits: "pixels",
         radiusMinPixels: 9, stroked: true, lineWidthMinPixels: 2,
         getFillColor: (a: Alarm) => [...SEV[a.severity], selectedAlarm?.id === a.id ? 255 : 200] as RGBA,
@@ -373,7 +374,7 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
         onClick: (i: any) => onSelectAlarm(i.object),
       }),
       new TextLayer({
-        id: "alarm-glyph", data: layersOn.alarms ? alarms.filter(a => alarmPos(a)) : [], getPosition: (a: Alarm) => alarmPos(a)!,
+        id: "alarm-glyph", data: layersOn.alarms && mode !== "diff" ? alarms.filter(a => alarmPos(a)) : [], getPosition: (a: Alarm) => alarmPos(a)!,
         getText: () => "!", getSize: 13, getColor: [10, 14, 24, 255], fontWeight: 800, getPixelOffset: [14, -14], fontFamily: "Inter, sans-serif",
       }),
       new TextLayer({
@@ -392,7 +393,7 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
     const style = { background: "rgba(9,16,30,.95)", border: "1px solid #283754", borderRadius: "8px", color: "#e7eef8", fontSize: "12px", padding: "8px 10px" };
     if (layer.id === "counties") {
       const c = counties[object.id], v = countyValue(object.id);
-      const lbl = mode === "sim" ? pct(v) + " within 42 d (simulated)" : mode === "diff" ? (v == null ? "–" : `${(100 * v).toFixed(1)} pp vs original (simulated)`)
+      const lbl = mode === "sim" ? pct(v) + " within 42 d (simulated)" : mode === "diff" ? (v == null ? "–" : `${(100 * v).toFixed(1)} pp vs comparison twin (simulated)`)
         : v == null ? "–" : OBS[mode].fmt(v) + " (observed)";
       return { html: `<b>${shortCounty(object.properties.name)}</b><br/>${lbl}${c ? `<br/><span style="color:#8da2c0">pop. ${Math.round(c.population).toLocaleString()}</span>` : ""}`, style };
     }
