@@ -113,3 +113,8 @@ ol.steps .link { margin-left: 6px; }
 .wave i:nth-child(5) { animation-delay: .4s; }
 @keyframes wv { 50% { height: 20px; } }
 @media (max-width: 760px) { .ops-drawer { top: auto; height: 62%; left: 8px; right: 8px; width: auto; } }
+.ai-bullets { margin: 6px 0; padding-left: 18px; }
+.ai-bullets li { margin: 4px 0; line-height: 1.45; }
+.ai-chat { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.ai-chat .qa .q { color: #bae6fd; font-size: 12px; }
+.ai-chat .qa .a { font-size: 12.5px; }

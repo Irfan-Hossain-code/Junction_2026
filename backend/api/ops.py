@@ -181,6 +181,18 @@ def ask(body: AskIn, conn=Depends(get_conn_dep)):
     return {**ex, "answer": nl.answer(body.question, facts)}
 
 
+class GroundedIn(BaseModel):
+    question: str
+    facts: dict[str, Any]
+
+
+@router.post("/answer")
+def grounded_answer(body: GroundedIn):
+    """Short conversational answer about ANY panel's facts (e.g. the twin's Analysis grounding data). Numbers in the
+    answer must appear in the facts, otherwise it is discarded (mode=fallback)."""
+    return nl.answer(body.question[:500], body.facts)
+
+
 # ------------------------------------------------------------------ commands (text box + voice share this)
 class CommandIn(BaseModel):
     text: str

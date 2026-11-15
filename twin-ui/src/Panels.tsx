@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AgentDetail, Alarm, Context, Interpretation, Recommendation, Selection, Summary, api, mergeParams, num, pct, shortCounty } from "./api";
+import { API, AgentDetail, Alarm, Context, Interpretation, Recommendation, Selection, Summary, api, mergeParams, num, pct, shortCounty } from "./api";
 
 export const Tag = ({ t }: { t: string }) => <span className={`tag ${t}`}>{t.toLowerCase()}</span>;
 
@@ -36,7 +36,8 @@ export function AIPanel({ ctx, summary, loading, view, tab, setTab, alarms, sele
       {tab === "analysis" && <div className="panel-b">
         {ctx && <div className="ai-issue"><b style={{ color: "var(--warn)" }}>Primary issue · </b>{ctx.primary_issue.headline} <Tag t="SIMULATED" /></div>}
         {loading || !summary ? (<>{[90, 100, 95, 70, 98, 85, 60].map((w, i) => <div key={i} className="skeleton" style={{ width: `${w}%` }} />)}</>)
-          : <div className="ai-text">{paras.map((p, i) => <p key={i}>{p}</p>)}</div>}
+          : <AnalysisBullets paras={paras} />}
+        {summary && <AnalysisChat facts={summary.facts} view={view} />}
         {summary?.rejected && (
           <div className="muted" style={{ fontSize: 11.5, marginTop: 6 }}>
             ⚠ The LLM draft was discarded because it used numbers not present in the data ({summary.rejected.numbers.join(", ")}). Showing the deterministic analysis instead.
@@ -360,4 +361,52 @@ export function InterventionStudio({ ctx, selection, onSimulated }: {
       </div>
     </div>
   );
+}
+
+
+// Analysis as short bullets (one sentence each) instead of paragraphs.
+function AnalysisBullets({ paras }: { paras: string[] }) {
+  const [all, setAll] = useState(false);
+  const sents = paras.join(" ").replace(/\s+/g, " ").split(/(?<=[.!?])\s+(?=[A-Z0-9])/).map(s => s.trim()).filter(s => s.length > 3);
+  const show = all ? sents : sents.slice(0, 5);
+  return (<div className="ai-text">
+    <ul className="ai-bullets">{show.map((s, i) => <li key={i}>{s}</li>)}</ul>
+    {sents.length > 5 && <button className="link" onClick={() => setAll(a => !a)}>{all ? "Show less" : `Show ${sents.length - 5} more`}</button>}
+  </div>);
+}
+
+// Small grounded conversation about the analysis; "Why did the results change?" as a toggle in comparison views.
+function AnalysisChat({ facts, view }: { facts: any; view: string }) {
+  const [q, setQ] = useState("");
+  const [log, setLog] = useState<{ q: string; a: string | null; mode: string }[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [whyOpen, setWhyOpen] = useState(false);
+  const [why, setWhy] = useState<{ a: string | null; mode: string } | null>(null);
+  useEffect(() => { setLog([]); setWhy(null); setWhyOpen(false); }, [facts]);
+  const ask = async (question: string) => {
+    const r = await fetch(API + "/ops/answer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, facts }) });
+    const j = await r.json().catch(() => ({}));
+    return { a: j.text ?? null, mode: j.mode ?? "fallback" };
+  };
+  const send = async (question: string) => {
+    if (!question.trim()) return;
+    setBusy(true); setQ("");
+    const r = await ask(question).catch(() => ({ a: null, mode: "fallback" }));
+    setLog(l => [...l, { q: question, ...r }]); setBusy(false);
+  };
+  const toggleWhy = async () => {
+    setWhyOpen(o => !o);
+    if (!why) setWhy(await ask("Why did the results change between the original and the modified scenario? Name the two or three biggest drivers.").catch(() => ({ a: null, mode: "fallback" })));
+  };
+  return (<div className="ai-chat">
+    {view !== "Original" && <div className="why">
+      <button className="link" onClick={toggleWhy}>{whyOpen ? "▾" : "▸"} Why did the results change?</button>
+      {whyOpen && (!why ? <div className="skeleton" /> : <p className="ans">{why.a ?? "No grounded answer available: see the bullets above."} {why.a && <span className="tag LLM">grounded</span>}</p>)}
+    </div>}
+    {log.map((m, i) => <div key={i} className="qa"><div className="q">{m.q}</div><div className="a">{m.a ?? "I can only answer with numbers in the data shown here; try rephrasing."}</div></div>)}
+    <form className="cmd" onSubmit={e => { e.preventDefault(); send(q); }}>
+      <input value={q} onChange={e => setQ(e.target.value)} placeholder="Ask about this analysis…" disabled={busy} />
+      <button className="btn" disabled={busy}>{busy ? "…" : "Ask"}</button>
+    </form>
+  </div>);
 }
