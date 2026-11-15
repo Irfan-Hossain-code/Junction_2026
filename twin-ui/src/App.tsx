@@ -4,8 +4,10 @@ import MapView, { LayersOn, MapMode, legendFor } from "./MapView";
 import { AIPanel, CompliancePanel, DelayPanel, InterventionStudio, Tag } from "./Panels";
 import SelectionCard from "./SelectionCard";
 import Optimiser from "./Optimiser";
+import OpsDrawer, { CallCenter, useOps } from "./Ops";
 
 type View = "original" | "modified" | "diff";
+type Twin = "baseline" | "disruption" | "recovery" | "history";
 const CAPS = ["colonoscopy", "ct_imaging", "mdt_crc", "crc_surgery", "oncology", "radiotherapy"];
 
 function useCache<T>() {
@@ -21,7 +23,10 @@ export default function App() {
   const [hcs, setHcs] = useState<any[]>([]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [modScenario, setModScenario] = useState<string | null>(null);
-  const [view, setView] = useState<View>("original");
+  const [twin, setTwin] = useState<Twin>("baseline");     // the three living twins (+ "history" = any stored run)
+  const [diffOn, setDiffOn] = useState(false);
+  const [histOpen, setHistOpen] = useState(false);
+  const [chatAlarm, setChatAlarm] = useState<Alarm | null>(null);
   const [selection, setSelection] = useState<Selection>({ scope: "national" });
   const [capability, setCapability] = useState("colonoscopy");
   const [mapMode, setMapMode] = useState<MapMode>("sim");
@@ -46,13 +51,23 @@ export default function App() {
   const [aiTab, setAiTab] = useState<"analysis" | "alarms" | "patient">("analysis");
   const [layersOn, setLayersOn] = useState<LayersOn>({ primary: true, private: false, patients: true, alarms: true });
   const netCache = useCache<Network>();
+  const { state: opsState, refresh: opsRefresh } = useOps();
+  const [opsOpen, setOpsOpen] = useState(false);
+  const [opsFocus, setOpsFocus] = useState(0);
+  const [opsPick, setOpsPick] = useState<string | null>(null);
+  const focusOps = () => { setOpsOpen(true); setOpsFocus(n => n + 1); };
 
   const baseline = scenarios.find(s => s.is_baseline);
   const baseRun = baseline?.latest_run ?? null;
   const mod = scenarios.find(s => s.id === modScenario);
-  const modRun = mod?.latest_run ?? null;
+  const twinRun = (k: string) => scenarios.find(s => s.twin === k)?.latest_run ?? null;
+  const runs: Record<string, string | null> = { baseline: baseRun, disruption: twinRun("disruption"), recovery: twinRun("recovery") };
+  const modRun = twin === "history" ? (mod?.latest_run ?? null) : twin === "baseline" ? null : runs[twin];
+  const view: View = twin === "baseline" || !modRun ? "original" : diffOn ? "diff" : "modified";
   const activeRun = view !== "original" && modRun ? modRun : baseRun;
-  const compareBase = view !== "original" && modRun ? baseRun : null;
+  // Disruption is compared with Baseline; MPC Recovery with the SAME disruption (the controller's value)
+  const compareBase = view === "original" ? null : twin === "recovery" ? (runs.disruption ?? baseRun) : baseRun;
+  const cmpRun = compareBase ?? baseRun;
 
   const loadScenarios = useCallback(async (prefer?: string) => {
     const s = await api.scenarios();
@@ -73,9 +88,9 @@ export default function App() {
     if (!activeRun) return;
     setLoadingNet(true);
     const a = netCache(`${activeRun}|${capability}`, () => api.network(activeRun, capability));
-    const b = baseRun ? netCache(`${baseRun}|${capability}`, () => api.network(baseRun, capability)) : Promise.resolve(null as any);
+    const b = cmpRun ? netCache(`${cmpRun}|${capability}`, () => api.network(cmpRun, capability)) : Promise.resolve(null as any);
     Promise.all([a, b]).then(([n, bn]) => { setNet(n); setBaseNet(bn); }).catch(e => setError(e.message)).finally(() => setLoadingNet(false));
-  }, [activeRun, baseRun, capability]);
+  }, [activeRun, cmpRun, capability]);
 
   // panels + AI summary follow selection and scenario
   useEffect(() => {
@@ -103,7 +118,7 @@ export default function App() {
     api.hcFlows(activeRun, selCounty).then(r => setHcFlows(r.flows)).catch(() => setHcFlows([]));
   }, [activeRun, selCounty]);
   // selected agent: same pid in the other scenario (common random numbers) for comparison
-  const otherRun = view === "original" ? modRun : baseRun;
+  const otherRun = view === "original" ? modRun : cmpRun;
   useEffect(() => {
     if (agentPid == null || !activeRun) { setAgent(null); return; }
     setAgentLoading(true); setExplain(null);
@@ -126,7 +141,7 @@ export default function App() {
   const onSimulated = async (runId: string, scenarioId: string) => {
     await loadScenarios(scenarioId);
     setModScenario(scenarioId);
-    setView("modified");
+    setTwin("history");
   };
 
   const headline = useMemo(() => {
@@ -153,6 +168,8 @@ export default function App() {
         <div className="brand"><span className="dot" />CancerFlow<small>National colorectal cancer pathway twin · Finland</small></div>
         <button className="btn opt-btn" onClick={() => setOptOpen(true)}>National optimiser</button>
         {optOpen && <Optimiser onClose={() => setOptOpen(false)} />}
+        <button className={`btn ops-btn ${opsState?.disruption ? "alarm" : ""}`} onClick={() => (opsOpen ? setOpsOpen(false) : focusOps())}>
+          {opsState?.disruption ? "● " : ""}Operations</button>
         <div className="spacer" />
         {headline ? (
           <div className="delta-chip">
@@ -161,7 +178,8 @@ export default function App() {
             {headline.local && <span>· {headline.local.nm}: <b className="num">{pct(headline.local.a, 0)} → {pct(headline.local.b, 0)}</b></span>}
           </div>) : <span className="meta">Original (baseline) scenario · pathway pack colorectal v1 · model crc-abm-0.4 (behavioural agents)</span>}
         <div className="spacer" />
-        <span className="meta" title={mod?.name}>{mod ? `Modified = ${mod.name.slice(0, 60)}${mod.name.length > 60 ? "…" : ""}` : "no modified scenario yet"}</span>
+        <span className="meta">{twin === "baseline" ? "Twin 1 · Baseline (reference)" : twin === "disruption" ? "Twin 2 · Disruption vs Baseline"
+          : twin === "recovery" ? "Twin 3 · MPC Recovery vs Disruption" : `History: ${(mod?.name || "").slice(0, 50)}`}</span>
       </div>
       {error && <div style={{ position: "fixed", bottom: 12, left: "50%", transform: "translateX(-50%)", zIndex: 99, background: "#3b1418", border: "1px solid var(--bad)", padding: "8px 14px", borderRadius: 8 }}
         onClick={() => setError(null)}>{error} (click to dismiss)</div>}
@@ -170,7 +188,10 @@ export default function App() {
           <MapView geo={geo} net={net} baseNet={baseNet} healthCentres={hcs} selection={selection} onSelect={setSelection}
             mode={mapMode} capability={capability} loading={loadingNet || !net}
             privateClinics={privateClinics} alarms={alarms} selectedAlarm={selectedAlarm} onSelectAlarm={onSelectAlarm}
-            agents={agents} agent={agent} onSelectAgent={onSelectAgent} hcFlows={hcFlows} layersOn={layersOn} />
+            agents={agents} agent={agent} onSelectAgent={onSelectAgent} hcFlows={hcFlows} layersOn={layersOn}
+            ops={opsOpen ? opsState : null} onOpsFacility={setOpsPick} opsFocus={opsFocus} />
+          {opsOpen && <OpsDrawer state={opsState} refresh={opsRefresh} onFocus={focusOps} pick={opsPick} clearPick={() => setOpsPick(null)} onClose={() => setOpsOpen(false)} />}
+          <CallCenter state={opsState} refresh={opsRefresh} onFocus={focusOps} />
 
           <div className="overlay crumbs">
             <button onClick={() => setSelection({ scope: "national" })}>Finland</button>
@@ -181,19 +202,24 @@ export default function App() {
           </div>
 
           <div className="overlay toggle-wrap">
-            <div className="seg">
-              <button className={view === "original" ? "on" : ""} onClick={() => setView("original")}>Original</button>
-              <button className={view === "modified" ? "on mod" : ""} disabled={!modRun} onClick={() => setView("modified")}>Modified</button>
-              <button className={view === "diff" ? "on diff" : ""} disabled={!modRun} onClick={() => setView("diff")}>Δ Difference</button>
+            <div className="seg twins">
+              <button className={twin === "baseline" ? "on" : ""} onClick={() => setTwin("baseline")} title="Normal Finland: the reference simulation">Baseline</button>
+              <button className={twin === "disruption" ? "on bad" : ""} disabled={!runs.disruption} onClick={() => setTwin("disruption")}
+                title="SYNTHETIC referral surge in Southern Finland (same capacity)">{runs.disruption ? "Disruption" : "Disruption (computing…)"}</button>
+              <button className={twin === "recovery" ? "on mod" : ""} disabled={!runs.recovery} onClick={() => setTwin("recovery")}
+                title="Same surge + CancerFlow's optimised response">{runs.recovery ? "MPC Recovery" : "MPC Recovery (computing…)"}</button>
+              <button className={`diff-t ${diffOn && twin !== "baseline" ? "on diff" : ""}`} disabled={twin === "baseline"} onClick={() => setDiffOn(d => !d)}
+                title="Colour the map by the change versus the comparison twin">Δ {twin === "recovery" ? "vs Disruption" : "vs Baseline"}</button>
             </div>
           </div>
 
           {selection.scope === "national" && (
             <div className="overlay scenario-pick">
-              <select value={modScenario ?? ""} onChange={e => setModScenario(e.target.value || null)} title="Modified scenario">
-                {scenarios.filter(s => !s.is_baseline && s.latest_run).map(s => <option key={s.id} value={s.id}>Modified: {s.name}</option>)}
-                {!scenarios.some(s => !s.is_baseline && s.latest_run) && <option value="">No modified scenario</option>}
-              </select>
+              <button className="link" onClick={() => setHistOpen(o => !o)}>{histOpen ? "▾" : "▸"} Advanced · simulation history</button>
+              {histOpen && <select value={twin === "history" ? (modScenario ?? "") : ""} onChange={e => { setModScenario(e.target.value || null); setTwin(e.target.value ? "history" : "baseline"); }}>
+                <option value="">— choose a stored run —</option>
+                {scenarios.filter(s => !s.is_baseline && !s.twin && s.latest_run).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>}
             </div>)}
 
           {!(agent && aiTab === "patient") && <SelectionCard selection={selection} net={net} baseNet={view !== "original" ? baseNet : null} ctx={ctx}
@@ -223,6 +249,8 @@ export default function App() {
               </div>
               <div className="legend-labels"><span>{legend.lo}</span><span>{legend.hi}</span></div>
               <div className="muted" style={{ fontSize: 10.5 }}>{legend.label} {mapMode.startsWith("obs") ? <Tag t="OBSERVED" /> : <Tag t="SIMULATED" />}</div>
+              {mapMode === "diff" && <div className="muted" style={{ fontSize: 10.5 }}>● hospital = change in utilisation vs {twin === "recovery" ? "Disruption" : "Baseline"}:
+                <span style={{ color: "var(--good)" }}> relieved</span> / <span style={{ color: "var(--bad)" }}>more loaded</span> / grey ±3 pp</div>}
               {ctlOpen && <div className="muted" style={{ fontSize: 10.5, marginTop: 3 }}>
                 ● hospital: size = synthetic {CAP_LABEL[capability].toLowerCase()} capacity, colour = utilisation (<span style={{ color: "var(--accent)" }}>ok</span> / <span style={{ color: "var(--warn)" }}>&gt;80%</span> / <span style={{ color: "var(--bad)" }}>&gt;93%</span>) ·
                 <span style={{ color: "var(--teal)" }}> ━</span> in-county / <span style={{ color: "var(--warn)" }}>━</span> cross-county flow · · health centre (OSM)
@@ -233,6 +261,8 @@ export default function App() {
 
         <AIPanel ctx={ctx} summary={summary} loading={loadingSum} view={view === "original" ? "Original" : view === "modified" ? "Modified" : "Difference"}
           tab={aiTab} setTab={setAiTab} alarms={scopedAlarms} selectedAlarm={selectedAlarm} onAlarm={onSelectAlarm}
+          chat={{ scope: selection.scope, id: selection.scope === "national" ? undefined : selection.id, run_id: activeRun ?? null, base_run_id: compareBase ?? null, twin }}
+          chatAlarm={chatAlarm} setChatAlarm={setChatAlarm}
           agent={agent} agentLoading={agentLoading} explain={explain} onExplain={onExplain} />
         <CompliancePanel ctx={ctx} onSelect={setSelection} view={view === "original" ? "Original" : "Modified"} />
         <DelayPanel ctx={ctx} />

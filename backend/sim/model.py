@@ -126,7 +126,10 @@ class Model:
         self.st = {k: Station(self.env, *k.split("|"), v) for k, v in snap.capacity.items() if v > 0}
         mids = list(snap.munis)
         pops = np.array([snap.munis[m]["pop"] for m in mids], dtype=float)
-        self.mids, self.mw = mids, pops / pops.sum()
+        df = getattr(snap, "demand_factor", None) or {}
+        wts = pops * np.array([df.get(snap.munis[m]["county"], 1.0) for m in mids]) if df else pops
+        self.surge = float(wts.sum() / pops.sum())           # total arrival multiplier (1.0 without a surge)
+        self.mids, self.mw = mids, wts / wts.sum()
         self.mcum = np.cumsum(self.mw)
         self.patients: list[PatientRec] = []
         self.dwell = {k: v.max_dwell_days.value for k, v in PACK.stages.items() if v.max_dwell_days}
@@ -325,7 +328,7 @@ class Model:
             yield from self.use(p, cap, stage)
 
     def arrivals(self, route):
-        lam = self.s.arrivals_per_week[route] / 7.0
+        lam = self.s.arrivals_per_week[route] / 7.0 * self.surge
         sf = self.s.screening_factor
         lam_max = lam * (max(sf.values()) if (route == "screening" and sf) else 1.0)
         rng = self.rng_arr

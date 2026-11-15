@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AgentDetail, Alarm, Context, Interpretation, Recommendation, Selection, Summary, api, mergeParams, num, pct, shortCounty } from "./api";
+import { API, AgentDetail, Alarm, Context, Interpretation, Recommendation, Selection, Summary, api, mergeParams, num, pct, shortCounty } from "./api";
 
 export const Tag = ({ t }: { t: string }) => <span className={`tag ${t}`}>{t.toLowerCase()}</span>;
 
@@ -14,7 +14,8 @@ function Delta({ a, b, pp = false, invert = false, d = 1, unit }: { a?: number |
 // ---------------------------------------------------------------- AI situation summary (+ alarms, patient inspector)
 type AITab = "analysis" | "alarms" | "patient";
 
-export function AIPanel({ ctx, summary, loading, view, tab, setTab, alarms, selectedAlarm, onAlarm, agent, agentLoading, explain, onExplain }: {
+export function AIPanel({ ctx, summary, loading, view, tab, setTab, alarms, selectedAlarm, onAlarm, agent, agentLoading, explain, onExplain, chat, chatAlarm, setChatAlarm }: {
+  chat?: ChatCtx; chatAlarm?: Alarm | null; setChatAlarm?: (a: Alarm | null) => void;
   ctx: Context | null; summary: Summary | null; loading: boolean; view: string; tab: AITab; setTab: (t: AITab) => void;
   alarms: Alarm[]; selectedAlarm: Alarm | null; onAlarm: (a: Alarm) => void;
   agent: AgentDetail | null; agentLoading: boolean; explain: { mode: string; text: string } | null | "loading"; onExplain: () => void;
@@ -31,12 +32,14 @@ export function AIPanel({ ctx, summary, loading, view, tab, setTab, alarms, sele
           {tab === "analysis" && summary && (summary.mode === "llm" ? <span className="tag LLM">nemotron · grounded</span> : <span className="tag FALLBACK">deterministic</span>)}
         </div>
       </div>
-      {tab === "alarms" && <AlarmList alarms={alarms} selected={selectedAlarm} onAlarm={onAlarm} />}
+      {tab === "alarms" && <AlarmList alarms={alarms} selected={selectedAlarm} onAlarm={onAlarm} live={ctx?.live}
+        onAsk={a => { setChatAlarm && setChatAlarm(a); setTab("analysis"); }} />}
       {tab === "patient" && <AgentInspector agent={agent} loading={agentLoading} explain={explain} onExplain={onExplain} view={view} />}
       {tab === "analysis" && <div className="panel-b">
         {ctx && <div className="ai-issue"><b style={{ color: "var(--warn)" }}>Primary issue · </b>{ctx.primary_issue.headline} <Tag t="SIMULATED" /></div>}
         {loading || !summary ? (<>{[90, 100, 95, 70, 98, 85, 60].map((w, i) => <div key={i} className="skeleton" style={{ width: `${w}%` }} />)}</>)
-          : <div className="ai-text">{paras.map((p, i) => <p key={i}>{p}</p>)}</div>}
+          : <AnalysisBullets paras={paras} />}
+        {summary && chat && <AnalysisChat chat={chat} view={view} alarm={chatAlarm} onClearAlarm={() => setChatAlarm && setChatAlarm(null)} />}
         {summary?.rejected && (
           <div className="muted" style={{ fontSize: 11.5, marginTop: 6 }}>
             ⚠ The LLM draft was discarded because it used numbers not present in the data ({summary.rejected.numbers.join(", ")}). Showing the deterministic analysis instead.
@@ -60,9 +63,12 @@ const ALARM_LABEL: Record<string, string> = {
   lost_to_follow_up: "Lost to follow-up", downstream_bottleneck: "Downstream bottleneck", throughput_drop: "Throughput drop",
 };
 
-function AlarmList({ alarms, selected, onAlarm }: { alarms: Alarm[]; selected: Alarm | null; onAlarm: (a: Alarm) => void }) {
+function AlarmList({ alarms, selected, onAlarm, onAsk, live }: { alarms: Alarm[]; selected: Alarm | null; onAlarm: (a: Alarm) => void;
+  onAsk: (a: Alarm) => void; live?: any }) {
   return (
     <div className="panel-b">
+      <div className="muted small alarm-key">Network alarms = thresholds on simulated hospital metrics (e.g. ≥ 95 % utilisation).
+        {live ? ` Separate from the ${live.open_alerts} operational patient alerts (care-app clocks on synthetic patients).` : ""}</div>
       {alarms.length === 0 && <div className="muted">No network alarm thresholds are crossed in this scenario and context.</div>}
       {alarms.map(a => (
         <div key={a.id} className={`alarm ${a.severity} ${selected?.id === a.id ? "on" : ""}`} onClick={() => onAlarm(a)}>
@@ -74,6 +80,7 @@ function AlarmList({ alarms, selected, onAlarm }: { alarms: Alarm[]; selected: A
               <div><b>Evidence:</b> {Object.entries(a.evidence).map(([k, v]) => `${k.replace(/_/g, " ")}: ${typeof v === "object" ? JSON.stringify(v) : v}`).join(" · ")}</div>
               <div><b>Duration:</b> {a.duration}</div>
               <div className="sug">→ {a.suggestion}</div>
+              <button className="btn" onClick={e => { e.stopPropagation(); onAsk(a); }}>Ask CancerFlow about this alarm</button>
             </div>)}
         </div>))}
     </div>);
@@ -317,6 +324,7 @@ export function InterventionStudio({ ctx, selection, onSimulated }: {
     <div className="panel area-studio">
       <div className="panel-h"><h3>Intervention studio</h3><span className="ctx">· {ctx ? shortCounty(ctx.context.name) : ""}</span></div>
       <div className="panel-b">
+        <div className="flow-steps"><span>Problem</span>→<span>Discuss</span>→<span>Evaluate</span>→<span>Compare</span>→<span>Recommend</span>→<span>Approve</span></div>
         {ctx?.primary_issue.top_station && (
           <div className="issue"><div className="lbl">Primary bottleneck</div>
             {ctx.primary_issue.top_station.capability_label} at {ctx.primary_issue.top_station.facility.replace(/\s*\(.*\)/, "")}: {pct(ctx.primary_issue.top_station.utilisation, 0)} utilised,
@@ -326,8 +334,10 @@ export function InterventionStudio({ ctx, selection, onSimulated }: {
         <div className="recs">
           {recs.map((r, i) => (
             <div key={r.id} className={`rec ${chosen[r.id] ? "on" : ""}`} onClick={() => setChosen(c => ({ ...c, [r.id]: !c[r.id] }))}>
-              <div className="t"><span className="n">{chosen[r.id] ? "✓" : i + 1}</span>{r.title}</div>
+              <div className="t"><span className="n">{chosen[r.id] ? "✓" : i + 1}</span>{r.title} <Provenance r={r} onOpen={onSimulated} /></div>
               <div className="r">{r.rationale}</div>
+              {r.evidence?.status === "optimizer_estimated" && <div className="r est">Optimizer estimate: overload {r.evidence.overload_before_per_week} → {r.evidence.overload_after_per_week}/wk,
+                {" "}{r.evidence.referrals_moved_per_week} referrals/wk moved{r.evidence.expected_acceptance != null ? `, ${Math.round(100 * r.evidence.expected_acceptance)} % expected to accept` : ""}. Simulate to validate.</div>}
               {chosen[r.id] && r.controls.map(c => {
                 const k = `${r.id}:${c.path}`, v = ctrl[k] ?? c.value;
                 return (<div key={k} className="ctl" onClick={e => e.stopPropagation()}>
@@ -357,7 +367,114 @@ export function InterventionStudio({ ctx, selection, onSimulated }: {
         {sim.running && <div className="progress"><i style={{ width: `${Math.min(97, (elapsed / 30) * 100)}%` }} /></div>}
         {sim.error && <div className="err">{sim.error}</div>}
         {!canRun && !sim.running && <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Select one or more recommendations, or interpret a custom request.</div>}
+        <div className="muted" style={{ fontSize: 10.5, marginTop: 6 }}>Simulating creates a what-if scenario only: nothing operational changes. Real changes need approval in Operations.</div>
       </div>
     </div>
   );
+}
+
+
+// Analysis as short bullets (one sentence each) instead of paragraphs.
+function AnalysisBullets({ paras }: { paras: string[] }) {
+  const [all, setAll] = useState(false);
+  const sents = paras.join(" ").replace(/\s+/g, " ").split(/(?<=[.!?])\s+(?=[A-Z0-9])/).map(s => s.trim()).filter(s => s.length > 3);
+  const show = all ? sents : sents.slice(0, 5);
+  return (<div className="ai-text">
+    <ul className="ai-bullets">{show.map((s, i) => <li key={i}>{s}</li>)}</ul>
+    {sents.length > 5 && <button className="link" onClick={() => setAll(a => !a)}>{all ? "Show less" : `Show ${sents.length - 5} more`}</button>}
+  </div>);
+}
+
+// The Analysis conversation (Nemotron first, grounded): decision support with history, scenario/area/alarm context.
+export type ChatCtx = { scope: string; id?: string; run_id: string | null; base_run_id: string | null; twin?: string };
+type Turn = { role: "user" | "assistant"; content: string; mode?: string; eval?: any };
+
+function renderAnswer(text: string) {
+  const lines = text.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const head = lines.filter(l => !l.startsWith("- ")).slice(0, 1);
+  const bullets = lines.filter(l => l.startsWith("- ")).map(l => l.slice(2));
+  const rest = lines.filter(l => !l.startsWith("- ")).slice(1);
+  return <>{head.map((h, i) => <p key={i} className="ans-h">{h}</p>)}
+    {bullets.length > 0 && <details open={bullets.length <= 2}><summary>{bullets.length} reasons</summary><ul className="bl">{bullets.map((b, i) => <li key={i}>{b}</li>)}</ul></details>}
+    {rest.map((h, i) => <p key={"r" + i} className="muted small">{h}</p>)}</>;
+}
+
+export function AnalysisChat({ chat, view, alarm, onClearAlarm }: { chat: ChatCtx; view: string; alarm?: Alarm | null; onClearAlarm?: () => void }) {
+  const [q, setQ] = useState("");
+  const [turns, setTurns] = useState<Turn[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [evaluation, setEvaluation] = useState<any>(null);
+  useEffect(() => { setTurns([]); setEvaluation(null); }, [chat.scope, chat.id, chat.run_id, chat.base_run_id]);
+  const call = async (history: Turn[], ev = evaluation) => {
+    const r = await fetch(API + "/twin/chat", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: history.map(t => ({ role: t.role, content: t.content })), scope: chat.scope, id: chat.id ?? null,
+        run_id: chat.run_id, base_run_id: chat.base_run_id, alarm_id: alarm?.id ?? null, evaluation: ev }) });
+    if (!r.ok) throw new Error(r.statusText);
+    return r.json();
+  };
+  const send = async (question: string) => {
+    if (!question.trim() || busy) return;
+    const h: Turn[] = [...turns, { role: "user", content: question }];
+    setTurns(h); setQ(""); setBusy("Thinking…");
+    try { const r = await call(h); setTurns([...h, { role: "assistant", content: r.text, mode: r.mode }]); }
+    catch { setTurns([...h, { role: "assistant", content: "The analysis service is unreachable right now.", mode: "error" }]); }
+    finally { setBusy(null); }
+  };
+  const runMpc = async () => {
+    setBusy("Evaluating with the MPC optimiser (about 30 s)…");
+    try {
+      const r = await fetch(API + "/twin/evaluate", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope: chat.scope, id: chat.id ?? null, run_id: chat.run_id, base_run_id: chat.base_run_id,
+          alarm_id: alarm?.id ?? null, capability: alarm ? null : "colonoscopy" }) });
+      const ev = await r.json(); setEvaluation(ev);
+      const h: Turn[] = [...turns, { role: "user", content: "Evaluate the options with the MPC and tell me what the estimate says.", eval: ev }];
+      const a = await call(h, ev);
+      setTurns([...h, { role: "assistant", content: a.text, mode: a.mode }]);
+    } catch { setTurns(t => [...t, { role: "assistant", content: "MPC evaluation failed; try again or use the Intervention Studio.", mode: "error" }]); }
+    finally { setBusy(null); }
+  };
+  const sugg = alarm ? ["What should we do about this alarm?", "Is this a local problem or a referral-flow problem?", "Should we buy capacity?"]
+    : chat.twin === "disruption" ? ["Why is Southern Finland suddenly overloaded?", "What happens if we reroute 30% of referrals to Turku?", "Where are the worst bottlenecks?"]
+    : chat.twin === "recovery" ? ["What did CancerFlow change?", "Why did the MPC choose these hospitals?", "Which bottlenecks remain?", "Should we invest in additional capacity?"]
+    : view !== "Original" ? ["Why did the results change?", "What should we do next?"] : ["Where are the biggest bottlenecks?", "Should we buy a new machine?"];
+  return (<div className="ai-chat">
+    {alarm && <div className="chat-ctx">Context: alarm · {alarm.title} <button className="link" onClick={onClearAlarm}>✕</button></div>}
+    {turns.map((t, i) => t.role === "user"
+      ? <div key={i} className="qa"><div className="q">{t.content}</div>{t.eval && <EvalCard ev={t.eval} />}</div>
+      : <div key={i} className="qa"><div className="a">{renderAnswer(t.content)}{t.mode && <span className={`tag ${t.mode === "deterministic" || t.mode === "error" ? "FALLBACK" : "LLM"}`}>{t.mode}</span>}</div></div>)}
+    {busy && <div className="busy"><span className="spinner sm" /> {busy}</div>}
+    <div className="chips">{sugg.map(s => <button key={s} className="chip" disabled={!!busy} onClick={() => send(s)}>{s}</button>)}
+      <button className="chip mpc" disabled={!!busy} onClick={runMpc} title="OR-Tools behaviour-aware optimiser on the active scenario (estimate, not a simulation)">⚙ Evaluate with MPC · available</button></div>
+    <form className="cmd" onSubmit={e => { e.preventDefault(); send(q); }}>
+      <input value={q} onChange={e => setQ(e.target.value)} placeholder="Ask, e.g. should we buy a new machine?" disabled={!!busy} />
+      <button className="btn" disabled={!!busy}>Ask</button>
+    </form>
+  </div>);
+}
+
+function EvalCard({ ev }: { ev: any }) {
+  if (ev?.status === "not_applicable") return (<div className="evalcard"><span className="tag FALLBACK">optimizer not applicable</span>
+    {ev.asked?.alarm ? ` · ${ev.asked.alarm.title}` : ""}<ul className="bl"><li>{ev.reason}</li><li>{ev.next_step}</li></ul></div>);
+  if (!ev?.existing_resources) return null;
+  const a = ev.existing_resources, b = ev.with_investment;
+  return (<div className="evalcard"><span className="tag HYPOTHESIS">{ev.tag}</span> {ev.scope} · {ev.capability}
+    <ul className="bl">
+      <li>Existing resources: overload {a.overload_before_per_week} → <b>{a.overload_after_per_week}</b>/wk, rerouting {a.referrals_rerouted_per_week}/wk{a.main_destinations?.length ? ` to ${a.main_destinations.join(", ")}` : ""}</li>
+      <li>With up to {b.budget_units} new units: overload → <b>{b.overload_after_per_week}</b>/wk {b.units_added?.length ? `(${b.units_added.join("; ")})` : "(none chosen)"}</li>
+      <li>Investment worth it: <b>{ev.investment_worth_it ? "yes" : "no"}</b></li>
+    </ul></div>);
+}
+
+
+const PROV: Record<string, [string, string, string]> = {
+  suggested: ["Suggested", "HYPOTHESIS", "Rule triggered by a simulated indicator. Not optimised or simulated yet."],
+  optimizer_estimated: ["Optimizer estimated", "DERIVED", "Evaluated by the OR-Tools strategic flow optimiser (expected value). Not simulated yet."],
+  simulation_validated: ["Simulation validated", "SIMULATED", "A SimPy run of this intervention exists for this area."],
+};
+function Provenance({ r, onOpen }: { r: Recommendation; onOpen: (runId: string, scenarioId: string, name: string) => void }) {
+  const st = r.evidence?.status || "suggested";
+  const [label, cls, tip] = PROV[st];
+  return <span className={`tag prov ${cls}`} title={`${tip}${r.evidence?.basis ? " " + r.evidence.basis : ""}`}
+    onClick={e => { if (st === "simulation_validated" && r.evidence?.run_id) { e.stopPropagation(); onOpen(r.evidence.run_id, r.evidence.scenario_id!, r.title); } }}>
+    {label}{st === "simulation_validated" ? " ↗" : ""}</span>;
 }

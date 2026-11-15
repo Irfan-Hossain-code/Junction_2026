@@ -222,7 +222,7 @@ def get_state(conn, pathway_id) -> dict[str, Any]:
     alerts = cur.execute("""SELECT id, rule_id, severity, status, message, responsible_role, responsible_facility_id,
                                    due_at, evidence, raised_at, resolved_at
                             FROM alert WHERE pathway_id=%s ORDER BY raised_at DESC""", (pathway_id,)).fetchall()
-    appts = cur.execute("""SELECT id, stage, facility_id, scheduled_for, status FROM appointment
+    appts = cur.execute("""SELECT id, stage, facility_id, scheduled_for, status, confirmed_at FROM appointment
                            WHERE pathway_id=%s ORDER BY scheduled_for""", (pathway_id,)).fetchall()
     stage_obj = lambda s: {"id": s, "label": pack.stages[s].label, "level": pack.stages[s].level,
                            "capability": pack.stages[s].capability, "actors": pack.stages[s].actors}

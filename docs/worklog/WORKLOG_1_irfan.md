@@ -2,10 +2,18 @@
 
 Shared coordination log for Irfan's Claude instance and Shams's AI assistant. Entries below are **append-only**; only CURRENT STATUS is edited in place. Once this file gets long, continue in `WORKLOG_2_irfan.md`.
 
-## CURRENT STATUS (last updated 2026-11-14 Sat)
+## CURRENT STATUS (last updated 2026-11-15 Sun 03:30)
 
 | Area | Status |
 |---|---|
+| Backend | API + **operations layer** (`/ops/*`, migration 004). **60 tests pass** |
+| Frontend / integration | Twin: **Operations drawer + incoming ElevenLabs call**. Care app: inbox / confirm / follow-up. All on ONE shared state |
+| Database | Aiven PG, migrations 001–004 |
+| Simulation / optimisation | SimPy twin, OR-Tools, brain (`backend/mpc/pathway`) now driven by live slots via `ops/evaluate.py` |
+| Blockers | **Modal deploy needs a human:** `python deploy/sync_secrets.py` (pushes keys), then build + `modal deploy` (see FINAL_DEMO / below) |
+| Next priorities | 1) rehearse `docs/FINAL_DEMO.md` 2) deploy 3) merge `final-demo` → main |
+
+---|---|
 | Backend | **API working** (pathways, events, alerts, worklist, facilities, regions, demo clock, WS). 24 tests pass |
 | Frontend / integration | **Twin UI working** (`twin-ui/`, http://localhost:5173). Shams: care app against the same API (`docs/HANDOFF.md`) |
 | Database | Aiven PG 18 + PostGIS, migrations 001–002. Real reference data loaded. 600 synthetic pathways + 4 demo stories |
@@ -95,3 +103,55 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
 - Found and fixed while building: ship-lag precedence semantics, partial-solve guard, urgent patients under-protected by π-weighting (now conservative + buffer), breach-minimisation sacrificing lost causes (severe tier), no incentive to treat earlier than target (tie-break), NaN in JSON.
 - Result (illustrative East Finland, 60 pts, 30 reps, committed results file): FIFO 28.3 % → B national 53.9 % within target, urgent breaches 6.5 → 0.7 (priority greedy 0.8), weighted lateness −48 %, no new capacity, 0 violations. Run-to-run ±2 pp (wall-clock solver limits). Diagnostics-first: colonoscopy −27 %, treatment unchanged. Relocation predicted better but rejected by replay.
 - API `/mpc/brain/*` (flag), twin UI "National optimiser" modal, `docs/BRAIN.md`. Tests: 11 new (report §15), suite 55/55.
+
+### 2026-11-15 — Claude (irfan) — Final demo integration (ops layer, voice, patient agents)
+- Summary: Emma's storyline end to end on shared state: GP booking (phone) → urgent referral → reminder/confirm → colonoscopy on Endoscopy Unit 2 → **unit offline 48 h** (real slot blocking) → brain evaluates on live free slots (before / no action / optimiser) → incoming **ElevenLabs** call (client tools → `/ops/*`) → Donny's own proposal evaluated and challenged (overload, acceptance) → human approval → idempotent re-booking events + notifications → persona patient agents reply (Claude Haiku phrases fixed decisions), declines trigger a re-plan → missed appointment → care-team follow-up (clinician authorises) → result, staging MRI, MDT, surgery (≈31 d after referral).
+- Choice: **colonoscopy unit, not MRI**, as the disrupted resource. MRI is not a diagnostic step for colorectal cancer; it appears as staging after confirmation.
+- Files: `backend/ops/*`, `backend/api/ops.py`, `backend/db/migrations/004_ops.sql`, `twin-ui/src/{Ops.tsx,ops.css,MapView.tsx,App.tsx,Panels.tsx}`, `care-app/src/{api.ts,screens/PatientHome.tsx,screens/DoctorWorklist.tsx}`, `deploy/sync_secrets.py`, `docs/FINAL_DEMO.md`
+- API/schema changes: `/ops/*` (new, additive); `appointment.confirmed_at`; `GET /pathways/{id}` appointments now include `confirmed_at`.
+- Tests: 60/60 (`backend/tests/test_ops.py` new, DB-free). Verified in Chrome: disruption → call (voice agent quoted backend numbers) → chat challenge → approval → Emma's phone notification.
+- Impact on Shams: care app additions are additive (Inbox component, two buttons). No existing route changed.
+- Outstanding: Modal secrets + deploy (needs approval); specialist-shortage disruption only listed (planned).
+
+### 2026-11-15 — Claude (irfan) — Three living twins + decision-support assistant
+- Summary:
+  - SimPy now supports a county `demand_surge`, which is no-op without it (model `crc-abm-0.5`). `backend/sim/twins.py` generates Baseline / Disruption (Southern surge) / MPC Recovery sequentially in a single process. Results: 73.4 % / 36.6 % / 53.3 % within 42 d.
+  - Map selector replaced: Baseline | Disruption | MPC Recovery + Δ, with history under Advanced. The Δ view colours hospitals by change in utilisation and hides absolute-load pulses; that pulse was why Raahe "glowed red".
+  - The Analysis chat is now `/twin/chat`: Nemotron first, Claude Haiku fallback, deterministic last. It is decision support: it recommends; approval is only for execution. It answers "why" with mechanisms, uses history, twin, area and alarm context, and labels out-of-county bottlenecks with their referral relationship.
+  - "Ask CancerFlow about this alarm" button. "⚙ Evaluate with MPC" runs `/twin/evaluate` (optimiser estimate, not simulated).
+- Finding: North Ostrobothnia's 7 operational alerts vs 0 network alarms is expected. The 7 are care-app clock/dwell alerts on 15 synthetic patients; network alarms are thresholds on simulated hospital metrics, and overload needs ≥ 95 % while Raahe is at 94 %. Both are now explained in the Alarms tab and to the assistant.
+- Tests: 60/60. Verified in Chrome: twin switching, Δ map, Recovery chat answer grounded in the optimiser plan.
+
+### 2026-11-15 — Claude (irfan) — Final integration: decision support, hierarchical MPC, Emma director
+- **A (decision support):**
+  - Root cause of the Kainuu bug: the staging alarm had no resource, so the UI defaulted to colonoscopy, and the investment pass could add capacity anywhere in Finland.
+  - `/twin/evaluate` now resolves alarm → county / stage → resource. It returns `not_applicable` for process delays with idle capacity and limits investment to the selected region.
+  - Recommendation provenance: suggested / optimizer_estimated / simulation_validated (`twin_context.mark_validated`). The chat prompt separates intents.
+- **B (hierarchical MPC):**
+  - Inner local repair vs outer whole-pathway MIP, with documented escalation thresholds (`ops/evaluate.LOCAL`).
+  - Plan versions (state digest), with stale-plan rejection and automatic recompute at approval.
+  - The follow-up after a no-show is scored by the outer model.
+  - Closed-loop receding-horizon brain (`mpc/pathway/closedloop.py`, `/mpc/brain/closed_loop`): 47.8 % vs 43.6 % open loop, 0 overbooking.
+- **C (Emma director):**
+  - `reset_story.py`; `ops_story_event` log (migration 005).
+  - Ordered, idempotent steps with failed/current state; app-completed steps detected from the shared state; "show next in" hints.
+  - Emma's marker and route on the map; care-app demo page takes `?patient=&doctor=`.
+- **Tests:** `test_final_story.py` (context, provenance, reset idempotent + scoped, full 17 steps with outage / stale / no-overbooking / no-show / cross-app) → 4/4. Existing suite 60/60.
+- **Incident:** I stopped the Windows `wslrelay` process (it owned port 8000), which broke `localhost` forwarding to WSL. Servers inside WSL keep running. Fix: `wsl --shutdown` and restart the servers (needed anyway to load the new code).
+
+### 2026-11-15 — Claude (irfan) — Voice agent: real MPC tools + conversation control
+- **Root causes found:**
+  - Voice approval went through natural-language `/ops/command`. Phrasing like "...move the patients" failed the rule check.
+  - A stale plan raised an exception after writing its recompute, so the request rolled back and every retry hit the same stale plan.
+  - Alternatives were looked up by ACTIVE outage only, so they failed after the 48 h window.
+  - No `end_call` tool, and late tool results were still spoken.
+  - The story tests reset the shared demo DB during a live call.
+- **Fixes:**
+  - Typed `/ops/voice/*` tools and `approve_checked` (savepoint, commit, structured outcome, approval hold, explicit-words check).
+  - `rank_options` follows the clinical hierarchy, with lateness, severe-delay and treatment metrics.
+  - `recovery_context`.
+  - Orchestrator with request ids, de-duplication, supersession and stale suppression.
+  - Advisory lock between reset and agent replies (it deadlocked in tests).
+  - Baseline skipped when the original slots are past.
+  - Story tests gated behind `CANCERFLOW_STORY_TESTS=1`.
+- **Tests:** regular 64 passed (4 gated skipped); gated story + voice 8/8; orchestrator 5/5 (node).

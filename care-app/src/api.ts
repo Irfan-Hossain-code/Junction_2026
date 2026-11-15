@@ -44,7 +44,11 @@ export type PathwayEvent = {
   occurred_at: string; recorded_at: string; payload: Record<string, any>; tag: string;
 };
 
-export type Appointment = { id: string; stage: string; facility_id: string | null; scheduled_for: string; status: string };
+export type Appointment = { id: string; stage: string; facility_id: string | null; scheduled_for: string; status: string; confirmed_at?: string | null };
+
+/** Shared operations layer (/ops): simulated notifications for patients / units. */
+export type OpsNotification = { id: string; audience: string; severity: "info" | "warning" | "critical"; kind: string; title: string; body: string;
+  payload: Record<string, any>; created_at: string; read_at: string | null; pathway_id: string | null };
 
 export type Patient = {
   id: string; display_name: string; birth_year: number | null; sex: string | null; tag: string;
@@ -145,6 +149,10 @@ export const api = {
   pack: (id: string) => req<{ stages: Record<string, { label: string }>; universal_stages?: Record<string, { label: string }> }>(
     "GET", `/packs/${id}`),
   clock: () => req<{ now: string }>("GET", "/clock"),
+  notifications: () => req<OpsNotification[]>("GET", "/ops/notifications"),
+  confirmAppointment: (id: string) => req<{ confirmed: boolean }>("POST", `/ops/appointments/${id}/confirm`),
+  authoriseFollowup: (ivId: string) => req<any>("POST", `/ops/followup/${ivId}/authorise`, { option: 0, actor: currentUserId || "nurse-pkks-scr" }),
+  reportSymptoms: () => req<{ message: string }>("POST", "/ops/story/book_gp"),
   setClock: (offset_days: number) => req<{ now: string; rescanned_pathways: number }>("POST", "/admin/clock", { offset_days }),
 };
 

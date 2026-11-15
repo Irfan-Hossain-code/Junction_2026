@@ -18,7 +18,7 @@ from backend.sim import params as P
 from backend.sim.model import Model, score
 from backend.sim.snapshot import Snapshot, apply_scenario, build_snapshot
 
-MODEL_VERSION = "crc-abm-0.4"
+MODEL_VERSION = "crc-abm-0.5"   # 0.5: county demand surge (no change without demand_surge)
 
 
 def _one(args):
@@ -103,14 +103,15 @@ def persist(conn, scenario_id, snap: Snapshot, scenario_params: dict, rows: list
     return str(rid)
 
 
-def run_scenario(conn, scenario_id, base: Snapshot | None = None, reps=4, seed=1000, horizon=365, warmup=90) -> dict:
+def run_scenario(conn, scenario_id, base: Snapshot | None = None, reps=4, seed=1000, horizon=365, warmup=90,
+                 parallel: bool = True) -> dict:
     sc = conn.execute("SELECT params FROM scenario WHERE id=%s", (scenario_id,)).fetchone()
     if not sc:
         raise KeyError(f"scenario {scenario_id}")
     base = base or build_snapshot(conn)
     snap = apply_scenario(base, sc[0] or {})
     started = datetime.now(timezone.utc)
-    rows, secs, pats = run_snapshot(snap, reps, seed, horizon, warmup, with_patients=True)
+    rows, secs, pats = run_snapshot(snap, reps, seed, horizon, warmup, parallel=parallel, with_patients=True)
     rid = persist(conn, scenario_id, snap, sc[0] or {}, rows, reps, seed, horizon, warmup, started)
     with conn.cursor() as cur:
         cur.executemany("""INSERT INTO sim_patient(run_id,pid,route,county,municipality,archetype,attrs,journey,outcome)

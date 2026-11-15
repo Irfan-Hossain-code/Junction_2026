@@ -3,6 +3,7 @@ import { Alert, api, PathwaySummary } from "../api";
 import { useAuth } from "../auth";
 import { AlertCard, ErrorNote, Header, SevBadge, Spinner, Tag } from "../components";
 import { daysBetween, go, plural, ROUTE_LABEL, sevRank, useLive } from "../lib";
+import { Inbox } from "./PatientHome";
 
 type Filter = "all" | "alerts" | "critical";
 
@@ -62,6 +63,7 @@ export default function DoctorWorklist() {
           <button className="btn primary" onClick={() => setShowNew(true)}>+ New pathway</button>
         </div>
 
+        <Inbox />
         {wl.error && <ErrorNote msg={wl.error} onRetry={wl.reload} />}
         {!wl.data && !wl.error && <div className="center pad"><Spinner /></div>}
 

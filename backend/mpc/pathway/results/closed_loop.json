@@ -1,0 +1,96 @@
+{
+ "instance": "East Finland illustrative pathway instance",
+ "disruption": {
+  "provider": "LAB_E",
+  "capability": "pathology",
+  "days": [
+   3,
+   10
+  ],
+  "label": "Eastern Finland shared pathology lab offline days 3-9"
+ },
+ "replications": 3,
+ "solver_time_limit_s": 8.0,
+ "replan_every_days": 7,
+ "event_triggered": "re-solve when the outage is first observed",
+ "note": "Same executor, same patients, same random numbers and the same outage for both modes. The open loop plans once on nominal capacity; the closed loop re-plans on observed state (completed stages, used capacity, declined hospitals, observed outages). SIMULATED, illustrative instance.",
+ "open_loop": {
+  "kpis": {
+   "pct_within_target": 43.61,
+   "urgent_breaches": 2.0,
+   "breaches": 11.33,
+   "weighted_lateness_days": 175.27,
+   "mean_treatment_day": 22.26,
+   "routed_samples": 23.67,
+   "transfers": 3.33,
+   "lost_to_follow_up": 0.0,
+   "overbooked_slots": 0.0
+  },
+  "epochs": [
+   {
+    "day": 0,
+    "patients_open": 60,
+    "status": "partial",
+    "outage_known": false
+   }
+  ]
+ },
+ "closed_loop": {
+  "kpis": {
+   "pct_within_target": 47.78,
+   "urgent_breaches": 1.0,
+   "breaches": 10.33,
+   "weighted_lateness_days": 92.8,
+   "mean_treatment_day": 20.36,
+   "routed_samples": 16.0,
+   "transfers": 3.33,
+   "lost_to_follow_up": 0.0,
+   "overbooked_slots": 0.0
+  },
+  "epochs": [
+   {
+    "day": 0,
+    "patients_open": 60,
+    "status": "partial",
+    "outage_known": false
+   },
+   {
+    "day": 3,
+    "patients_open": 59,
+    "status": "partial",
+    "outage_known": true
+   },
+   {
+    "day": 7,
+    "patients_open": 59,
+    "status": "partial",
+    "outage_known": true
+   },
+   {
+    "day": 14,
+    "patients_open": 46,
+    "status": "partial",
+    "outage_known": true
+   },
+   {
+    "day": 21,
+    "patients_open": 28,
+    "status": "optimal",
+    "outage_known": true
+   },
+   {
+    "day": 28,
+    "patients_open": 6,
+    "status": "optimal",
+    "outage_known": true
+   },
+   {
+    "day": 35,
+    "patients_open": 2,
+    "status": "optimal",
+    "outage_known": true
+   }
+  ]
+ },
+ "runtime_s": 118.7
+}

@@ -1,6 +1,6 @@
 # HANDOFF: read this first (for any AI coding assistant on this repo)
 
-_Last updated: 2026-11-14 · Keep this file short. Full design: `docs/CANCERFLOW.md`. History: `docs/worklog/`._
+_Last updated: 2026-11-15 · Keep this file short. Full design: `docs/CANCERFLOW.md`. History: `docs/worklog/`._
 
 ## What this is
 CancerFlow: one Python backend with two TypeScript front-ends.
@@ -34,6 +34,15 @@ Hybrid agent-based + SimPy: behavioural patient agents (offers, declines, no-sho
 
 ## Brain (end-to-end pathway optimiser, same flag)
 `backend/mpc/pathway/`: multi-stage lexicographic MIP + baselines + stochastic replay + validator + counterfactual benchmark. With `CANCERFLOW_MPC=1`: `GET /mpc/brain/benchmark`, `POST /mpc/brain/explain`, `GET /mpc/brain/patient/{pid}` (care app: original vs recommended pathway, actions need approval). Docs: `docs/BRAIN.md`.
+
+## Final demo: operations layer (2026-11-15, branch `final-demo`)
+**Read `docs/FINAL_DEMO.md` first.** Shared state for the care app, twin and voice: `backend/ops/` + `backend/api/ops.py` (always mounted, `/ops/*`), migration `004_ops.sql`.
+- **Tables:** `ops_resource`, `ops_slot` (real occupancy), `ops_disruption`, `ops_intervention` (+`_log`, lifecycle DETECTED→…→APPLIED/REJECTED/FAILED/SUPERSEDED), `ops_notification` (dedupe keys), `ops_patient_agent` (persona + memory). `appointment.confirmed_at` was added.
+- **Brain adapter** (`ops/evaluate.py`): live FREE slots → `backend.mpc.pathway` instance → solve / greedy / replay. Recovery options: before breakdown, no action, optimiser, admin proposal, re-plan.
+- **Story** (`ops/story.py`): Emma's steps post real events through `svc.append_event` (same validation as the care app). Reset closes earlier demo pathways with WITHDRAWN events. It never deletes events and never touches other patients.
+- **Care app** (backward compatible): `Inbox` (`GET /ops/notifications`, Confirm → `POST /ops/appointments/{id}/confirm`), Emma's "I have symptoms" button, care-team follow-up authorisation in the worklist.
+- **Voice:** ElevenLabs agent with client tools (`backend/ops/voice_setup.py`); the browser executes them against `/ops/*`. `GET /ops/voice/session` returns a signed URL.
+- **LLMs:** Claude Haiku (`ANTHROPIC_API_KEY`) parses commands and phrases patient replies; Nemotron is the fallback. All numbers are grounded.
 
 ## Endpoints
 See `documentation/backend/app_backend_routes.md` (contracts + examples). Live OpenAPI at `/docs`. Generate TS types with `npx openapi-typescript http://localhost:8000/openapi.json -o src/api.d.ts`.

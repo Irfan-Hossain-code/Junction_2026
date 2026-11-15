@@ -86,3 +86,12 @@ def explain():
         elif t:
             out["rejected"] = llm.ungrounded_numbers(t, facts)[:6]
     return out
+
+
+@router.get("/closed_loop")
+def closed_loop():
+    """Stored open- vs closed-loop comparison (python -m backend.mpc.pathway.closedloop)."""
+    f = RESULTS / "closed_loop.json"
+    if not f.exists():
+        raise HTTPException(404, "not computed yet: python -m backend.mpc.pathway.closedloop")
+    return clean(json.loads(f.read_text(encoding="utf-8")))

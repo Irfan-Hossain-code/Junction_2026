@@ -315,6 +315,7 @@ async def stream(ws: WebSocket):
 # ------------------------------------------------------------------ digital twin (simulation / optimisation)
 import backend.api.twin_ai  # noqa: E402,F401  (registers /twin/context, /summary, /interpret, /simulate)
 import backend.api.twin_agents  # noqa: E402,F401  (registers /twin/anomalies, /patients, /hc_flows)
+import backend.api.twin_chat  # noqa: E402,F401  (registers /twin/chat, /twin/evaluate)
 from backend.api.twin import router as twin_router  # noqa: E402
 
 app.include_router(twin_router)
@@ -322,6 +323,10 @@ app.include_router(twin_router)
 from backend.api.care import router as care_router  # noqa: E402  (care app ↔ twin bridge, read-only)
 
 app.include_router(care_router)
+
+from backend.api.ops import router as ops_router  # noqa: E402  (shared operations layer: disruptions, interventions, voice)
+
+app.include_router(ops_router)
 
 # ------------------------------------------------------------------ experimental MPC layer (feature flag, default OFF)
 from backend.mpc.coordinator import enabled as _mpc_enabled  # noqa: E402

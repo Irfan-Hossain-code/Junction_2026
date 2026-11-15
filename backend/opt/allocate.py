@@ -71,6 +71,7 @@ def demand(snap: Snapshot, cap: str) -> dict:
     for mid, m in snap.munis.items():
         share = m["pop"] / tot
         sf = snap.screening_factor.get(m["county"], 1.0) if snap.screening_factor else 1.0
+        share *= (getattr(snap, "demand_factor", None) or {}).get(m["county"], 1.0)
         out[mid] = share * (snap.arrivals_per_week["screening"] * sf * up["screening"] +
                             snap.arrivals_per_week["symptomatic"] * up["symptomatic"])
     return out
@@ -80,7 +81,7 @@ def optimise(snap: Snapshot, cap: str = "colonoscopy", budget_units: int = 4, un
              rho: float = 0.85, max_travel_min: float = 180.0, cross_yta_penalty_min: float = 30.0,
              w_over: float = 1000.0, w_eq: float = 2.0, w_trav: float = 1.0, w_move: float = 20.0,
              time_limit_s: int = 20, behavioral: bool = False, restrict_counties: list | None = None,
-             w_decline: float = 60.0) -> dict:
+             w_decline: float = 60.0, invest_facilities: list | None = None) -> dict:
     """behavioral=True: expected-value approximation of the agent model inside the MIP.
     a_mf = P(patient accepts an offer at f | travel), mixture over archetypes (same formula as the simulator,
     waits assumed equal); declined demand returns to the home hospital; slots consumed = completed / P(attend)."""
@@ -123,7 +124,7 @@ def optimise(snap: Snapshot, cap: str = "colonoscopy", budget_units: int = 4, un
         for (m, f) in list(cost):
             if f != base[m]:
                 cost[m, f] = acc[m, f] * cost[m, f] + (1 - acc[m, f]) * snap.travel.get(f"{m}|{base[m]}", cost[m, f])
-    y = {f: s.IntVar(0, budget_units, f"y[{f}]") for f in facs}
+    y = {f: s.IntVar(0, budget_units if (invest_facilities is None or f in invest_facilities) else 0, f"y[{f}]") for f in facs}
     over = {f: s.NumVar(0, s.infinity(), f"over[{f}]") for f in facs}
     z = s.NumVar(0, s.infinity(), "z")
     by_m, by_f = defaultdict(list), defaultdict(list)

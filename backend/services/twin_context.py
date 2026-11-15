@@ -194,7 +194,11 @@ def recommendations(snap: Snapshot, info: dict, stations: list[dict], dl: dict, 
                           + ", ".join(snap.facilities[d]["name"] for d in dest[:3]) + ", with transport support",
                 "rationale": f"OR-Tools plan that accounts for patient acceptance (expected {100 * (acc or 0):.0f} % accept, with transport "
                              f"support) and no-shows; {top['facility']} {CAP_LABEL[cap]} is at {100 * (top['utilisation'] or 0):.0f} % (SIMULATED).",
-                "params": {"routing_set": rs, "transport_support": restrict or True}, "controls": []})
+                "params": {"routing_set": rs, "transport_support": restrict or True}, "controls": [],
+                "evidence": {"status": "optimizer_estimated", "model": "OR-Tools strategic network-flow (expected value, behaviour-aware)",
+                             "scope": info["name"], "resource": CAP_LABEL[cap],
+                             "overload_before_per_week": plan["overload_before"], "overload_after_per_week": plan["overload_after"],
+                             "referrals_moved_per_week": plan["moved_per_week"], "expected_acceptance": acc}})
     pilot = P.PRIVATE_PILOT_FACILITY
     if pilot in snap.facilities and info.get("county") == snap.facilities[pilot]["county"]:
         recs.append({
@@ -213,7 +217,24 @@ def recommendations(snap: Snapshot, info: dict, stations: list[dict], dl: dict, 
                          f"{top['capacity_per_week'] or 0:.1f} slots/week (SYNTHETIC capacity, SIMULATED load).",
             "params": {"capacity": [{"facility_id": top["facility_id"], "capability": cap, "add_per_week": 5}]},
             "controls": [{"path": "capacity.0.add_per_week", "label": "Added slots / week", "min": 1, "max": 20, "step": 1, "value": 5}]})
+    for r in recs:                      # provenance: only claim what was actually computed
+        r.setdefault("evidence", {"status": "suggested",
+                                  "basis": "rule triggered by a simulated indicator; not optimised or simulated yet"})
     return recs[:5]
+
+
+def mark_validated(conn, recs: list[dict], info: dict) -> list[dict]:
+    """A recommendation is 'simulation_validated' only if a stored SimPy run of it exists for this area
+    (the Intervention Studio names its runs '<area>: <title> + ...')."""
+    short = info["name"].replace(" wellbeing services county", "")
+    for r in recs:
+        row = conn.execute("""SELECT s.id, r.id FROM scenario s JOIN sim_run r ON r.scenario_id=s.id AND r.status='done'
+                              WHERE s.name ILIKE %s AND s.name ILIKE %s ORDER BY r.finished_at DESC LIMIT 1""",
+                           (short + ":%", "%" + r["title"] + "%")).fetchone()
+        if row:
+            r["evidence"] = {**r.get("evidence", {}), "status": "simulation_validated", "scenario_id": str(row[0]), "run_id": str(row[1]),
+                             "basis": "SimPy run with behavioural agents stored for this area (open it to compare)"}
+    return recs
 
 
 def primary_issue(info, comp, dl, stations) -> dict:
@@ -247,7 +268,7 @@ def build_context(conn, snap: Snapshot, scope: str, sid: Optional[str], run_id: 
         ctx["base"] = {"compliance": compliance(breg), "delays": delays(breg), "bottlenecks": stations_in_scope(snap, B, info)[:8],
                        "national_compliance": compliance(B.get("national", {}).get("national", {})),
                        "ranking": county_ranking(snap, B) if scope == "national" else None}
-    ctx["recommendations"] = recommendations(snap, info, st, dl, comp)
+    ctx["recommendations"] = mark_validated(conn, recommendations(snap, info, st, dl, comp), info)
     from backend.services.anomalies import detect
     alarms = detect(snap, M, metrics_of(conn, base_run_id) if base_run_id and base_run_id != run_id else None)
     if info["scope"] == "county":
