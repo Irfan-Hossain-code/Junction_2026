@@ -324,6 +324,7 @@ export function InterventionStudio({ ctx, selection, onSimulated }: {
     <div className="panel area-studio">
       <div className="panel-h"><h3>Intervention studio</h3><span className="ctx">· {ctx ? shortCounty(ctx.context.name) : ""}</span></div>
       <div className="panel-b">
+        <div className="flow-steps"><span>Problem</span>→<span>Discuss</span>→<span>Evaluate</span>→<span>Compare</span>→<span>Recommend</span>→<span>Approve</span></div>
         {ctx?.primary_issue.top_station && (
           <div className="issue"><div className="lbl">Primary bottleneck</div>
             {ctx.primary_issue.top_station.capability_label} at {ctx.primary_issue.top_station.facility.replace(/\s*\(.*\)/, "")}: {pct(ctx.primary_issue.top_station.utilisation, 0)} utilised,
@@ -333,8 +334,10 @@ export function InterventionStudio({ ctx, selection, onSimulated }: {
         <div className="recs">
           {recs.map((r, i) => (
             <div key={r.id} className={`rec ${chosen[r.id] ? "on" : ""}`} onClick={() => setChosen(c => ({ ...c, [r.id]: !c[r.id] }))}>
-              <div className="t"><span className="n">{chosen[r.id] ? "✓" : i + 1}</span>{r.title}</div>
+              <div className="t"><span className="n">{chosen[r.id] ? "✓" : i + 1}</span>{r.title} <Provenance r={r} onOpen={onSimulated} /></div>
               <div className="r">{r.rationale}</div>
+              {r.evidence?.status === "optimizer_estimated" && <div className="r est">Optimizer estimate: overload {r.evidence.overload_before_per_week} → {r.evidence.overload_after_per_week}/wk,
+                {" "}{r.evidence.referrals_moved_per_week} referrals/wk moved{r.evidence.expected_acceptance != null ? `, ${Math.round(100 * r.evidence.expected_acceptance)} % expected to accept` : ""}. Simulate to validate.</div>}
               {chosen[r.id] && r.controls.map(c => {
                 const k = `${r.id}:${c.path}`, v = ctrl[k] ?? c.value;
                 return (<div key={k} className="ctl" onClick={e => e.stopPropagation()}>
@@ -364,6 +367,7 @@ export function InterventionStudio({ ctx, selection, onSimulated }: {
         {sim.running && <div className="progress"><i style={{ width: `${Math.min(97, (elapsed / 30) * 100)}%` }} /></div>}
         {sim.error && <div className="err">{sim.error}</div>}
         {!canRun && !sim.running && <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Select one or more recommendations, or interpret a custom request.</div>}
+        <div className="muted" style={{ fontSize: 10.5, marginTop: 6 }}>Simulating creates a what-if scenario only: nothing operational changes. Real changes need approval in Operations.</div>
       </div>
     </div>
   );
@@ -420,7 +424,8 @@ export function AnalysisChat({ chat, view, alarm, onClearAlarm }: { chat: ChatCt
     setBusy("Evaluating with the MPC optimiser (about 30 s)…");
     try {
       const r = await fetch(API + "/twin/evaluate", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scope: chat.scope, id: chat.id ?? null, run_id: chat.run_id, capability: alarm?.capability || "colonoscopy" }) });
+        body: JSON.stringify({ scope: chat.scope, id: chat.id ?? null, run_id: chat.run_id, base_run_id: chat.base_run_id,
+          alarm_id: alarm?.id ?? null, capability: alarm ? null : "colonoscopy" }) });
       const ev = await r.json(); setEvaluation(ev);
       const h: Turn[] = [...turns, { role: "user", content: "Evaluate the options with the MPC and tell me what the estimate says.", eval: ev }];
       const a = await call(h, ev);
@@ -448,6 +453,8 @@ export function AnalysisChat({ chat, view, alarm, onClearAlarm }: { chat: ChatCt
 }
 
 function EvalCard({ ev }: { ev: any }) {
+  if (ev?.status === "not_applicable") return (<div className="evalcard"><span className="tag FALLBACK">optimizer not applicable</span>
+    {ev.asked?.alarm ? ` · ${ev.asked.alarm.title}` : ""}<ul className="bl"><li>{ev.reason}</li><li>{ev.next_step}</li></ul></div>);
   if (!ev?.existing_resources) return null;
   const a = ev.existing_resources, b = ev.with_investment;
   return (<div className="evalcard"><span className="tag HYPOTHESIS">{ev.tag}</span> {ev.scope} · {ev.capability}
@@ -456,4 +463,18 @@ function EvalCard({ ev }: { ev: any }) {
       <li>With up to {b.budget_units} new units: overload → <b>{b.overload_after_per_week}</b>/wk {b.units_added?.length ? `(${b.units_added.join("; ")})` : "(none chosen)"}</li>
       <li>Investment worth it: <b>{ev.investment_worth_it ? "yes" : "no"}</b></li>
     </ul></div>);
+}
+
+
+const PROV: Record<string, [string, string, string]> = {
+  suggested: ["Suggested", "HYPOTHESIS", "Rule triggered by a simulated indicator. Not optimised or simulated yet."],
+  optimizer_estimated: ["Optimizer estimated", "DERIVED", "Evaluated by the OR-Tools strategic flow optimiser (expected value). Not simulated yet."],
+  simulation_validated: ["Simulation validated", "SIMULATED", "A SimPy run of this intervention exists for this area."],
+};
+function Provenance({ r, onOpen }: { r: Recommendation; onOpen: (runId: string, scenarioId: string, name: string) => void }) {
+  const st = r.evidence?.status || "suggested";
+  const [label, cls, tip] = PROV[st];
+  return <span className={`tag prov ${cls}`} title={`${tip}${r.evidence?.basis ? " " + r.evidence.basis : ""}`}
+    onClick={e => { if (st === "simulation_validated" && r.evidence?.run_id) { e.stopPropagation(); onOpen(r.evidence.run_id, r.evidence.scenario_id!, r.title); } }}>
+    {label}{st === "simulation_validated" ? " ↗" : ""}</span>;
 }

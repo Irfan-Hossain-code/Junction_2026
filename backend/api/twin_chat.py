@@ -39,6 +39,11 @@ How to answer:
 - Operational patient alerts (care-app clock alerts on individual synthetic patients) are NOT network alarms
   (thresholds on simulated hospital metrics). Do not mix them up and do not speculate about broken data feeds.
 - If an optimiser estimate is not in the facts and would settle the question, end with: "I can evaluate this with the MPC."
+- Know what the user wants: explain, brainstorm, evaluate, recommend, authorise or execute. Explaining, brainstorming
+  and recommending need no approval. Evaluations come only from OPTIMISER_estimate (say "optimizer estimate") or
+  simulated facts (say "simulated"). You never execute: real changes go through the Operations approval.
+- Options have an evidence status (suggested / optimizer_estimated / simulation_validated): say which one applies.
+- If the optimizer estimate is "not_applicable", say why and name the lever that fits (e.g. stall monitoring).
 - Use ONLY numbers that appear in FACTS. Never invent outcomes. Say "simulated" for simulated values.
 - Plain text, no markdown headers, at most 110 words."""
 
@@ -109,11 +114,14 @@ def chat_facts(conn, body: ChatIn) -> tuple[dict, dict]:
                         "operational_definition": "care-app clock/dwell alerts on individual SYNTHETIC patients living in the area",
                         "network_alarms": len(ctx.get("anomalies", [])),
                         "network_definition": f"thresholds on SIMULATED hospital metrics, e.g. sustained overload at >= {round(100 * ALARM_T['overload_util'])} % utilisation"}
-    f["rule_based_options"] = [{"option": r["title"], "action": r["action"], "why": r["rationale"]} for r in ctx.get("recommendations", [])[:4]]
+    f["rule_based_options"] = [{"option": r["title"], "action": r["action"], "why": r["rationale"],
+                                "evidence_status": (r.get("evidence") or {}).get("status", "suggested")} for r in ctx.get("recommendations", [])[:4]]
     if body.alarm_id:
         al = next((a for a in ctx.get("anomalies", []) if a["id"] == body.alarm_id), None)
         if al:
-            f["selected_network_alarm"] = {"title": al["title"], "type": al["type"], "severity": al["severity"],
+            f["selected_network_alarm"] = {"id": al["id"], "title": al["title"], "type": al["type"], "severity": al["severity"],
+                                           "location": al["location"].get("name"), "resource": al.get("capability"),
+                                           "simulated_window": "steady state over the 365-day simulated horizon",
                                            "metric": al["metric"], "value": al["value"], "threshold": al["threshold"],
                                            "evidence": al["evidence"], "rule_suggestion": al["suggestion"]}
     if body.evaluation:
@@ -168,29 +176,91 @@ class EvalIn(BaseModel):
     scope: str = "national"
     id: Optional[str] = None
     run_id: Optional[str] = None
-    capability: str = "colonoscopy"
+    base_run_id: Optional[str] = None
+    alarm_id: Optional[str] = None
+    capability: Optional[str] = None
     budget_units: int = 2
+
+
+PROCESS_ALARMS = {"stalled_transition", "lost_to_follow_up", "high_nonattendance"}
+MODEL_NOTE = ("OR-Tools strategic network-flow optimiser (expected-value MIP over weekly referral flows; objective: "
+              "overload >> equity >> travel >> moved referrals). NOT the patient-level pathway MPC and NOT a simulation.")
+
+
+def _target(conn, body: "EvalIn"):
+    """Resolve WHAT to evaluate from the selected alarm / area: county, facility, resource, and why."""
+    from backend.api.twin_ai import _ctx
+    from backend.services.anomalies import PACK
+    ctx = _ctx(conn, body.scope, body.id, body.run_id, body.base_run_id)
+    alarm = next((a for a in ctx.get("anomalies", []) if a["id"] == body.alarm_id), None) if body.alarm_id else None
+    if body.alarm_id and not alarm:                     # alarm not in the scoped list: look network-wide
+        ctx_n = _ctx(conn, "national", None, body.run_id, body.base_run_id)
+        from backend.services.anomalies import detect
+        alarm = next((a for a in detect(base_snapshot(conn), tc.metrics_of(conn, ctx_n["run_id"])) if a["id"] == body.alarm_id), None)
+    cap, county, fac, stage = body.capability, ctx["context"].get("county"), None, None
+    if alarm:
+        loc = alarm["location"]
+        county, fac = loc.get("county_id") or county, loc.get("facility_id")
+        cap = alarm.get("capability") or cap
+        if not cap and alarm["type"] == "stalled_transition":
+            stage = alarm["evidence"].get("stage")
+            cap = PACK.stages[stage].capability if stage in PACK.stages else None
+    return ctx, alarm, cap or (None if alarm else "colonoscopy"), county, fac, stage
 
 
 @router.post("/evaluate")
 def evaluate(body: EvalIn, conn=Depends(get_conn_dep)):
-    """'Evaluate with MPC': optimiser estimate on the ACTIVE scenario, existing resources first, then a small budget.
-    Expected-value MIP (seconds), NOT a simulation; run the Intervention Studio to verify in SimPy."""
+    """'Evaluate with MPC' for the SELECTED problem. Checks first whether a capacity/routing optimiser can address it
+    (process delays with idle capacity cannot); otherwise runs the strategic optimiser restricted to that region and
+    resource, existing resources first, then a small budget limited to hospitals in that region."""
+    ctx, alarm, cap, county, fac, stage = _target(conn, body)
     snap = base_snapshot(conn)
-    sc = _scenario_of(conn, body.run_id)
+    sc = _scenario_of(conn, ctx["run_id"])
     if sc:
         snap = apply_scenario(snap, {k: v for k, v in sc["params"].items() if k not in ("plan_summary", "twin")})
-    info = tc.scope_info(snap, body.scope, body.id)
-    restrict = [info["county"]] if info.get("county") else None
-    a = optimise(snap, body.capability, budget_units=0, behavioral=True, restrict_counties=restrict, time_limit_s=15)
-    b = optimise(snap, body.capability, budget_units=body.budget_units, unit_per_week=5.0, behavioral=True,
-                 restrict_counties=restrict, time_limit_s=15)
+    M = tc.metrics_of(conn, ctx["run_id"])
+    cname = snap.counties.get(county, {}).get("name", county) if county else "Finland"
+    asked = {"alarm": alarm and {"id": alarm["id"], "type": alarm["type"], "title": alarm["title"]}, "county": cname,
+             "facility": fac and snap.facilities.get(fac, {}).get("name", fac), "resource": cap, "stage": stage,
+             "scenario": sc["label"] if sc else None}
+    # resource state for this area (local hospitals + hospitals receiving this county's referrals)
+    serving = {f for f, v in snap.facilities.items() if v["county"] == county} if county else set(snap.facilities)
+    for k, e in M.get("edge", {}).items():
+        src, rest = k.split("->")
+        if county and src == county and rest.endswith("|" + str(cap)) and e["flow_per_week"]["mean"] >= 0.5:
+            serving.add(rest.split("|")[0])
+    res = []
+    for f in serving:
+        m = M.get("facility", {}).get(f"{f}|{cap}")
+        if m:
+            res.append({"hospital": snap.facilities[f]["name"], "local": snap.facilities[f]["county"] == county,
+                        "utilisation_pct": round(100 * (m["utilisation"]["mean"] or 0)), "mean_queue_days": round(m["mean_wait_days"]["mean"] or 0, 1)})
+    res.sort(key=lambda r: -r["utilisation_pct"])
+    base = {"asked": asked, "resource_state": res[:5], "model": MODEL_NOTE}
+    if not cap:
+        return {**base, "status": "not_applicable", "reason": "This alarm is not about a capacity-limited resource; the optimiser has nothing to optimise.",
+                "next_step": "Simulate 'Detect stalled steps automatically' in the Intervention Studio (simulation-validated)."}
+    busy = max([r["utilisation_pct"] for r in res] or [0])
+    queue = max([r["mean_queue_days"] for r in res] or [0])
+    if alarm and alarm["type"] in PROCESS_ALARMS and busy < 85 and queue < 1.5:
+        return {**base, "status": "not_applicable",
+                "reason": f"Process delay, not capacity: {cap.replace('_', ' ')} serving {cname} runs at most {busy} % with a "
+                          f"{queue}-day queue, so re-routing or buying capacity would not shorten this stage.",
+                "next_step": "Levers that act on hand-offs: stalled-step monitoring and booking follow-up. Simulate "
+                             "'Detect stalled steps automatically' in the Intervention Studio to validate it."}
+    restrict = [county] if county else None
+    invest = [f for f in snap.facilities if snap.facilities[f]["county"] == county] if county else None
+    a = optimise(snap, cap, budget_units=0, behavioral=True, restrict_counties=restrict, time_limit_s=15)
+    b = optimise(snap, cap, budget_units=body.budget_units, unit_per_week=5.0, behavioral=True, restrict_counties=restrict,
+                 invest_facilities=invest, time_limit_s=15)
     name = lambda f: snap.facilities.get(f, {}).get("name", f)
-    return {"tag": "OPTIMISER ESTIMATE (expected value, not simulated)", "scope": info["name"], "capability": body.capability,
+    return {**base, "status": "optimizer_estimated", "tag": "OPTIMIZER ESTIMATE (expected value, not simulated)",
+            "scope": cname, "capability": cap,
             "existing_resources": {"overload_before_per_week": a["overload_before"], "overload_after_per_week": a["overload_after"],
                                    "referrals_rerouted_per_week": a["moved_per_week"], "expected_acceptance": a["expected_acceptance_of_moves"],
                                    "main_destinations": sorted({name(f) for c in a["routing_changes"][:6] for f, _ in c["to"]})[:4]},
-            "with_investment": {"budget_units": body.budget_units, "unit_per_week": 5.0, "overload_after_per_week": b["overload_after"],
+            "with_investment": {"budget_units": body.budget_units, "unit_per_week": 5.0, "candidates": f"hospitals in {cname} only",
+                                "overload_after_per_week": b["overload_after"],
                                 "units_added": [f"{x['units']} x 5/wk at {name(x['facility_id'])}" for x in b["capacity_additions"]]},
             "investment_worth_it": bool(b["capacity_additions"]) and (a["overload_after"] - b["overload_after"]) > 0.5,
-            "scenario": sc["label"] if sc else None}
+            "note": "Overload is national-model weekly excess demand at the resource; 0 means existing capacity suffices in expectation."}

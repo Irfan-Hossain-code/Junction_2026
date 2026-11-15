@@ -280,7 +280,7 @@ def evaluate(conn, disruption_id, admin_alloc: dict | None = None, extra_avoid: 
         res["baseline"] = {"label": "Original plan (no breakdown)", **_evaluate(binst, bplan)}
     if "no_action" in include:
         plans["no_action"] = schedule_greedy(inst, "fifo")
-        res["no_action"] = {"label": "Breakdown, no coordination (rebooked locally, first come first served)",
+        res["no_action"] = {"label": "Local repair (inner MPC): rebook at the home hospital, earliest free slots",
                             **_evaluate(inst, plans["no_action"])}
     if "optimised" in include:
         hint = schedule_greedy(inst, "priority")
@@ -309,6 +309,79 @@ def evaluate(conn, disruption_id, admin_alloc: dict | None = None, extra_avoid: 
     for k, pl in plans.items():
         out["plans"][k] = {"rows": _plan_rows(conn, inst, pl, info, day0_at, res[k], take_slots=False),
                            "load": _window_load(inst, pl)}
+    if "no_action" in res and "optimised" in res:
+        out["controller"] = controller_decision(res["no_action"], res["optimised"], len(inst.patients),
+                                                n_facilities=len({r["facility_id"] for r in info.values()}))
+    out["state_version"] = state_version(conn)
+    return out
+
+
+# ------------------------------------------------------------------ hierarchical control: local repair vs global replan
+LOCAL = {"max_affected": 3, "max_facilities": 1, "max_urgent_loss_pp": 2.0, "max_target_loss_pp": 2.0}   # documented thresholds
+
+
+def controller_decision(local: dict, glob: dict, n_affected: int, n_facilities: int = 1) -> dict:
+    """Inner MPC = local repair (rebook at the home hospital, earliest free slots, priority order).
+    Escalate to the outer whole-pathway MPC when ANY threshold is crossed (thresholds in LOCAL, documented in docs)."""
+    lk, gk = local["kpis"], glob["kpis"]
+    reasons = []
+    if n_affected > LOCAL["max_affected"]:
+        reasons.append(f"{n_affected} appointments affected (local limit {LOCAL['max_affected']})")
+    if n_facilities > LOCAL["max_facilities"]:
+        reasons.append(f"{n_facilities} facilities affected")
+    du = (gk.get("pct_urgent_within_target") or 0) - (lk.get("pct_urgent_within_target") or 0)
+    dt = (gk.get("pct_within_target") or 0) - (lk.get("pct_within_target") or 0)
+    if du > LOCAL["max_urgent_loss_pp"]:
+        reasons.append(f"local repair leaves urgent patients {round(du, 1)} pp worse than the global plan")
+    if dt > LOCAL["max_target_loss_pp"]:
+        reasons.append(f"local repair leaves {round(dt, 1)} pp fewer patients within the 42-day target")
+    return {"level": "global" if reasons else "local", "inner": "local repair (home hospital, earliest free slots)",
+            "outer": "whole-pathway MPC (lexicographic MIP over colonoscopy -> pathology -> MDT -> treatment)",
+            "escalation_reasons": reasons or ["local repair is within all thresholds"], "thresholds": LOCAL}
+
+
+def state_version(conn) -> str:
+    """Digest of the bookable state the plan was computed on (free/booked/blocked colonoscopy slots + booked appointments).
+    Approval re-checks it: a plan computed on an obsolete capacity snapshot is never executed."""
+    import hashlib
+    rows = conn.execute("""SELECT s.id::text, s.status FROM ops_slot s JOIN ops_resource r ON r.id=s.resource_id
+                           WHERE r.capability='colonoscopy' AND s.starts_at >= %s ORDER BY 1""", (core.t0(conn),)).fetchall()
+    return hashlib.sha256(repr(rows).encode()).hexdigest()[:12]
+
+
+def score_options(conn, pathway_id, options: list[dict]) -> list[dict]:
+    """Outer check of local repair options for ONE patient (e.g. after a no-show): replay her remaining pathway for each
+    candidate slot on the live state. Returns options with p_on_time + mean treatment day (simulated, pooled)."""
+    rows = conn.cursor(row_factory=dict_row).execute(
+        """SELECT p.patient_id, pt.display_name AS name, ag.persona, ST_X(pt.home_geom::geometry) AS lon, ST_Y(pt.home_geom::geometry) AS lat,
+                  p.id AS pathway_id FROM pathway p JOIN patient pt ON pt.id=p.patient_id
+           LEFT JOIN ops_patient_agent ag ON ag.patient_id=p.patient_id WHERE p.id=%s""", (pathway_id,)).fetchall()
+    if not rows:
+        return options
+    r0 = _with_referral(conn, rows)[0]
+    now = svc.now(conn)
+    t0 = core.t0(conn)
+    sd = math.floor((now - t0).total_seconds() / 86400)
+    day0_at = t0 + timedelta(days=sd)
+    cap = _capacity(conn, day0_at, now)
+    per = r0["persona"] or {}
+    elapsed = (now - r0["referral_at"]).total_seconds() / 86400 if r0["referral_at"] else 0.0
+    out = []
+    for o in options:
+        from datetime import datetime as _dt
+        d = int((_dt.fromisoformat(o["at"]) - day0_at).total_seconds() // 86400)
+        pat = Patient(pid=r0["patient_id"], region="North Karelia", home=HOME_FACILITY, home_lab=LAB, priority=r0["priority"],
+                      ready_day=0.0, deadline_day=round(42 - elapsed, 1), stages=_stages(True), diagnosis_known=False,
+                      travel_min={f: float(v) for f, v in per.get("travel_min", {}).items()},
+                      accept_prob={f: float(v) for f, v in per.get("accept_prob", {}).items()},
+                      p_attend=float(per.get("p_attend", 0.93)), treat_home=HOME_FACILITY)
+        c2 = dict(cap)
+        c2[o["facility_id"], "colonoscopy", d] = c2.get((o["facility_id"], "colonoscopy", d), 0) + 1   # the held slot itself
+        inst = Instance({o["facility_id"]: Provider(o["facility_id"], o["facility"], ""), HOME_FACILITY: Provider(HOME_FACILITY, "PKKS", ""),
+                         LAB: Provider(LAB, "lab", "")}, c2, [pat], horizon_days=HORIZON)
+        plan = schedule_greedy(inst, "priority", fixed={(pat.pid, 0): StageAssignment(pat.pid, 0, "colonoscopy", o["facility_id"], float(d), 1.0, False)})
+        ev = _evaluate(inst, plan)["patients"][pat.pid]
+        out.append({**o, "p_on_time": ev["p_on_time"], "treatment_day": ev["treatment_day"], "deadline_day": pat.deadline_day})
     return out
 
 

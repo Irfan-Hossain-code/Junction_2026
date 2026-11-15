@@ -14,6 +14,8 @@ export default function Optimiser({ onClose }: { onClose: () => void }) {
   const [doc, setDoc] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
   const [exp, setExp] = useState<any>(null);
+  const [cl, setCl] = useState<any>(null);
+  useEffect(() => { fetch(API + "/mpc/brain/closed_loop").then(r => r.ok ? r.json() : null).then(setCl).catch(() => {}); }, []);
   useEffect(() => {
     fetch(API + "/mpc/brain/benchmark").then(async r => {
       if (!r.ok) throw new Error(r.status === 404 ? "The optimiser API is not enabled. Start the backend with CANCERFLOW_MPC=1." : r.statusText);
@@ -99,6 +101,20 @@ export default function Optimiser({ onClose }: { onClose: () => void }) {
                 <ul className="muted" style={{ fontSize: 11.5 }}>{Object.entries(rec.rejected_alternatives).map(([k, v]: any) => <li key={k}><b>{NAMES[k] || k}:</b> {v.join("; ")}</li>)}</ul>
               </details>
             </section>
+
+            {cl && (
+              <section className="card">
+                <h4>Closed-loop MPC: re-planning on observed state <Tag t="SIMULATED" /></h4>
+                <p className="muted">{cl.disruption.label}. Same patients, random numbers and outage. Open loop plans once on nominal capacity;
+                  closed loop re-solves every {cl.replan_every_days} days and when the outage is observed ({cl.closed_loop.epochs?.length} control epochs).</p>
+                <table className="captable opt-table"><thead><tr><th /><th className="r">Within target</th><th className="r">Weighted lateness</th>
+                  <th className="r">Treatment day</th><th className="r">Urgent br.</th><th className="r">Samples routed</th><th className="r">Overbooked</th></tr></thead>
+                  <tbody>{(["open_loop", "closed_loop"] as const).map(k => (
+                    <tr key={k} className={k === "closed_loop" ? "rec" : ""}><td>{k === "open_loop" ? "Open loop (plan once)" : "Closed loop (receding horizon)"}</td>
+                      <td className="r num">{f(cl[k].kpis.pct_within_target)}%</td><td className="r num">{f(cl[k].kpis.weighted_lateness_days, 0)}</td>
+                      <td className="r num">{f(cl[k].kpis.mean_treatment_day)}</td><td className="r num">{f(cl[k].kpis.urgent_breaches)}</td>
+                      <td className="r num">{f(cl[k].kpis.routed_samples)}</td><td className="r num">{f(cl[k].kpis.overbooked_slots, 0)}</td></tr>))}</tbody></table>
+              </section>)}
 
             {doc.patient_story && (
               <section className="card">

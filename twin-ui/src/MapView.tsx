@@ -104,7 +104,20 @@ function opsLayers(ops: any, tick: number, onFacility?: (f: string) => void) {
   const affected = (ops.disruption?.summary?.affected || []).length ? (iv?.rows || []) : [];
   const pulse = 0.5 + 0.5 * Math.sin(tick / 260);
   const emmaId = ops.emma?.patient_id;
-  return [
+  // Emma's own pathway (always visible while Operations is open): home -> next booked appointment
+  const em = ops.emma;
+  const nextAppt = em ? (em.appointments || []).filter((a: any) => a.status === "booked").sort((a: any, b: any) => a.scheduled_for.localeCompare(b.scheduled_for))[0] : null;
+  const emTo = nextAppt && byFac[nextAppt.facility_id];
+  const emmaLayers = em?.lon ? [
+    new PathLayer({ id: "emma-route", data: emTo ? [{ path: [[em.lon, em.lat], [emTo.lon, emTo.lat]] }] : [], getPath: (d: any) => d.path,
+      widthUnits: "pixels", getWidth: 4, getColor: [232, 121, 249, 230] }),
+    new ScatterplotLayer({ id: "emma", data: [em], getPosition: (d: any) => [d.lon, d.lat], radiusUnits: "pixels", getRadius: 10, stroked: true,
+      lineWidthUnits: "pixels", getLineWidth: 3, getFillColor: [232, 121, 249, 255], getLineColor: [255, 255, 255, 255] }),
+    new TextLayer({ id: "emma-label", data: [em], getPosition: (d: any) => [d.lon, d.lat], getPixelOffset: [0, -20], fontWeight: 800, getSize: 13,
+      getText: (d: any) => `Emma · ${d.stage?.label || "not started"}${nextAppt ? ` · next: ${nextAppt.stage.toLowerCase().replace("_", " ")} ${new Date(nextAppt.scheduled_for).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : ""}`,
+      getColor: [240, 171, 252, 255], fontFamily: "Inter, sans-serif", outlineWidth: 3, outlineColor: [5, 10, 20, 255], fontSettings: { sdf: true } }),
+  ] : [];
+  return [...emmaLayers,
     new ScatterplotLayer({
       id: "ops-pulse", data: facs.filter((f: any) => f.offline), getPosition: (f: any) => [f.lon, f.lat],
       getRadius: 9000 + 9000 * pulse, radiusUnits: "meters", radiusMinPixels: 14 + 10 * pulse, filled: true,

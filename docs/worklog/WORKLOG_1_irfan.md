@@ -121,3 +121,20 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
   - "Ask CancerFlow about this alarm" button. "⚙ Evaluate with MPC" runs `/twin/evaluate` (optimiser estimate, not simulated).
 - Finding: North Ostrobothnia's 7 operational alerts vs 0 network alarms is expected. The 7 are care-app clock/dwell alerts on 15 synthetic patients; network alarms are thresholds on simulated hospital metrics, and overload needs ≥ 95 % while Raahe is at 94 %. Both are now explained in the Alarms tab and to the assistant.
 - Tests: 60/60. Verified in Chrome: twin switching, Δ map, Recovery chat answer grounded in the optimiser plan.
+
+### 2026-11-15 — Claude (irfan) — Final integration: decision support, hierarchical MPC, Emma director
+- **A (decision support):**
+  - Root cause of the Kainuu bug: the staging alarm had no resource, so the UI defaulted to colonoscopy, and the investment pass could add capacity anywhere in Finland.
+  - `/twin/evaluate` now resolves alarm → county / stage → resource. It returns `not_applicable` for process delays with idle capacity and limits investment to the selected region.
+  - Recommendation provenance: suggested / optimizer_estimated / simulation_validated (`twin_context.mark_validated`). The chat prompt separates intents.
+- **B (hierarchical MPC):**
+  - Inner local repair vs outer whole-pathway MIP, with documented escalation thresholds (`ops/evaluate.LOCAL`).
+  - Plan versions (state digest), with stale-plan rejection and automatic recompute at approval.
+  - The follow-up after a no-show is scored by the outer model.
+  - Closed-loop receding-horizon brain (`mpc/pathway/closedloop.py`, `/mpc/brain/closed_loop`): 47.8 % vs 43.6 % open loop, 0 overbooking.
+- **C (Emma director):**
+  - `reset_story.py`; `ops_story_event` log (migration 005).
+  - Ordered, idempotent steps with failed/current state; app-completed steps detected from the shared state; "show next in" hints.
+  - Emma's marker and route on the map; care-app demo page takes `?patient=&doctor=`.
+- **Tests:** `test_final_story.py` (context, provenance, reset idempotent + scoped, full 17 steps with outage / stale / no-overbooking / no-show / cross-app) → 4/4. Existing suite 60/60.
+- **Incident:** I stopped the Windows `wslrelay` process (it owned port 8000), which broke `localhost` forwarding to WSL. Servers inside WSL keep running. Fix: `wsl --shutdown` and restart the servers (needed anyway to load the new code).

@@ -157,15 +157,22 @@ def evaluate_optimiser(conn, iv_id):
     iv = get(conn, iv_id)
     set_status(conn, iv_id, "PROPOSED", "optimiser", "whole-pathway optimiser proposal requested")
     ev = evaluate.evaluate(conn, iv["disruption_id"])
-    plan = ev["plans"].get("optimised", {})
+    ctl = ev.get("controller") or {"level": "global"}
+    log(conn, iv_id, "PROPOSED", "inner MPC", "local repair evaluated: " + "; ".join(ctl.get("escalation_reasons", [])))
+    if ctl["level"] == "global":
+        log(conn, iv_id, "PROPOSED", "outer MPC", "escalated to whole-pathway replanning on the current state")
+    plan = ev["plans"].get("optimised" if ctl["level"] == "global" else "no_action", {})
     rows = plan.get("rows", [])
     moved = [r for r in rows if r["transfer"]]
     by_fac = {}
     for r in rows:
         by_fac[r["to"]["facility"]] = by_fac.get(r["to"]["facility"], 0) + 1
     proposal = {"kind": "reschedule", "rows": rows, "by_facility": by_fac, "transfers": len(moved),
-                "basis": "optimised"}
-    set_status(conn, iv_id, "EVALUATED", "optimiser", "replayed against baseline and no-action", evaluation=ev, proposal=proposal)
+                "basis": "optimised" if ctl["level"] == "global" else "local_repair", "controller": ctl,
+                "state_version": ev.get("state_version")}
+    core.set_setting(conn, "ops_plan_version", ev.get("state_version"))
+    set_status(conn, iv_id, "EVALUATED", "optimiser", f"replayed against baseline and local repair (state v{ev.get('state_version')})",
+               evaluation=ev, proposal=proposal)
     set_status(conn, iv_id, "AWAITING_APPROVAL", "cancerflow", "needs the regional coordinator's approval")
     o, n = ev["options"].get("optimised", {}).get("kpis", {}), ev["options"].get("no_action", {}).get("kpis", {})
     core.notify(conn, key=f"iv-ready-{iv_id}", audience="admin", severity="warning", kind="proposal",
@@ -327,6 +334,16 @@ def approve(conn, iv_id, actor=COORD_USER, justification="", background_agents: 
         return iv                                             # idempotent: a second approval changes nothing
     if iv["status"] != "AWAITING_APPROVAL":
         raise svc.Conflict(f"intervention is {iv['status']}; only AWAITING_APPROVAL can be approved")
+    ver = (iv.get("evaluation") or {}).get("state_version")
+    if ver and ver != evaluate.state_version(conn):      # never execute a plan computed on an obsolete capacity snapshot
+        set_status(conn, iv_id, "SUPERSEDED", "cancerflow", "stale: bookable state changed since evaluation; recomputing")
+        if iv["source"] == "optimiser" and iv.get("disruption_id"):
+            new_id = uuid.uuid4()
+            conn.execute("""INSERT INTO ops_intervention(id,disruption_id,parent_id,source,status,title,created_at,updated_at)
+                            VALUES (%s,%s,%s,'optimiser','DETECTED',%s,%s,%s)""",
+                         (new_id, iv["disruption_id"], iv_id, iv["title"] + " (recomputed)", svc.now(conn), svc.now(conn)))
+            evaluate_optimiser(conn, new_id)
+        raise svc.Conflict("the state changed since this plan was computed; a fresh plan was computed - review it before approving")
     set_status(conn, iv_id, "APPROVED", actor, justification or "approved", decided_by=actor, justification=justification)
     try:
         offers = _apply(conn, iv)

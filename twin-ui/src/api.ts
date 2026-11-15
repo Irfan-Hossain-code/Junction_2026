@@ -42,6 +42,8 @@ export type Station = {
 export type Recommendation = {
   id: string; title: string; action: string; rationale: string; params: any;
   controls: { path: string; label: string; min: number; max: number; step: number; value: number }[];
+  evidence?: { status: "suggested" | "optimizer_estimated" | "simulation_validated"; basis?: string; model?: string; run_id?: string;
+    scenario_id?: string; overload_before_per_week?: number; overload_after_per_week?: number; referrals_moved_per_week?: number; expected_acceptance?: number };
 };
 export type Context = {
   context: { scope: Scope; id: string; name: string; county: string | null; county_name?: string; kind?: string };

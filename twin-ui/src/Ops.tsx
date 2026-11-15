@@ -37,7 +37,7 @@ export function useOps() {
 
 const STEPS = ["DETECTED", "PROPOSED", "EVALUATED", "AWAITING_APPROVAL", "APPROVED", "APPLIED"];
 const OPT_ORDER = ["baseline", "no_action", "optimised", "admin", "keep_current", "replan"];
-const OPT_SHORT: Record<string, string> = { baseline: "Before breakdown", no_action: "No action", optimised: "CancerFlow plan", admin: "Your proposal",
+const OPT_SHORT: Record<string, string> = { baseline: "Before breakdown", no_action: "Local repair", optimised: "CancerFlow plan", admin: "Your proposal",
   keep_current: "Keep booking", replan: "Re-plan" };
 const when = (iso?: string | null) => iso ? new Date(iso).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "–";
 const f1 = (x: any, d = 1) => (x == null ? "–" : Number(x).toFixed(d));
@@ -153,13 +153,17 @@ export default function OpsDrawer({ state, refresh, onFocus, pick, clearPick, on
           <div className="row-sb"><h4 style={{ margin: 0 }}>{iv.title}</h4><Tag t="SIMULATED" /></div>
           <Lifecycle status={iv.status} />
           {iv.status === "DETECTED" || iv.status === "PROPOSED" ? <div className="busy"><span className="spinner sm" /> Brain is evaluating options on live free slots…</div> : null}
+          {iv.controller && <div className={`ctl-box ${iv.controller.level}`}>
+            <b>{iv.controller.level === "global" ? "Inner MPC → escalated to outer whole-pathway MPC" : iv.controller.level === "local" ? "Inner MPC: local repair is enough" : "Fallback rule"}</b>
+            <ul className="bl">{(iv.controller.escalation_reasons || [iv.controller.reason]).slice(0, 3).map((x: string, i: number) => <li key={i}>{x}</li>)}</ul>
+            {iv.state_version && <span className="muted small">plan computed on state v{iv.state_version}</span>}</div>}
           {iv.options && Object.keys(iv.options).length > 0 && <Compare options={iv.options} />}
           {iv.review && <div className={`verdict v-${iv.review.verdict}`}>
             {iv.review.verdict === "worse_than_recommendation" ? "Worse than CancerFlow's recommendation" :
               iv.review.verdict === "comparable_with_risks" ? "Comparable on target, with risks" : "As good as or better than the recommendation"}
             <ul className="bl">{iv.review.warnings.slice(0, 4).map((w: any, i: number) => <li key={i}>{w.text}</li>)}</ul></div>}
           {iv.options_followup && <div><h4>Replacement slots (priority kept)</h4>
-            {iv.options_followup.map((o: any, i: number) => <div key={i} className="kv"><span className="k">{o.facility} · {o.when}</span>
+            {iv.options_followup.map((o: any, i: number) => <div key={i} className="kv"><span className="k">{i === 0 ? "★ " : ""}{o.facility} · {o.when}{o.p_on_time != null ? ` · ${Math.round(100 * o.p_on_time)} % on time (sim.)` : ""}</span>
               <button className="btn" disabled={!!busy || iv.status !== "AWAITING_APPROVAL"} onClick={() => run("Booking…", () => ops(`/ops/followup/${iv.id}/authorise`, { option: i }))}>Authorise</button></div>)}</div>}
 
           {iv.rows?.length > 0 && <>
@@ -222,9 +226,13 @@ export default function OpsDrawer({ state, refresh, onFocus, pick, clearPick, on
       {tab === "story" && <div className="card story">
         <div className="row-sb"><h4 style={{ margin: 0 }}>Emma's pathway · director</h4>
           <button className="btn" disabled={!!busy} onClick={() => run("Resetting the demo (≈40 s)…", () => ops("/ops/demo/reset", {}))}>Reset</button></div>
-        <ol className="steps">{state.story.steps.map((s: any) => <li key={s.key} className={s.done ? "done" : ""}>
-          <span className={`who ${s.actor}`}>{s.actor}</span> {s.label}
-          {!s.done && <button className="link" disabled={!!busy} onClick={() => run(s.label + "…", () => ops(`/ops/story/${s.key}`, {})).then(r => { if (s.key === "disruption") onFocus(); return r; })}>run</button>}</li>)}</ol>
+        <div className="muted small">Simulated time: <b>{when(state.now)}</b> · story day {Math.floor(state.story.story_day ?? 0)}</div>
+        {state.story.next && <div className="next-app">Next: <b>{state.story.steps.find((s: any) => s.key === state.story.next)?.label}</b>
+          <span> · show in {state.story.steps.find((s: any) => s.key === state.story.next)?.show_in}</span></div>}
+        <ol className="steps">{state.story.steps.map((s: any) => <li key={s.key} className={s.status}>
+          <span className={`who ${s.actor}`}>{s.actor}</span> {s.label} <span className="ev">{s.event}</span>
+          {s.status === "current" && <button className="link" disabled={!!busy} onClick={() => run(s.label + "…", () => ops(`/ops/story/${s.key}`, {})).then(r => { if (s.key === "disruption") onFocus(); return r; })}>run ▸</button>}
+          {s.error && <div className="err small">failed: {s.error}</div>}</li>)}</ol>
         <button className="btn-primary" disabled={!!busy} onClick={() => run("Next step…", () => ops("/ops/story/next", {}))}>{busy || "Next step ▸"}</button>
         {state.story.last && <p className="muted">{state.story.last.message}</p>}
         <p className="muted small">Patient's phone: open the care app as Emma (<code>pat-emma</code>). Every step is a real event in the shared database.</p>

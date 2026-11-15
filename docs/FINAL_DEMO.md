@@ -16,6 +16,38 @@ cd care-app && npx vite --port 5174                     # http://localhost:5174/
 - **Reset before the demo:** twin → **Operations** → **Story** → **Reset** (≈40 s). Or `POST /ops/demo/reset`.
 - **Keys:** `.env` holds `ANTHROPIC_API_KEY` (Haiku: parsing + patient messages) and `VERDA_*` (Nemotron). `.env.local` holds `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID` (created by `python -m backend.ops.voice_setup`).
 
+## Reset and director
+- **Reset Emma's story** (story namespace only; idempotent): `python reset_story.py` from the repo root, or twin → Operations → Story → **Reset**.
+  It never touches national scenarios, sim runs, other patients or the care app's other data. Earlier story pathways are closed with WITHDRAWN events, never deleted.
+- **Director:** twin → **Operations → Story**.
+  - Shows all 17 steps with their event type (`appointment.booked`, `resource.outage_started`, …), the **current** step, completed and failed steps, the simulated time, and **which app to show next**.
+  - Out-of-order steps are refused, and repeating a completed step is a no-op.
+  - Steps completed inside the apps count automatically: Emma confirming on her phone, Donny approving by voice or chat, a nurse authorising a slot.
+- **Windows:** keep the director open in one window. Then open:
+  - Emma's phone: `http://localhost:5174/?as=pat-emma#/`
+  - Clinician + phone side by side: `http://localhost:5174/?patient=pat-emma&doctor=gp-ops-joensuu#/demo`
+  - The twin: `http://localhost:5173`
+- **Every step** is logged in `ops_story_event` (run, step, type, correlation id, simulated time, actor, plan version).
+
+## Hierarchical MPC (what runs at the outage and the no-show)
+1. **Observe:** the live free/booked/blocked slots (state digest = *plan version*).
+2. **Inner MPC (local repair):** rebook at the home hospital, earliest free slots, clinical-priority order.
+3. **Outer MPC (whole-pathway brain):** the lexicographic MIP over colonoscopy → pathology → MDT → treatment on the same state, left-shifted and replayed 200× against "before breakdown" and "local repair".
+4. **Escalation thresholds** (`backend/ops/evaluate.py: LOCAL`): escalate to the outer MPC if more than 3 appointments are affected, more than 1 facility is affected, or local repair loses more than 2 pp urgent-within-target or more than 2 pp within-target versus the global plan. The drawer shows the decision and the reasons.
+5. **Approval:** Donny approves by voice, chat or button. If the bookable state changed since the plan was computed, approval is refused and a fresh plan is computed automatically.
+6. **Execute:** idempotent re-booking events and notifications. Patient-agent replies feed back: declines and time requests trigger a re-plan of those patients.
+7. **No-show:** the inner controller proposes local repair, and the outer model replays Emma's remaining pathway for each candidate slot on the live state. It escalates away from home only if local repair costs more than 5 pp chance of on-time treatment.
+- **Closed-loop brain (illustrative East Finland instance):** `python -m backend.mpc.pathway.closedloop`, also shown in the **National optimiser** modal. It re-solves every 7 days and when an outage is observed, using completed stages, used capacity, declined hospitals and observed outages. Same executor and random numbers for both modes.
+
+  | Mode | Within target | Urgent breaches | Weighted lateness | Overbooking |
+  |---|---|---|---|---|
+  | Open loop | 43.6 % | 2.0 | 175 d | 0 |
+  | Closed loop | 47.8 % | 1.0 | 93 d | 0 |
+
+## Decision support (national twin)
+- **Intervention Studio** labels each option **Suggested** (rule), **Optimizer estimated** (OR-Tools strategic flow, numbers shown) or **Simulation validated** (a stored SimPy run of it exists for that area; click to open). A label appears only if that computation happened.
+- **Evaluate with MPC** (chat) evaluates the *selected* alarm: its region, resource and stage. If the resource has idle capacity, it reports **not applicable (process delay)** instead of returning an unrelated result. Investment candidates are limited to the selected region.
+
 ## Script
 
 | Act | Do | What judges see |

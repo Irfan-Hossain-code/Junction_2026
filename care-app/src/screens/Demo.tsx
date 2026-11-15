@@ -4,8 +4,10 @@ import { DemoClock, ErrorNote, LiveDot, Spinner } from "../components";
 
 // Presenter view: clinician on the left, the patient's phone on the right, both live.
 // Each frame is pinned to its user with `?as=` (see auth.tsx), so the presenter's own login is untouched.
-const DEFAULT_DOCTOR = "nurse-pkks-scr";
-const DEFAULT_PATIENT = "pat-d-0001";
+// ?patient=pat-emma&doctor=gp-ops-joensuu (hash route #/demo) picks the pair for the final storyline
+const qp = new URLSearchParams(location.search);
+const DEFAULT_DOCTOR = qp.get("doctor") || "nurse-pkks-scr";
+const DEFAULT_PATIENT = qp.get("patient") || "pat-d-0001";
 
 export default function Demo() {
   const [doctors, setDoctors] = useState<User[]>([]);

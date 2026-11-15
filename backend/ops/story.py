@@ -444,22 +444,78 @@ STEPS = [
 ]
 
 
-def run_step(conn, key: str) -> dict:
+EVENT_TYPE = {"book_gp": "appointment.booked", "attend_gp": "referral.created", "referral_received": "referral.received",
+              "reminder": "appointment.confirmation_requested", "confirm_specialist": "appointment.confirmed",
+              "attend_specialist": "procedure.requested", "disruption": "resource.outage_started", "recover": "admin.recovery_approved",
+              "confirm_new": "appointment.confirmed", "pre_procedure": "appointment.checkin_requested", "miss": "appointment.missed",
+              "followup_rebook": "appointment.rescheduled", "attend_colonoscopy": "procedure.completed", "histology": "pathology.result_recorded",
+              "staging": "staging.completed", "mdt": "mdt.decision_recorded", "treatment": "treatment.started"}
+SHOW_IN = {"patient": "Patient app (Emma's phone)", "clinician": "Clinician app (worklist / pathway)",
+           "system": "National twin · Operations", "admin": "National twin · Operations (Donny: call or chat)"}
+
+
+def _done_by_state(conn, st: dict) -> set:
+    """Steps can also be completed in the apps (Emma confirms on her phone, Donny approves by voice, a nurse authorises
+    a slot). The director reads that from the shared state instead of assuming its own buttons were used."""
+    done = set(st.get("done", []))
+    pw = st.get("emma_pathway")
+    if conn.execute("SELECT 1 FROM ops_intervention WHERE source IN ('optimiser','admin','voice','text','map') AND status='APPLIED' LIMIT 1").fetchone():
+        done.add("recover")
+    if conn.execute("SELECT 1 FROM ops_intervention WHERE source='followup' AND status='APPLIED' LIMIT 1").fetchone():
+        done.add("followup_rebook")
+    if pw:
+        conf = {r[0]: r[1] for r in conn.execute(
+            "SELECT stage, bool_or(confirmed_at IS NOT NULL) FROM appointment WHERE pathway_id=%s GROUP BY stage", (pw,)).fetchall()}
+        if conf.get("SPECIALIST_ASSESSMENT"):
+            done.add("confirm_specialist")
+        if "recover" in done and conn.execute("""SELECT 1 FROM appointment a WHERE a.pathway_id=%s AND a.stage='COLONOSCOPY'
+                AND a.confirmed_at IS NOT NULL AND EXISTS (SELECT 1 FROM ops_slot s WHERE s.appointment_id=a.id AND s.booked_by LIKE 'intervention:%%')""",
+                                              (pw,)).fetchone():
+            done.add("confirm_new")
+    return done
+
+
+def _log(conn, st, key, status, msg, corr, payload=None):
+    conn.execute("""INSERT INTO ops_story_event(run,step,type,status,correlation_id,sim_at,actor,patient_id,plan_version,message,payload)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb) ON CONFLICT DO NOTHING""",
+                 (st.get("run", 0), key, EVENT_TYPE.get(key, key), status, corr, svc.now(conn),
+                  next(a for k, _, a, _ in STEPS if k == key), st.get("emma_patient"),
+                  core.get_setting(conn, "ops_plan_version"), msg, json.dumps(payload or {}, default=str)))
+
+
+def run_step(conn, key: str, force: bool = False) -> dict:
     fn = next((f for k, _, _, f in STEPS if k == key), None)
     if not fn:
         raise svc.NotFound(f"story step {key}")
-    msg = fn(conn)
+    st = state(conn)
+    if not st:
+        raise svc.Conflict("story not initialised: run reset_story.py or press Reset")
+    done = _done_by_state(conn, st)
+    if key in done and not force:                       # idempotent: a completed step is never executed twice
+        return {"step": key, "message": "already done", "now": svc.now(conn).isoformat(), "story_day": round(core.story_day(conn), 2)}
+    nxt = next((k for k, *_ in STEPS if k not in done), None)
+    if key != nxt and not force:
+        raise svc.Conflict(f"out of order: the next step is '{nxt}'")
+    corr = did("story", st.get("run"), key)
+    try:
+        msg = fn(conn)
+    except Exception as e:                               # record the failure on its own connection (this one rolls back)
+        from backend.db.conn import connect
+        with connect() as c2:
+            _log(c2, st, key, "failed", str(e)[:400], corr)
+        raise
     st = state(conn)
     if key not in st["done"]:
         st["done"].append(key)
     st["last"] = {"step": key, "message": msg}
     save(conn, st)
+    _log(conn, st, key, "completed", msg, corr)
     core.emit({"kind": "ops", "what": "story", "step": key, "message": msg})
     return {"step": key, "message": msg, "now": svc.now(conn).isoformat(), "story_day": round(core.story_day(conn), 2)}
 
 
 def next_step(conn) -> dict:
-    done = set(state(conn).get("done", []))
+    done = _done_by_state(conn, state(conn))
     k = next((k for k, *_ in STEPS if k not in done), None)
     if not k:
         return {"step": None, "message": "Story complete."}
@@ -468,11 +524,16 @@ def next_step(conn) -> dict:
 
 def overview(conn) -> dict:
     st = state(conn)
-    done = set(st.get("done", []))
+    done = _done_by_state(conn, st) if st else set()
     try:
         day = round(core.story_day(conn), 2)
     except LookupError:
         day = None
+    nxt = next((k for k, *_ in STEPS if k not in done), None)
+    failed = {r[0]: r[1] for r in conn.execute(
+        "SELECT step, message FROM ops_story_event WHERE run=%s AND status='failed' ORDER BY id", (st.get("run", -1),)).fetchall()} if st else {}
     return {"initialised": bool(st), "run": st.get("run"), "story_day": day, "now": svc.now(conn).isoformat(),
-            "emma_patient": st.get("emma_patient"), "emma_pathway": st.get("emma_pathway"), "last": st.get("last"),
-            "steps": [{"key": k, "label": l, "actor": a, "done": k in done} for k, l, a, _ in STEPS]}
+            "emma_patient": st.get("emma_patient"), "emma_pathway": st.get("emma_pathway"), "last": st.get("last"), "next": nxt,
+            "steps": [{"key": k, "label": l, "actor": a, "event": EVENT_TYPE.get(k), "show_in": SHOW_IN[a],
+                       "status": "completed" if k in done else ("current" if k == nxt else ("failed" if k in failed else "pending")),
+                       "done": k in done, "error": failed.get(k) if k not in done else None} for k, l, a, _ in STEPS]}

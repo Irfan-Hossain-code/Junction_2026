@@ -99,7 +99,7 @@ def explain(iv: dict) -> dict:
         if m.get(k) is None:
             return
         parts = [f"{lbl}: {m[k]}{unit}"]
-        for nm, ref in (("recommended", o if mine != "optimised" else None), ("no action", n), ("before breakdown", b)):
+        for nm, ref in (("recommended", o if mine != "optimised" else None), ("local repair only", n), ("before breakdown", b)):
             if ref and ref.get(k) is not None:
                 parts.append(f"{nm} {ref[k]}{unit}")
         bullets.append(" · ".join(parts))

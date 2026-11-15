@@ -82,6 +82,7 @@ def _brief(iv: dict | None) -> dict | None:
             "options": opts, "review": ev.get("review"), "by_facility": pr.get("by_facility"), "transfers": pr.get("transfers"),
             "rows": pr.get("rows") or [], "replies": pr.get("replies") or [], "applied": pr.get("applied") or [],
             "options_followup": pr.get("options") if pr.get("kind") == "followup" else None,
+            "controller": pr.get("controller"), "state_version": pr.get("state_version") or ev.get("state_version"),
             "log": iv.get("log"), "decided_by": iv.get("decided_by"), "justification": iv.get("justification"),
             "assumptions": ev.get("assumptions"), "replications": ev.get("replications")}
 

@@ -56,6 +56,23 @@ def record_missed(conn, appointment_id) -> str:
         if home and (_dt.fromisoformat(home["at"]) - _dt.fromisoformat(first)).total_seconds() <= 2 * 86400:
             opts.remove(home); opts.insert(0, home)
     opts = opts[:3]
+    # hierarchical check: the inner controller proposes the earliest local repair; the outer (whole-pathway) model replays
+    # the patient's REMAINING pathway for each option on the live state. Escalate away from the local option only if it
+    # costs > 5 pp chance of treatment within target.
+    from backend.ops import evaluate as _ev
+    try:
+        opts = _ev.score_options(conn, a["pathway_id"], opts)
+        best = max(opts, key=lambda o: (o.get("p_on_time") or 0, -(o.get("treatment_day") or 999))) if opts else None
+        home = next((o for o in opts if o["facility_id"] == HOME_FACILITY), None)
+        pick = home if (home and best and (home.get("p_on_time") or 0) >= (best.get("p_on_time") or 0) - 0.05) else best
+        if pick:
+            opts.remove(pick); opts.insert(0, pick)
+        controller = {"level": "local" if pick is home else "global",
+                      "reason": "local repair at the home hospital keeps the treatment-target chance within 5 pp of the best option"
+                      if pick is home else "local repair would cost > 5 pp chance of treatment within target; outer plan picks another hospital",
+                      "options_scored_by": "whole-pathway replay on the current state (200 runs)"}
+    except Exception as e:                                      # never block continuity of care on the optimiser
+        controller = {"level": "fallback", "reason": f"scoring unavailable ({e}); earliest-slot rule used"}
     iv_id = did("iv-followup", appointment_id)
     if not conn.execute("SELECT 1 FROM ops_intervention WHERE id=%s", (iv_id,)).fetchone():
         conn.execute("""INSERT INTO ops_intervention(id,source,status,title,proposal,created_at,updated_at)
@@ -63,7 +80,8 @@ def record_missed(conn, appointment_id) -> str:
                      (iv_id, f"Follow-up: {a['name']} missed a colonoscopy ({priority})",
                       json.dumps({"kind": "followup", "pathway_id": str(a["pathway_id"]), "patient_id": a["patient_id"],
                                   "name": a["name"], "priority": priority, "missed_appointment_id": str(appointment_id),
-                                  "options": opts, "responsible": "Endoscopy unit, North Karelia Central Hospital"}), now, now))
+                                  "options": opts, "controller": controller,
+                                  "responsible": "Endoscopy unit, North Karelia Central Hospital"}), now, now))
         interventions.log(conn, iv_id, "DETECTED", "cancerflow", "appointment missed; pathway step unresolved")
         interventions.set_status(conn, iv_id, "AWAITING_APPROVAL", "cancerflow",
                                  "replacement slots evaluated; needs clinician authorisation and patient consent")

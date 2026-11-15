@@ -130,3 +130,18 @@ ol.steps .link { margin-left: 6px; }
 .seg.twins .diff-t { margin-left: 6px; }
 .scenario-pick .link { font-size: 11.5px; }
 .scenario-pick select { display: block; margin-top: 4px; max-width: 320px; }
+
+.flow-steps { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-size: 10.5px; color: var(--muted); margin-bottom: 6px; }
+.flow-steps span { border: 1px solid var(--border-2); border-radius: 99px; padding: 1px 6px; color: var(--text-2); }
+.tag.prov { margin-left: 6px; cursor: help; }
+.rec .r.est { color: #c4b5fd; }
+
+.ctl-box { border: 1px solid var(--border-2); border-radius: 8px; padding: 6px 8px; margin: 6px 0; font-size: 12px; }
+.ctl-box.global { border-color: rgba(167,139,250,.6); } .ctl-box.local { border-color: rgba(52,211,153,.5); }
+
+ol.steps li.completed { color: var(--muted); text-decoration: line-through; }
+ol.steps li.current { color: #fff; font-weight: 700; background: rgba(56,189,248,.12); border-radius: 6px; padding: 2px 4px; }
+ol.steps li.failed { color: #fca5a5; }
+ol.steps .ev { font-size: 9.5px; color: var(--muted); font-family: var(--mono); margin-left: 4px; }
+.next-app { font-size: 12px; margin: 6px 0; padding: 6px 8px; border: 1px solid var(--accent); border-radius: 8px; }
+.next-app span { color: var(--text-2); }
