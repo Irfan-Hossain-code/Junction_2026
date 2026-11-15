@@ -25,6 +25,74 @@ from backend.services import pathways as svc
 OPEN = ("DETECTED", "PROPOSED", "EVALUATED", "AWAITING_APPROVAL", "APPROVED")
 
 
+class StalePlan(svc.Conflict):
+    pass
+
+
+def is_stale(conn, iv) -> bool:
+    ver = (iv.get("evaluation") or {}).get("state_version")
+    return bool(ver) and ver != evaluate.state_version(conn)
+
+
+def recompute(conn, parent) -> str:
+    """Fresh outer-MPC plan for the active disruption on the CURRENT state (supersedes pending optimiser plans)."""
+    d = recovery_context(conn)
+    if not d:
+        raise svc.Conflict("no disruption to recover from (no outage and no recovery plan on record)")
+    for (oid,) in conn.execute("""SELECT id FROM ops_intervention WHERE disruption_id=%s AND source IN ('optimiser','replan')
+                                  AND status = ANY(%s)""", (d["id"], ["PROPOSED", "EVALUATED", "AWAITING_APPROVAL"])).fetchall():
+        set_status(conn, oid, "SUPERSEDED", "cancerflow", "superseded by a fresh plan on the current state")
+    new_id = uuid.uuid4()
+    now = svc.now(conn)
+    conn.execute("""INSERT INTO ops_intervention(id,disruption_id,parent_id,source,status,title,created_at,updated_at)
+                    VALUES (%s,%s,%s,'optimiser','DETECTED',%s,%s,%s)""",
+                 (new_id, d["id"], (parent or {}).get("id"), f"Recover {d['summary'].get('affected_count')} appointments (fresh MPC plan)", now, now))
+    log(conn, new_id, "DETECTED", "cancerflow", "fresh optimisation requested on the current state")
+    evaluate_optimiser(conn, new_id)
+    return str(new_id)
+
+
+def approve_checked(conn, iv_id, actor=COORD_USER, justification="") -> dict:
+    """Transactional, idempotent approval with a machine-readable outcome (used by voice, chat and buttons).
+    committed=True only after the database commit succeeded. Never raises for expected failures."""
+    try:
+        iv = get(conn, iv_id)
+    except svc.NotFound:
+        return {"committed": False, "error_category": "not_found", "message": f"no plan {iv_id}"}
+    if iv["status"] == "APPLIED":
+        return {"committed": True, "already_applied": True, "plan_id": str(iv_id), "status": "APPLIED"}
+    if iv["status"] != "AWAITING_APPROVAL":
+        return {"committed": False, "error_category": "not_pending", "plan_id": str(iv_id), "status": iv["status"],
+                "message": f"this plan is {iv['status']}, not awaiting approval"}
+    hold = approval_hold(conn)
+    if hold and hold.get("on"):
+        return {"committed": False, "error_category": "on_hold", "plan_id": str(iv_id),
+                "message": f"approvals are on hold ({hold.get('reason') or 'operator asked not to submit plans'}); lift the hold first"}
+    if is_stale(conn, iv):
+        new_id = recompute(conn, iv)
+        conn.commit()
+        return {"committed": False, "error_category": "stale_plan", "plan_id": str(iv_id), "new_plan_id": new_id,
+                "message": "the bookable state changed since this plan was computed; a fresh plan was computed and is awaiting approval"}
+    try:
+        with conn.transaction():                          # savepoint: a failed apply leaves no partial bookings
+            approve(conn, iv_id, actor, justification)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        try:
+            log(conn, iv_id, "AWAITING_APPROVAL", "cancerflow", f"approval attempt failed ({type(e).__name__}): {str(e)[:200]}")
+            conn.commit()
+        except Exception:
+            conn.rollback()
+        cat = "apply_conflict" if isinstance(e, svc.Conflict) else "internal_error"
+        return {"committed": False, "error_category": cat, "plan_id": str(iv_id), "message": str(e)[:300],
+                "pending": True, "retry_safe": False}
+    done = get(conn, iv_id)
+    return {"committed": True, "plan_id": str(iv_id), "status": done["status"],
+            "appointments_moved": len(done["proposal"].get("applied", [])),
+            "notified": "patients and receiving hospitals", "approved_by": actor}
+
+
 # ------------------------------------------------------------------ helpers
 def log(conn, iv_id, status, actor=None, note=None):
     conn.execute("INSERT INTO ops_intervention_log(intervention_id,status,actor,note,at) VALUES (%s,%s,%s,%s,%s)",
@@ -63,6 +131,32 @@ def active_disruption(conn):
     if r:
         r["id"] = str(r["id"])
     return r
+
+
+def recovery_context(conn):
+    """The disruption the operator is working on: the active one, or (after the outage window ended or the clock moved on)
+    the one behind the latest recovery plan. Resolved from the backend, never from conversation memory."""
+    d = active_disruption(conn)
+    if d:
+        return d
+    r = conn.cursor(row_factory=dict_row).execute(
+        """SELECT d.* FROM ops_intervention i JOIN ops_disruption d ON d.id=i.disruption_id
+           WHERE i.source IN ('optimiser','replan','admin','voice','text','map') ORDER BY i.created_at DESC LIMIT 1""").fetchone()
+    if r:
+        r["id"] = str(r["id"])
+    return r
+
+
+def approval_hold(conn):
+    return core.get_setting(conn, "ops_approval_hold") or None
+
+
+def set_hold(conn, on: bool, reason: str = "", actor: str = COORD_USER) -> dict:
+    """'Don't submit any plans': no approval can execute until the operator lifts the hold."""
+    val = {"on": True, "reason": reason, "by": actor, "at": svc.now(conn).isoformat()} if on else None
+    core.set_setting(conn, "ops_approval_hold", val)
+    core.emit({"kind": "ops", "what": "hold", "on": on})
+    return {"hold": bool(on), "reason": reason}
 
 
 def current(conn):
@@ -203,9 +297,9 @@ def propose(conn, allocations: list | None = None, per_patient: dict | None = No
             actor: str = COORD_USER, note: str = "", background: bool = False) -> dict:
     """allocations: [{"facility": "Kuopio", "share": 0.5} | {"facility": ..., "count": 3}]; per_patient: {patient_id: facility}.
     Shares are split over the affected patients in clinical-priority order (urgent first, earliest deadline)."""
-    d = active_disruption(conn)
+    d = recovery_context(conn)
     if not d:
-        raise svc.Conflict("no active disruption")
+        raise svc.Conflict("no disruption to recover from (no outage and no recovery plan on record)")
     parent = current(conn)
     base_rows = (parent or {}).get("proposal", {}).get("rows") or []
     aff = evaluate.affected_patients(conn, d["id"])
@@ -334,16 +428,8 @@ def approve(conn, iv_id, actor=COORD_USER, justification="", background_agents: 
         return iv                                             # idempotent: a second approval changes nothing
     if iv["status"] != "AWAITING_APPROVAL":
         raise svc.Conflict(f"intervention is {iv['status']}; only AWAITING_APPROVAL can be approved")
-    ver = (iv.get("evaluation") or {}).get("state_version")
-    if ver and ver != evaluate.state_version(conn):      # never execute a plan computed on an obsolete capacity snapshot
-        set_status(conn, iv_id, "SUPERSEDED", "cancerflow", "stale: bookable state changed since evaluation; recomputing")
-        if iv["source"] == "optimiser" and iv.get("disruption_id"):
-            new_id = uuid.uuid4()
-            conn.execute("""INSERT INTO ops_intervention(id,disruption_id,parent_id,source,status,title,created_at,updated_at)
-                            VALUES (%s,%s,%s,'optimiser','DETECTED',%s,%s,%s)""",
-                         (new_id, iv["disruption_id"], iv_id, iv["title"] + " (recomputed)", svc.now(conn), svc.now(conn)))
-            evaluate_optimiser(conn, new_id)
-        raise svc.Conflict("the state changed since this plan was computed; a fresh plan was computed - review it before approving")
+    if is_stale(conn, iv):                               # checked BEFORE any write; approve_checked() recomputes
+        raise StalePlan("the bookable state changed since this plan was computed")
     set_status(conn, iv_id, "APPROVED", actor, justification or "approved", decided_by=actor, justification=justification)
     try:
         offers = _apply(conn, iv)
@@ -429,7 +515,14 @@ def _apply(conn, iv) -> list[dict]:
 
 def agent_round(conn, iv_id):
     """Every moved patient (except Emma, who is the presenter) answers. Declines/counters feed back into the optimiser."""
-    iv = get(conn, iv_id)
+    conn.execute("SELECT pg_advisory_xact_lock(4242)")   # serialised with story reset (no deadlock on agent memory)
+    for _ in range(60):                                   # wait until the approval transaction is visible (committed)
+        iv = get(conn, iv_id)
+        if iv["status"] == "APPLIED" and iv["proposal"].get("applied") is not None:
+            break
+        time.sleep(0.25)
+    else:
+        return
     emma = iv["proposal"].get("emma_patient")
     replies, avoid, earliest = [], {}, {}
     t0 = core.t0(conn)

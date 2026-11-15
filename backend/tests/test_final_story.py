@@ -8,6 +8,8 @@ from backend.db.conn import connect
 from backend.ops import core, evaluate, interventions, story
 from backend.services import pathways as svc
 
+# These tests RESET and replay the shared demo story: never run them during a live demo.
+STORY = pytest.mark.skipif(not os.environ.get("CANCERFLOW_STORY_TESTS"), reason="set CANCERFLOW_STORY_TESTS=1 (resets the shared demo story)")
 pytestmark = pytest.mark.skipif(not os.environ.get("DATABASE_URL"), reason="needs DATABASE_URL")
 
 
@@ -60,6 +62,7 @@ def _initial(c):
             "day": round(core.story_day(c), 1), "done": st["done"], "emma_pathway": st["emma_pathway"], "cohort": len(st["cohort"])}
 
 
+@STORY
 def test_10_reset_is_idempotent_and_scoped():
     from reset_story import main
     with connect() as c:
@@ -75,6 +78,7 @@ def test_10_reset_is_idempotent_and_scoped():
     assert after == before                                          # national scenarios, runs, other patients untouched
 
 
+@STORY
 def test_3_to_11_full_story():
     with connect() as c:
         st = story.state(c)

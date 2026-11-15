@@ -153,6 +153,7 @@ def _evaluate(inst: Instance, plan: Plan) -> dict:
     outs = [replay(inst, plan, r, seed=2026) for r in range(REPS)]
     need = on = urg_need = urg_on = 0
     breaches, cds, dds, tds, transfers, travel, lost = [], [], [], [], [], [], []
+    late, ulate, severe = [], [], 0                       # lateness (days past target, lost = 60 d penalty as in the brain)
     per = {p.pid: {"need": 0, "on": 0, "cd": [], "td": [], "acc": 0} for p in inst.patients}
     pm = {p.pid: p for p in inst.patients}
     for o in outs:
@@ -170,6 +171,11 @@ def _evaluate(inst: Instance, plan: Plan) -> dict:
                 if p.priority == "urgent":
                     urg_need += 1; urg_on += ok
                 b += 0 if ok else 1
+                lt = 60.0 if (x["lost"] or x["treatment_day"] is None) else max(0.0, x["treatment_day"] - p.deadline_day)
+                late.append(lt)
+                severe += 1 if lt > 14 else 0
+                if p.priority == "urgent":
+                    ulate.append(lt)
                 if x["treatment_day"] is not None:
                     tds.append(x["treatment_day"]); per[pid]["td"].append(x["treatment_day"])
         breaches.append(b)
@@ -182,7 +188,10 @@ def _evaluate(inst: Instance, plan: Plan) -> dict:
            "breaches_per_run": round(float(np.mean(breaches)), 2), "mean_colonoscopy_day": r1(cds),
            "mean_diagnosis_day": r1(dds), "mean_treatment_day": r1(tds), "transfers": r1(transfers),
            "patient_travel_hours": r1(travel), "lost_to_follow_up": round(float(np.mean(lost)), 2),
-           "pathways_needing_treatment": need, "replications": REPS}
+           "pathways_needing_treatment": need, "replications": REPS,
+           "urgent_mean_lateness_days": r1(ulate) if ulate else 0.0, "mean_lateness_days": r1(late) if late else 0.0,
+           "pct_severe_delay": round(100 * severe / need, 1) if need else 0.0,
+           "p90_treatment_day": round(float(np.percentile(tds, 90)), 1) if tds else None}
     pts = {}
     for p in inst.patients:
         q = per[p.pid]
@@ -274,6 +283,8 @@ def evaluate(conn, disruption_id, admin_alloc: dict | None = None, extra_avoid: 
     if not inst.patients:
         return {"options": {}, "patients": 0}
     res, plans = {}, {}
+    if "baseline" in include and any(i["orig_day"] < 0 for i in info.values()):
+        include = tuple(k for k in include if k != "baseline")        # original slots already in the past: no "before" plan
     if "baseline" in include:
         binst, _, _ = build(conn, disruption_id, baseline=True)
         bplan = schedule_greedy(binst, "priority", fixed=_fixed_colonoscopy(binst, {}, {pid: i["orig_day"] for pid, i in info.items()}))
@@ -410,3 +421,46 @@ def evaluate_subset(conn, patient_ids: list, applied: dict, avoid: dict, earlies
                         "replan": {"label": "Re-planned with the patient's stated constraints", **ev_new}},
             "rows": out_rows, "by_facility": by, "constraints": {"avoid": avoid, "earliest_story_day": earliest},
             "replications": REPS}
+
+
+# ------------------------------------------------------------------ lexicographic comparison (clinical hierarchy)
+LEX = [("pct_urgent_within_target", -1, 1.0, "urgent patients treated within target (%)"),
+       ("urgent_mean_lateness_days", 1, 0.5, "urgent patients: mean days late"),
+       ("pct_severe_delay", 1, 1.0, "severe delays: > 14 days late (%)"),
+       ("pct_within_target", -1, 1.0, "all patients treated within target (%)"),
+       ("mean_lateness_days", 1, 0.5, "mean days late (all)"),
+       ("mean_treatment_day", 1, 0.5, "mean day treatment starts"),
+       ("patient_travel_hours", 1, 0.5, "patient travel burden (hours)")]
+
+
+def rank_options(options: dict) -> list[dict]:
+    """Rank evaluated options by the clinical objective hierarchy (each tier only breaks ties of the one above, with a
+    tolerance). 0 % within target everywhere does NOT make options equal: lateness and severe delays still decide."""
+    import functools
+    keys = [k for k in options if k != "baseline" and options[k].get("kpis")]
+
+    def cmp(a, b):
+        ka, kb = options[a]["kpis"], options[b]["kpis"]
+        for m, sign, tol, _ in LEX:
+            x, y = ka.get(m), kb.get(m)
+            if x is None or y is None:
+                continue
+            if abs(x - y) > tol:
+                return -1 if sign * (x - y) < 0 else 1
+        return 0
+    order = sorted(keys, key=functools.cmp_to_key(cmp))
+    out = []
+    for i, k in enumerate(order):
+        why = None
+        if i + 1 < len(order):
+            nb = options[order[i + 1]]["kpis"]
+            for m, sign, tol, lbl in LEX:
+                x, y = options[k]["kpis"].get(m), nb.get(m)
+                if x is not None and y is not None and abs(x - y) > tol:
+                    why = f"better on '{lbl}': {x} vs {y} ({options[order[i + 1]].get('label', order[i + 1])})"
+                    break
+        out.append({"rank": i + 1, "option": k, "label": options[k].get("label", k), "decided_by": why or "tied within tolerance on all tiers",
+                    **{m: options[k]["kpis"].get(m) for m, *_ in LEX},
+                    "mean_colonoscopy_day": options[k]["kpis"].get("mean_colonoscopy_day"),
+                    "mean_diagnosis_day": options[k]["kpis"].get("mean_diagnosis_day")})
+    return out

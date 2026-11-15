@@ -7,6 +7,7 @@ changes happen exclusively in POST /ops/interventions/{id}/approve (human approv
 from __future__ import annotations
 
 import os
+import re
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -142,7 +143,10 @@ class DecisionIn(BaseModel):
 
 @router.post("/interventions/{iv_id}/approve")
 def approve(iv_id: str, body: DecisionIn, conn=Depends(get_conn_dep)):
-    return _brief(_run(interventions.approve, conn, iv_id, body.actor, body.justification))
+    r = interventions.approve_checked(conn, iv_id, body.actor, body.justification)
+    if not r["committed"]:
+        raise HTTPException(409 if r["error_category"] != "not_found" else 404, r["message"])
+    return _brief(interventions.get(conn, iv_id))
 
 
 @router.post("/interventions/{iv_id}/reject")
@@ -222,8 +226,11 @@ def command(body: CommandIn, conn=Depends(get_conn_dep)):
         if r:
             cur = interventions.get(conn, r[0])
     if act == "approve" and cur and cur["status"] == "AWAITING_APPROVAL":
-        iv = _run(interventions.approve, conn, cur["id"], COORD_USER, cmd.get("justification") or body.text)
-        return {"command": cmd, "intervention": _brief(iv), "reply": f"Approved and applied: {iv['title']}. Patients and receiving units are being notified."}
+        r = interventions.approve_checked(conn, cur["id"], COORD_USER, cmd.get("justification") or body.text)
+        iv = interventions.get(conn, r.get("new_plan_id") or cur["id"])
+        reply = (f"Approved and applied: {iv['title']}. Patients and receiving units are being notified." if r["committed"]
+                 else f"Not approved ({r['error_category']}): {r['message']}")
+        return {"command": cmd, "intervention": _brief(iv), "approval": r, "reply": reply}
     if act == "reject" and cur and cur["status"] == "AWAITING_APPROVAL":
         iv = _run(interventions.reject, conn, cur["id"], COORD_USER, body.text)
         return {"command": cmd, "intervention": _brief(iv), "reply": "Rejected. The previous recommendation is still available."}
@@ -316,3 +323,164 @@ def voice_brief(conn=Depends(get_conn_dep)):
             "headline": f"{s['resource']} at {s['facility']} is offline for {int(s['hours'])} hours; "
                         f"{s['affected_count']} colonoscopies are affected, {s['urgent_count']} of them urgent.",
             "bullets": ex.get("bullets", [])}
+
+
+# ------------------------------------------------------------------ typed voice tools (no natural-language parsing)
+from backend.ops import evaluate as _ev  # noqa: E402
+
+GLOSSARY = {"mean_colonoscopy_day": "days from today until the colonoscopy (diagnostic appointment)",
+            "mean_diagnosis_day": "days from today until the histology result (confirmed diagnosis)",
+            "mean_treatment_day": "days from today until TREATMENT STARTS (only patients who turn out to need treatment)",
+            "p90_treatment_day": "90th percentile of treatment start (days from today)",
+            "pct_within_target": "% of patients needing treatment who start it within 42 days of referral",
+            "pct_urgent_within_target": "same, urgent referrals only",
+            "urgent_mean_lateness_days": "urgent patients: mean days past the 42-day target",
+            "mean_lateness_days": "all patients: mean days past target (lost patient = 60 d)",
+            "pct_severe_delay": "% more than 14 days past target"}
+HIERARCHY = [lbl for *_, lbl in _ev.LEX]
+
+
+def _pending_plan(conn, which: str = "recommended", plan_id: Optional[str] = None):
+    if plan_id:
+        return interventions.get(conn, plan_id)
+    srcs = ["optimiser", "replan"] if which == "recommended" else ["optimiser", "replan", "admin", "voice", "text", "map"]
+    r = conn.execute("""SELECT id FROM ops_intervention WHERE source = ANY(%s) AND status IN ('AWAITING_APPROVAL','APPLIED')
+                        ORDER BY (status='AWAITING_APPROVAL') DESC, created_at DESC LIMIT 1""", (srcs,)).fetchone()
+    return interventions.get(conn, r[0]) if r else None
+
+
+def _plan_summary(conn, iv) -> dict:
+    ev = iv.get("evaluation") or {}
+    pr = iv.get("proposal") or {}
+    opts = ev.get("options") or {}
+    mine = "admin" if "admin" in opts else ("replan" if "replan" in opts else ("optimised" if pr.get("basis") == "optimised" else "no_action"))
+    k = (opts.get(mine) or {}).get("kpis", {})
+    return {"plan_id": iv["id"], "status": iv["status"], "title": iv["title"], "source": iv["source"],
+            "computed_on_state_version": ev.get("state_version"),
+            "stale": interventions.is_stale(conn, iv) if iv["status"] == "AWAITING_APPROVAL" else False,
+            "provenance": {"engine": "whole-pathway MPC (lexicographic MIP) + 200 stochastic replays" if mine != "admin" else
+                           "administrator allocation, scheduled and replayed 200 times", "evaluated_option": mine,
+                           "controller": pr.get("controller"), "day0": ev.get("day0"), "simulated": True},
+            "allocation": pr.get("by_facility"), "kpis": {m: k.get(m) for m in GLOSSARY},
+            "patients": [{"name": r["name"], "priority": r["priority"], "to": r["to"]["facility"], "colonoscopy_at": r["to"]["at"],
+                          "expected_colonoscopy_day": (r.get("outcome") or {}).get("colonoscopy_day"),
+                          "expected_treatment_day_if_needed": (r.get("outcome") or {}).get("treatment_day"),
+                          "p_treated_within_target": (r.get("outcome") or {}).get("p_on_time"),
+                          "p_accepts_offer": r.get("accept_prob")} for r in pr.get("rows", [])],
+            "glossary": GLOSSARY}
+
+
+def available_tools(conn, d, plan) -> dict:
+    """What the agent may actually offer right now (checked against backend state, not assumed)."""
+    hold = interventions.approval_hold(conn)
+    has_ctx = bool(d)
+    return {"get_situation": True, "compare_plans": bool(plan), "get_plan_details": bool(plan), "explain_plan": bool(plan),
+            "run_mpc": has_ctx, "propose_allocation": has_ctx,
+            "approve_plan": bool(plan and plan["status"] == "AWAITING_APPROVAL" and not (hold and hold.get("on"))),
+            "check_approval": bool(plan), "set_hold": True,
+            "approvals_on_hold": bool(hold and hold.get("on"))}
+
+
+class HoldIn(BaseModel):
+    hold: bool = True
+    reason: str = ""
+
+
+@router.post("/voice/hold")
+def voice_hold(body: HoldIn, conn=Depends(get_conn_dep)):
+    return interventions.set_hold(conn, body.hold, body.reason)
+
+
+@router.get("/voice/situation")
+def voice_situation(conn=Depends(get_conn_dep)):
+    d = interventions.recovery_context(conn)
+    plan = _pending_plan(conn)
+    return {"disruption": d and {"resource": d["summary"]["resource"], "facility": d["summary"]["facility"], "hours": d["summary"]["hours"],
+                                 "from": d["summary"]["starts_at"], "until": d["summary"]["ends_at"],
+                                 "affected": d["summary"]["affected"], "affected_count": d["summary"]["affected_count"],
+                                 "urgent_count": d["summary"]["urgent_count"]},
+            "outage_active": bool(d and d.get("status") == "active"),
+            "current_plan": plan and _plan_summary(conn, plan), "objective_hierarchy": HIERARCHY,
+            "available_tools": available_tools(conn, d, plan),
+            "note": "propose_allocation and run_mpc are evaluations only: they never change appointments."}
+
+
+@router.post("/voice/optimise")
+def voice_optimise(conn=Depends(get_conn_dep)):
+    """'Use MPC to find a solution': fresh outer-MPC plan on the current state (a few seconds)."""
+    plan = _pending_plan(conn)
+    new_id = _run(interventions.recompute, conn, plan)
+    conn.commit()
+    iv = interventions.get(conn, new_id)
+    return {"plan": _plan_summary(conn, iv), "ranking": _ev.rank_options((iv.get("evaluation") or {}).get("options") or {}),
+            "objective_hierarchy": HIERARCHY}
+
+
+@router.get("/voice/compare")
+def voice_compare(conn=Depends(get_conn_dep)):
+    """All evaluated options for the active disruption, ranked by the clinical hierarchy (not by one average)."""
+    plan = _pending_plan(conn)
+    if not plan:
+        return {"ranking": [], "message": "no evaluated plan yet: call run_mpc"}
+    opts = dict((plan.get("evaluation") or {}).get("options") or {})
+    for (iid,) in conn.execute("""SELECT id FROM ops_intervention WHERE source IN ('admin','voice','text','map')
+                                  AND status IN ('AWAITING_APPROVAL','EVALUATED') ORDER BY created_at DESC LIMIT 3""").fetchall():
+        a = (interventions.get(conn, iid).get("evaluation") or {}).get("options", {}).get("admin")
+        if a:
+            opts[f"admin:{iid}"] = {**a, "label": f"Donny's proposal ({str(iid)[:8]})"}
+    return {"ranking": _ev.rank_options(opts), "recommended_plan_id": plan["id"], "objective_hierarchy": HIERARCHY,
+            "glossary": GLOSSARY, "note": "Ranked tier by tier: a lower tier only breaks ties of the tiers above (tolerances apply). SIMULATED."}
+
+
+@router.get("/voice/plan")
+def voice_plan(which: str = "recommended", plan_id: Optional[str] = None, conn=Depends(get_conn_dep)):
+    plan = _pending_plan(conn, which, plan_id)
+    if not plan:
+        raise HTTPException(404, "no plan")
+    return _plan_summary(conn, plan)
+
+
+class VoiceApproveIn(BaseModel):
+    plan_id: Optional[str] = None
+    which: str = "recommended"
+    justification: str = ""
+    donny_words: str = ""          # Donny's literal authorising utterance (checked server-side)
+
+
+AFFIRM = re.compile(r"\b(approve|approved|yes|go ahead|execute|do it|confirm|confirmed|proceed|apply)\b", re.I)
+NEGATE = re.compile(r"\b(don'?t|do not|no|not|cancel|stop|wait|hold|hypothetical|just evaluate|only evaluate)\b", re.I)
+
+
+def authorisation_ok(words: str) -> tuple[bool, str]:
+    """Execution needs Donny's own explicit words: an affirmative and no negation/hypothetical in the same utterance."""
+    w = (words or "").strip()
+    if not w:
+        return False, "missing: quote Donny's exact words authorising execution"
+    if NEGATE.search(w):
+        return False, "Donny's words contain a negation or a hypothetical; ask whether he wants to execute or only evaluate"
+    if not AFFIRM.search(w):
+        return False, "Donny's words do not explicitly authorise execution; ask him to confirm"
+    return True, ""
+
+
+@router.post("/voice/approve")
+def voice_approve(body: VoiceApproveIn, conn=Depends(get_conn_dep)):
+    """Always HTTP 200 with committed true/false + error_category, so the agent never loops on transport errors."""
+    ok, why = authorisation_ok(body.donny_words)
+    if not ok:
+        return {"committed": False, "error_category": "needs_explicit_authorization", "message": why}
+    try:
+        plan = _pending_plan(conn, body.which, body.plan_id)
+    except svc.NotFound:
+        plan = None
+    if not plan:
+        return {"committed": False, "error_category": "not_found", "message": "no plan awaiting approval"}
+    return interventions.approve_checked(conn, plan["id"], COORD_USER, body.justification or body.donny_words)
+
+
+@router.get("/voice/approval/{plan_id}")
+def voice_approval(plan_id: str, conn=Depends(get_conn_dep)):
+    iv = _run(interventions.get, conn, plan_id)
+    return {"plan_id": plan_id, "status": iv["status"], "committed": iv["status"] == "APPLIED",
+            "appointments_moved": len((iv.get("proposal") or {}).get("applied", [])), "decided_by": iv.get("decided_by"),
+            "log": [f"{x['status']}: {x['note']}" for x in iv.get("log", [])[-4:]]}

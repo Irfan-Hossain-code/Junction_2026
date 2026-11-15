@@ -44,6 +44,20 @@ cd care-app && npx vite --port 5174                     # http://localhost:5174/
   | Open loop | 43.6 % | 2.0 | 175 d | 0 |
   | Closed loop | 47.8 % | 1.0 | 93 d | 0 |
 
+## Voice call (Donny)
+- **Typed tools:** the agent calls typed backend tools only (`/ops/voice/*`). Nothing goes through free-text parsing except the evaluation of Donny's own allocation.
+  - `get_situation`: outage, affected patients, current plan, available tools.
+  - `run_mpc`: fresh whole-pathway optimisation on the current state.
+  - `compare_plans`: ranked by the clinical hierarchy (urgent → severe delays → within target → lateness → treatment start → travel). 0 % everywhere still ranks.
+  - `get_plan_details`: colonoscopy vs diagnosis vs TREATMENT day per patient.
+  - `propose_allocation`: always hypothetical.
+  - `approve_plan`: explicit plan id + Donny's literal words, checked server-side.
+  - `check_approval`, `set_hold` ("don't submit anything"), `end_call`.
+- **Approval** is transactional and idempotent, with `committed` true/false and an error category: `stale_plan` (a fresh plan is computed), `on_hold`, `needs_explicit_authorization`, `not_pending`, `not_found`, `apply_conflict`. The agent may only say "done" when `committed` is true.
+- **Orchestrator** (`twin-ui/src/voice/orchestrator.ts`): session and request ids. Identical in-flight requests share one backend call; newer requests supersede older ones; superseded and post-hang-up results come back as `stale` and are never spoken. Unavailable tools are blocked.
+- **Recovery context** comes from the backend (the latest plan's disruption), so "compare with Kuopio" still works after the 48 h outage window has ended.
+- **Tests:** `node --test twin-ui/tests/orchestrator.test.ts` (5). `CANCERFLOW_STORY_TESTS=1 python -m pytest backend/tests/test_voice_tools.py backend/tests/test_final_story.py`. These **reset the demo story**, so never run them during a live demo.
+
 ## Decision support (national twin)
 - **Intervention Studio** labels each option **Suggested** (rule), **Optimizer estimated** (OR-Tools strategic flow, numbers shown) or **Simulation validated** (a stored SimPy run of it exists for that area; click to open). A label appears only if that computation happened.
 - **Evaluate with MPC** (chat) evaluates the *selected* alarm: its region, resource and stage. If the resource has idle capacity, it reports **not applicable (process delay)** instead of returning an unrelated result. Investment candidates are limited to the selected region.

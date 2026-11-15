@@ -3,6 +3,7 @@ import "./ops.css";
 import { Conversation } from "@elevenlabs/client";
 import { API } from "./api";
 import { Tag } from "./Panels";
+import { VoiceOrchestrator } from "./voice/orchestrator";
 
 // Operations command centre: ONE shared backend state (/ops/*) for map, buttons, text commands and the voice agent.
 // Nothing here changes operational data except Approve / Reject (human decisions), which call the backend.
@@ -279,36 +280,57 @@ export function CallCenter({ state, refresh, onFocus }: { state: any; refresh: (
     return () => audio.current?.stop?.();
   }, [ring]);
 
-  const tool = (fn: (p?: any) => Promise<any>) => async (p: any) => {
-    try { const r = await fn(p); refresh(); return JSON.stringify(r); } catch (e: any) { return JSON.stringify({ error: e.message }); }
+  // every client tool goes through the orchestrator: request ids, de-duplication, supersession, no output after the call
+  const orch = useRef<VoiceOrchestrator | null>(null);
+  const [vstate, setVstate] = useState<string>("idle");
+  const execTool = async (name: string, p: any) => {
+    const r = await (async () => {
+      switch (name) {
+        case "get_situation": return ops("/ops/voice/situation");
+        case "run_mpc": return ops("/ops/voice/optimise", {});
+        case "compare_plans": return ops("/ops/voice/compare");
+        case "get_plan_details": return ops(`/ops/voice/plan${p?.plan_id ? `?plan_id=${encodeURIComponent(p.plan_id)}` : ""}`);
+        case "propose_allocation": {        // evaluation only: never changes appointments
+          const x = await ops("/ops/command", { text: `evaluate (hypothetical, do not execute): ${p.instruction}`, source: "voice" });
+          return { plan_id: x.intervention?.id, status: x.intervention?.status, hypothetical: true, reply: x.reply, verdict: x.explain?.verdict,
+            key_numbers: x.explain?.bullets?.slice(0, 4), reasons: x.explain?.why?.slice(0, 3) };
+        }
+        case "approve_plan": return ops("/ops/voice/approve", { plan_id: p?.plan_id || null, justification: p?.justification || "", donny_words: p?.donny_words || "" });
+        case "check_approval": return ops(`/ops/voice/approval/${encodeURIComponent(p.plan_id)}`);
+        case "set_hold": return ops("/ops/voice/hold", { hold: p?.hold !== false, reason: p?.reason || "" });
+        case "reject_plan": { const x = await ops("/ops/command", { text: `reject. ${p?.reason || ""}`, source: "voice" }); return { reply: x.reply }; }
+        case "explain_plan": { const x = await ops("/ops/ask", { question: p?.question || "why?" }); return { answer: x.answer?.text, key_numbers: x.bullets, reasons: x.why }; }
+        default: return { unavailable: true, tool: name };
+      }
+    })().catch((e: any) => ({ error: e.message, error_category: "backend_unavailable" }));
+    refresh();
+    return r;
   };
+  const TOOLS = ["get_situation", "run_mpc", "compare_plans", "get_plan_details", "propose_allocation", "approve_plan", "check_approval", "set_hold", "reject_plan", "explain_plan"];
   const answer = async () => {
     setRing(false); setCall("connecting"); setErr(null); setLines([]); onFocus();
+    const o = new VoiceOrchestrator(execTool);
+    o.onChange = () => setVstate(o.status);
+    orch.current = o;
     try {
       const s = await ops("/ops/voice/session");
+      const clientTools = Object.fromEntries(TOOLS.map(n => [n, (p: any) => o.call(n, p || {})]));
       conv.current = await Conversation.startSession({
         signedUrl: s.signed_url,
         dynamicVariables: { headline: s.dynamic_variables.headline },
-        clientTools: {
-          get_situation: tool(() => ops("/ops/voice/brief")),
-          propose_allocation: async (p: any) => tool(async () => { const r = await ops("/ops/command", { text: p.instruction, source: "voice" });
-            return { reply: r.reply, verdict: r.explain?.verdict, key_numbers: r.explain?.bullets?.slice(0, 3), reasons: r.explain?.why?.slice(0, 3), status: r.intervention?.status }; })(p),
-          approve_plan: async (p: any) => tool(async () => { const r = await ops("/ops/command", { text: p.which === "recommended" ? `approve your recommendation. ${p.justification || ""}` : `approve. ${p.justification || ""}`, source: "voice" });
-            return { reply: r.reply, status: r.intervention?.status }; })(p),
-          reject_plan: async (p: any) => tool(async () => { const r = await ops("/ops/command", { text: `reject. ${p.reason || ""}`, source: "voice" }); return { reply: r.reply }; })(p),
-          explain_plan: async (p: any) => tool(async () => { const r = await ops("/ops/ask", { question: p.question || "why?" }); return { answer: r.answer?.text, key_numbers: r.bullets, reasons: r.why }; })(p),
-        },
-        onMessage: (m: any) => setLines(l => [...l, { who: m.source === "user" || m.role === "user" ? "Donny" : "CancerFlow", text: m.message }]),
-        onModeChange: (m: any) => setMode(m.mode),
-        onConnect: () => setCall("live"),
-        onDisconnect: () => setCall(c => (c === "failed" ? c : "ended")),
+        clientTools,
+        onMessage: (m: any) => { if (!o.ended) setLines(l => [...l, { who: m.source === "user" || m.role === "user" ? "Donny" : "CancerFlow", text: m.message }]); },
+        onModeChange: (m: any) => { setMode(m.mode); o.setMode(m.mode); },
+        onConnect: (c: any) => { o.start(c?.conversationId || `s-${Date.now()}`); setCall("live"); },
+        onDisconnect: () => { o.end(); setCall(c => (c === "failed" ? c : "ended")); },
         onError: (e: any) => { setErr(String(e?.message || e)); },
       } as any);
     } catch (e: any) {
+      o.end();
       setCall("failed"); setErr(`Voice unavailable (${e.message}). Use "Talk to CancerFlow" in the Operations panel - same tools, same state.`);
     }
   };
-  const hang = async () => { try { await conv.current?.endSession(); } catch { /* */ } setCall("ended"); };
+  const hang = async () => { orch.current?.end(); try { await conv.current?.endSession(); } catch { /* */ } setCall("ended"); };
 
   if (ring) return (
     <div className="call ring">
@@ -323,6 +345,7 @@ export function CallCenter({ state, refresh, onFocus }: { state: any; refresh: (
       <div className="row-sb"><b>{call === "connecting" ? "Connecting…" : call === "live" ? `On call · CancerFlow is ${mode === "speaking" ? "speaking" : "listening"}` : call === "failed" ? "Voice failed" : "Call ended"}</b>
         {call === "live" || call === "connecting" ? <button className="btn dec" onClick={hang}>Hang up</button> : <button className="btn" onClick={() => setCall("idle")}>Close</button>}</div>
       {call === "live" && <div className={`wave ${mode}`}><i /><i /><i /><i /><i /></div>}
+      <div className="muted small">state: {vstate.replace(/_/g, " ")}{orch.current?.sessionId ? ` · session ${orch.current.sessionId.slice(-6)}` : ""}</div>
       {err && <div className="err small">{err}</div>}
       <div className="call-lines">{lines.slice(-6).map((l, i) => <div key={i} className={`cl ${l.who === "Donny" ? "you" : "cf"}`}><b>{l.who}:</b> {l.text}</div>)}</div>
       <div className="muted small">Every number comes from backend tools · nothing executes without your explicit yes</div>

@@ -71,6 +71,7 @@ def _muni_id(conn, name: str):
 
 
 def reset(conn) -> dict:
+    conn.execute("SELECT pg_advisory_xact_lock(4242)")   # waits for background patient-agent replies to finish
     st_old = state(conn)
     run = int(st_old.get("run", 0)) + 1
     # anchor story day 0 at today's midnight (Finnish time), clock at 08:30 on day 0

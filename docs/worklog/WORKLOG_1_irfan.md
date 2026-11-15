@@ -138,3 +138,20 @@ Shared coordination log for Irfan's Claude instance and Shams's AI assistant. En
   - Emma's marker and route on the map; care-app demo page takes `?patient=&doctor=`.
 - **Tests:** `test_final_story.py` (context, provenance, reset idempotent + scoped, full 17 steps with outage / stale / no-overbooking / no-show / cross-app) → 4/4. Existing suite 60/60.
 - **Incident:** I stopped the Windows `wslrelay` process (it owned port 8000), which broke `localhost` forwarding to WSL. Servers inside WSL keep running. Fix: `wsl --shutdown` and restart the servers (needed anyway to load the new code).
+
+### 2026-11-15 — Claude (irfan) — Voice agent: real MPC tools + conversation control
+- **Root causes found:**
+  - Voice approval went through natural-language `/ops/command`. Phrasing like "...move the patients" failed the rule check.
+  - A stale plan raised an exception after writing its recompute, so the request rolled back and every retry hit the same stale plan.
+  - Alternatives were looked up by ACTIVE outage only, so they failed after the 48 h window.
+  - No `end_call` tool, and late tool results were still spoken.
+  - The story tests reset the shared demo DB during a live call.
+- **Fixes:**
+  - Typed `/ops/voice/*` tools and `approve_checked` (savepoint, commit, structured outcome, approval hold, explicit-words check).
+  - `rank_options` follows the clinical hierarchy, with lateness, severe-delay and treatment metrics.
+  - `recovery_context`.
+  - Orchestrator with request ids, de-duplication, supersession and stale suppression.
+  - Advisory lock between reset and agent replies (it deadlocked in tests).
+  - Baseline skipped when the original slots are past.
+  - Story tests gated behind `CANCERFLOW_STORY_TESTS=1`.
+- **Tests:** regular 64 passed (4 gated skipped); gated story + voice 8/8; orchestrator 5/5 (node).
