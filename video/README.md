@@ -2,7 +2,7 @@
 
 A 1920×1080, 30 fps, about 4:55 video for Junction 2026. The animated scenes are code (React + SVG in [Remotion](https://remotion.dev)), so they render the same way every time. Irfan's recordings drop into named slots.
 
-This folder is self-contained. It doesn't import from or change `care-app/`, `twin-ui/` or `backend/`.
+This folder is self-contained. It doesn't import from or change `care-app/`, `twin-ui/` or `backend/`.ssh
 
 ## Truth sources (nothing is invented)
 | On screen | Comes from | Refresh with |
