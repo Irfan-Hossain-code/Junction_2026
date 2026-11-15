@@ -32,7 +32,8 @@ SCHEMA = {
 PARSE_SYSTEM = f"""Map a healthcare coordinator's instruction about rescheduling colonoscopy patients after an endoscopy
 unit breakdown in Joensuu to a command. Hospitals: {', '.join(FAC_SHORT.values())}. Counties: North Savo = Kuopio,
 South Savo = Mikkeli and Savonlinna, Central Finland = Jyväskylä. 'half' = share 0.5, 'a third' = 0.333.
-'approve'/'go ahead'/'accept' = approve. Never invent hospitals. If unclear use action 'unknown'."""
+'approve'/'go ahead'/'accept' = approve. Named patients go in per_patient (first names are fine); 'everyone else' /
+'the rest' goes in allocations with share 1. Never invent hospitals. If unclear use action 'unknown'."""
 
 
 def parse(text: str) -> dict:

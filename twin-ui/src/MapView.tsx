@@ -80,10 +80,67 @@ type Props = {
   selection: Selection; onSelect: (s: Selection) => void; mode: MapMode; capability: string; loading: boolean;
   privateClinics: any[]; alarms: Alarm[]; selectedAlarm: Alarm | null; onSelectAlarm: (a: Alarm) => void;
   agents: AgentSummary[]; agent: AgentDetail | null; onSelectAgent: (pid: number) => void; hcFlows: HcFlow[]; layersOn: LayersOn;
+  ops?: any; onOpsFacility?: (facilityId: string) => void; opsFocus?: number;
 };
 
+// Operations overlay (shared /ops state): resource status, affected patients, proposed vs applied routes
+const EAST_BOUNDS: [[number, number], [number, number]] = [[25.2, 61.3], [31.2, 63.9]];
+function opsLayers(ops: any, tick: number, onFacility?: (f: string) => void) {
+  if (!ops?.initialised) return [];
+  const byFac: Record<string, any> = {};
+  for (const r of ops.resources || []) {
+    if (r.capability !== "colonoscopy") continue;
+    const f = byFac[r.facility_id] || (byFac[r.facility_id] = { id: r.facility_id, short: r.short, lon: r.lon, lat: r.lat, offline: 0, units: [], free: 0, slots: 0 });
+    f.units.push(r); f.free += r.free_72h; f.slots += r.slots_72h; if (r.status === "offline") f.offline++;
+  }
+  const facs = Object.values(byFac);
+  const iv = ops.intervention;
+  const applied = iv?.status === "APPLIED";
+  const live = iv && ["EVALUATED", "AWAITING_APPROVAL", "APPLIED", "APPROVED"].includes(iv.status) && iv.rows?.length;
+  const routes = live ? iv.rows.filter((r: any) => r.home?.lon && r.to?.facility_id).map((r: any) => {
+    const to = byFac[r.to.facility_id];
+    return to ? { ...r, path: [[r.home.lon, r.home.lat], [to.lon, to.lat]] } : null;
+  }).filter(Boolean) : [];
+  const affected = (ops.disruption?.summary?.affected || []).length ? (iv?.rows || []) : [];
+  const pulse = 0.5 + 0.5 * Math.sin(tick / 260);
+  const emmaId = ops.emma?.patient_id;
+  return [
+    new ScatterplotLayer({
+      id: "ops-pulse", data: facs.filter((f: any) => f.offline), getPosition: (f: any) => [f.lon, f.lat],
+      getRadius: 9000 + 9000 * pulse, radiusUnits: "meters", radiusMinPixels: 14 + 10 * pulse, filled: true,
+      getFillColor: [239, 83, 80, Math.round(60 + 60 * (1 - pulse))], updateTriggers: { getRadius: tick, getFillColor: tick },
+    }),
+    new PathLayer({
+      id: "ops-routes", data: routes, getPath: (d: any) => d.path, widthUnits: "pixels",
+      getWidth: (d: any) => (d.transfer ? 3.5 : 2), getColor: (d: any) => applied ? (d.transfer ? [52, 211, 153, 230] : [125, 211, 252, 170])
+        : (d.transfer ? [245, 165, 36, 220] : [148, 163, 184, 120]), pickable: true,
+      updateTriggers: { getColor: [applied, iv?.id] },
+    }),
+    new ScatterplotLayer({
+      id: "ops-patients", data: affected.filter((r: any) => r.home?.lon), pickable: true, getPosition: (r: any) => [r.home.lon, r.home.lat],
+      getRadius: (r: any) => (r.patient_id === emmaId ? 9 : 6), radiusUnits: "pixels", stroked: true, lineWidthUnits: "pixels", getLineWidth: 2,
+      getFillColor: (r: any) => r.patient_id === emmaId ? [232, 121, 249, 255] : r.priority === "urgent" ? [251, 146, 60, 255] : [226, 232, 240, 230],
+      getLineColor: [8, 14, 26, 255], updateTriggers: { getRadius: emmaId, getFillColor: emmaId },
+    }),
+    new ScatterplotLayer({
+      id: "ops-facilities", data: facs, pickable: true, getPosition: (f: any) => [f.lon, f.lat], radiusUnits: "pixels",
+      getRadius: (f: any) => 9 + Math.min(10, f.free / 2), stroked: true, lineWidthUnits: "pixels", getLineWidth: 3, filled: true,
+      getFillColor: (f: any) => f.offline ? [239, 83, 80, 255] : f.free === 0 ? [245, 165, 36, 255] : [52, 211, 153, 255],
+      getLineColor: [255, 255, 255, 230], onClick: (i: any) => onFacility && onFacility(i.object.id),
+      updateTriggers: { getFillColor: [ops.now], getRadius: [ops.now] },
+    }),
+    new TextLayer({
+      id: "ops-labels", data: [...facs.map((f: any) => ({ p: [f.lon, f.lat], t: `${f.short}${f.offline ? " · UNIT OFFLINE" : ` · ${f.free} free / 72 h`}`, bad: f.offline })),
+        ...affected.filter((r: any) => r.patient_id === emmaId && r.home?.lon).map((r: any) => ({ p: [r.home.lon, r.home.lat], t: "Emma", emma: true }))],
+      getPosition: (d: any) => d.p, getText: (d: any) => d.t, getSize: (d: any) => (d.emma ? 13 : 12), fontWeight: 700,
+      getColor: (d: any) => d.bad ? [255, 140, 140, 255] : d.emma ? [240, 171, 252, 255] : [230, 240, 250, 240], getPixelOffset: (d: any) => d.emma ? [0, -16] : [0, 20],
+      fontFamily: "Inter, sans-serif", outlineWidth: 3, outlineColor: [5, 10, 20, 255], fontSettings: { sdf: true },
+    }),
+  ];
+}
+
 export default function MapView({ geo, net, baseNet, healthCentres, selection, onSelect, mode, capability, loading,
-  privateClinics, alarms, selectedAlarm, onSelectAlarm, agents, agent, onSelectAgent, hcFlows, layersOn }: Props) {
+  privateClinics, alarms, selectedAlarm, onSelectAlarm, agents, agent, onSelectAgent, hcFlows, layersOn, ops, onOpsFacility, opsFocus }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 900, height: 600 });
   const [viewState, setViewState] = useState<any>({ longitude: 25.6, latitude: 64.9, zoom: 4.2, pitch: 0, bearing: 0 });
@@ -123,6 +180,9 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
       if (f) setViewState((v: any) => ({ ...v, longitude: f.lon, latitude: f.lat, zoom: Math.max(v.zoom, 7), transitionDuration: 900, transitionInterpolator: new FlyToInterpolator({ speed: 1.6 }) }));
     }
   }, [selection.scope, selection.id, geo]);
+
+  // operations: fly to Eastern Finland when the presenter focuses the ops view (disruption, approval)
+  useEffect(() => { if (opsFocus) fit(EAST_BOUNDS, 40); }, [opsFocus]);
 
   // particle animation (~30 fps)
   useEffect(() => {
@@ -311,9 +371,10 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
         getSize: 11, getColor: [200, 215, 235, 220], getPixelOffset: [0, -16], fontFamily: "Inter, sans-serif", fontWeight: 600,
         outlineWidth: 3, outlineColor: [5, 10, 20, 255], fontSettings: { sdf: true },
       }),
+      ...opsLayers(ops, tick, onOpsFacility),
     ];
   }, [geo, net, baseNet, healthCentres, privateClinics, flows, hcPaths, tick, mode, selection.scope, selection.id, selCounty, capability,
-    viewState.zoom >= 5.4, viewState.zoom >= 6.5, alarms, selectedAlarm, agents, agent, journey, layersOn, unit, hcUnit]);
+    viewState.zoom >= 5.4, viewState.zoom >= 6.5, alarms, selectedAlarm, agents, agent, journey, layersOn, unit, hcUnit, ops]);
 
   const tooltip = ({ object, layer }: any) => {
     if (!object) return null;
@@ -335,6 +396,9 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
     if (layer.id === "health-centres") return { html: `${object.name}<br/><span style="color:#8da2c0">health centre · primary care (OSM)</span>`, style };
     if (layer.id === "private-clinics") return { html: `${object.name}<br/><span style="color:#8da2c0">private / occupational first contact (OSM) · not routed by default</span>`, style };
     if (layer.id === "alarms") return { html: `<b style="color:${object.severity === "critical" ? "#ef5350" : "#f5a524"}">${object.severity.toUpperCase()}</b> · ${object.title}<br/><span style="color:#8da2c0">click for evidence</span>`, style };
+    if (layer.id === "ops-facilities") return { html: `<b>${object.short}</b><br/>${object.units.map((u: any) => `${u.name}: ${u.status === "offline" ? "<b style='color:#ef5350'>OFFLINE</b>" : `${u.free_72h} free of ${u.slots_72h} slots (72 h)`}`).join("<br/>")}<br/><span style="color:#8da2c0">click to send the selected patient here</span>`, style };
+    if (layer.id === "ops-patients") return { html: `<b>${object.name}</b> · ${object.priority}<br/>${object.from.facility} → <b>${object.to.facility}</b>${object.to.at ? ` · ${new Date(object.to.at).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : ""}<br/>P(accept) ${Math.round(100 * (object.accept_prob ?? 1))} % · P(on time) ${object.outcome?.p_on_time != null ? Math.round(100 * object.outcome.p_on_time) + " %" : "–"} <span style="color:#8da2c0">(simulated)</span>`, style };
+    if (layer.id === "ops-routes") return { html: `${object.name}: ${object.home?.muni} → ${object.to.facility} · ${Math.round(object.travel_min || 0)} min travel`, style };
     if (layer.id === "agents") return { html: `Synthetic patient #${object.pid} · ${object.archetype.replace(/_/g, " ")}, ${object.age} y${object.urgent ? " · urgent" : ""}<br/>${object.lost ? "lost to follow-up" : object.rtt_days != null ? `referral → treatment ${object.rtt_days} d (${object.rtt_status})` : "no treatment needed / in progress"}${object.declined ? ` · declined ${object.declined} offer(s)` : ""}${object.missed ? ` · missed ${object.missed}` : ""}`, style };
     return null;
   };

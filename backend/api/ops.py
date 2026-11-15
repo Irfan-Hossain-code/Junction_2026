@@ -195,8 +195,11 @@ def command(body: CommandIn, conn=Depends(get_conn_dep)):
     if act == "propose" and (cmd.get("allocations") or cmd.get("per_patient")):
         per = None
         if cmd.get("per_patient"):
-            names = {r["name"].split(" ")[0].lower(): r["patient_id"] for r in (cur or {}).get("proposal", {}).get("rows", [])}
-            per = {names.get(x["patient"].split(" ")[0].lower(), x["patient"]): x["facility"] for x in cmd["per_patient"]}
+            names = {}
+            for r in (cur or {}).get("proposal", {}).get("rows", []):
+                names[r["name"].lower()] = names[r["name"].split(" ")[0].lower()] = names[r["name"].split(" ")[-1].lower()] = r["patient_id"]
+            per = {names.get(x["patient"].lower(), names.get(x["patient"].split(" ")[0].lower(), x["patient"])): x["facility"]
+                   for x in cmd["per_patient"]}
         iv = _run(interventions.propose, conn, cmd.get("allocations") or None, per, body.source, COORD_USER, body.text)
         ex = nl.explain(iv)
         return {"command": cmd, "intervention": _brief(iv), "explain": ex, "reply": _say(iv, ex)}

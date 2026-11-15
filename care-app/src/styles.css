@@ -387,3 +387,12 @@ label { display: flex; flex-direction: column; gap: 4px; font-size: .88em; color
 .alt-wrap { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--border); }
 .alt-wrap .load-row { flex: 1; min-width: 0; }
 .cap-foot { margin: 10px 0 0; }
+
+/* CancerFlow messages (shared /ops notifications) */
+.inbox .inbox-item { border-left: 3px solid var(--border); padding: 6px 10px; margin: 8px 0; }
+.inbox .inbox-item.warning { border-color: #f5a524; }
+.inbox .inbox-item.critical { border-color: #ef5350; }
+.inbox .inbox-item.latest { background: rgba(13,148,136,.06); border-radius: 6px; }
+.inbox .inbox-item p { margin: 4px 0; }
+.inbox .row { justify-content: space-between; align-items: center; gap: 8px; }
+.btn.small { padding: 4px 10px; font-size: .85rem; }

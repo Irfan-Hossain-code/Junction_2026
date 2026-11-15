@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api, PathwayState, uuid } from "../api";
+import { api, OpsNotification, PathwayState, uuid } from "../api";
 import { useAuth } from "../auth";
 import { ClockBar, ErrorNote, Header, Spinner, Tag, Timeline } from "../components";
 import { fmtDay, PATIENT_ACTION, PHASES, phaseOf, relDays, roleLabel, sevRank, STAGE_EXPLAIN, useFacilityName, useLive, useStageLabel } from "../lib";
@@ -22,8 +22,10 @@ export default function PatientHome() {
         {list.error && <ErrorNote msg={list.error} onRetry={list.reload} />}
         {!list.data && !list.error && <div className="center pad"><Spinner /></div>}
         {list.data && pathways.length === 0 && (
-          <div className="card"><p>You don't have an active care pathway. If you have symptoms, contact your health centre.</p></div>
+          <div className="card"><p>You don't have an active care pathway. If you have symptoms, contact your health centre.</p>
+            {user?.id === "pat-emma" && <SymptomsButton onDone={list.reload} />}</div>
         )}
+        <Inbox />
         {pathways.length > 1 && (
           <div className="row wrap">
             {pathways.map((p) => (
@@ -37,6 +39,60 @@ export default function PatientHome() {
       </main>
     </div>
   );
+}
+
+/** Demo: Emma reports symptoms and books a GP visit (creates her pathway in the shared backend). */
+function SymptomsButton({ onDone }: { onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  return (<>
+    <button className="action" disabled={busy} onClick={async () => {
+      setBusy(true); setErr(null);
+      try { await api.reportSymptoms(); onDone(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); }
+    }}><b>{busy ? "Booking…" : "I have symptoms: book a GP appointment"}</b>
+      <span className="muted small">Rectal bleeding for 3 weeks, tiredness. The earliest slot at Niinivaara health station.</span></button>
+    {err && <ErrorNote msg={err} />}
+  </>);
+}
+
+/** Messages from CancerFlow (reminders, rescheduling, follow-up). Confirming updates the shared appointment. */
+export function Inbox() {
+  const { user } = useAuth();
+  const n = useLive(() => api.notifications().catch(() => [] as OpsNotification[]), [user?.id],
+    (m) => m.kind === "notification" || m.kind === "event" || m.kind === "clock" || m.kind === "ops");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [done, setDone] = useState<Record<string, boolean>>({});
+  const items = (n.data || []).slice(0, 4);
+  if (!items.length) return null;
+  const confirm = async (x: OpsNotification) => {
+    setBusy(x.id);
+    try { await api.confirmAppointment(x.payload.appointment_id); setDone((d) => ({ ...d, [x.payload.appointment_id]: true })); n.reload(); }
+    finally { setBusy(null); }
+  };
+  return (
+    <section className="card inbox">
+      <h3>Messages</h3>
+      {items.map((x, i) => {
+        const needs = (x.payload?.needs_confirmation || x.payload?.needs_checkin) && !done[x.payload?.appointment_id];
+        return (
+          <div key={x.id} className={`inbox-item ${x.severity} ${i === 0 ? "latest" : ""}`}>
+            <b>{x.title}</b>
+            <p>{x.body}</p>
+            <div className="row">
+              <span className="muted small">{new Date(x.created_at).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+              {needs && <button className="btn primary small" disabled={busy === x.id} onClick={() => confirm(x)}>
+                {x.payload?.needs_checkin ? "I'm prepared and coming" : "Confirm"}</button>}
+              {x.kind === "missed" && x.audience === "care_team" && x.payload?.intervention_id && !done[x.id] &&
+                <button className="btn primary small" disabled={busy === x.id} onClick={async () => {
+                  setBusy(x.id);
+                  try { await api.authoriseFollowup(x.payload.intervention_id); setDone((d) => ({ ...d, [x.id]: true })); } finally { setBusy(null); }
+                }}>Authorise earliest replacement slot</button>}
+              {!needs && x.payload?.appointment_id && ((x as any).confirmed || done[x.payload.appointment_id]) && (x as any).appointment_status === "booked" && <span className="ok-note small">Confirmed ✓</span>}
+              {(x as any).appointment_status === "cancelled" && <span className="muted small">replaced</span>}
+            </div>
+          </div>);
+      })}
+    </section>);
 }
 
 function PatientPathway({ id }: { id: string }) {
@@ -113,7 +169,9 @@ function PatientPathway({ id }: { id: string }) {
               <li key={a.id}>
                 <div className="appt-date"><b>{fmtDay(a.scheduled_for)}</b>
                   <span>{new Date(a.scheduled_for).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span></div>
-                <div><b>{stageLabel(a.stage)}</b><div className="muted small">{relDays(a.scheduled_for, now)}</div></div>
+                <div><b>{stageLabel(a.stage)}</b><div className="muted small">{facName(a.facility_id) || ""} · {relDays(a.scheduled_for, now)}</div>
+                  {a.confirmed_at ? <span className="ok-note small">Confirmed ✓</span>
+                    : <button className="btn primary small" onClick={() => api.confirmAppointment(a.id).then(st.reload)}>Confirm</button>}</div>
               </li>
             ))}
           </ul>

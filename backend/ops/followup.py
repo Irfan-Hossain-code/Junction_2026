@@ -46,8 +46,16 @@ def record_missed(conn, appointment_id) -> str:
             opts.append({"facility_id": fid, "facility": FAC_SHORT[fid], "slot_id": str(s["id"]), "resource_id": s["resource_id"],
                          "at": s["starts_at"].isoformat(), "when": core.fmt_time(s["starts_at"]), "travel_min": tm,
                          "accept_prob": (per.get("accept_prob") or {}).get(fid, 1.0)})
-    opts.sort(key=lambda o: (o["at"], o["facility_id"] != HOME_FACILITY))
-    opts = sorted(opts[:3], key=lambda o: (o["facility_id"] != HOME_FACILITY, o["at"]))
+    # earliest acceptable slot first (urgent priority kept); the home hospital wins only if within 2 days of the earliest
+    opts = [o for o in opts if o["facility_id"] == HOME_FACILITY or (o["accept_prob"] or 0) >= 0.4]
+    opts.sort(key=lambda o: o["at"])
+    if opts:
+        first = opts[0]["at"]
+        from datetime import datetime as _dt
+        home = next((o for o in opts if o["facility_id"] == HOME_FACILITY), None)
+        if home and (_dt.fromisoformat(home["at"]) - _dt.fromisoformat(first)).total_seconds() <= 2 * 86400:
+            opts.remove(home); opts.insert(0, home)
+    opts = opts[:3]
     iv_id = did("iv-followup", appointment_id)
     if not conn.execute("SELECT 1 FROM ops_intervention WHERE id=%s", (iv_id,)).fetchone():
         conn.execute("""INSERT INTO ops_intervention(id,source,status,title,proposal,created_at,updated_at)

@@ -204,25 +204,27 @@ def propose(conn, allocations: list | None = None, per_patient: dict | None = No
     aff = evaluate.affected_patients(conn, d["id"])
     order = sorted(aff, key=lambda a: (a["priority"] != "urgent", a["starts_at"], a["patient_id"]))
     alloc, problems = {}, []
-    if per_patient:
+    named = {}
+    for pid, f in (per_patient or {}).items():                # explicit patients first ("send Tapio to Kuopio")
+        fid = f if f in FAC_SHORT else _resolve_facility(conn, f)
+        if not fid:
+            problems.append(f"unknown hospital '{f}'")
+        named[pid] = fid
+    order = [a for a in order if a["patient_id"] not in named]
+    if not allocations:                                       # everyone else keeps the current proposal
         base = {r["patient_id"]: r["to"]["facility_id"] for r in base_rows}
-        alloc = {**base, **per_patient}
-        for pid, f in per_patient.items():
-            if not _resolve_facility(conn, f) and f not in FAC_SHORT:
-                problems.append(f"unknown hospital '{f}'")
-            alloc[pid] = f if f in FAC_SHORT else _resolve_facility(conn, f)
-    else:
+        for a in order:
+            alloc[a["patient_id"]] = base.get(a["patient_id"], HOME_FACILITY)
+    else:                                                     # "... and everyone else / half to X"
         parts = []
-        for a in allocations or []:
+        for a in allocations:
             fid = _resolve_facility(conn, a.get("facility", ""))
             if not fid:
                 problems.append(f"no hospital with endoscopy matches '{a.get('facility')}'")
                 continue
             parts.append((fid, a.get("count"), a.get("share")))
         n = len(order)
-        counts = []
-        for fid, c, s in parts:
-            counts.append([fid, int(c) if c is not None else None, (float(s) if s is not None else None)])
+        counts = [[fid, int(c) if c is not None else None, (float(s) if s is not None else None)] for fid, c, s in parts]
         fixed_total = sum(c for _, c, _ in counts if c is not None)
         shares = [x for x in counts if x[1] is None]
         rest = max(0, n - fixed_total)
@@ -240,6 +242,7 @@ def propose(conn, allocations: list | None = None, per_patient: dict | None = No
             i += c or 0
         for a in order[i:]:
             alloc[a["patient_id"]] = HOME_FACILITY            # unallocated remainder stays at the home hospital
+    alloc.update(named)
     online = {r[0] for r in conn.execute("SELECT DISTINCT facility_id FROM ops_resource WHERE capability='colonoscopy' AND status='online'")}
     for pid, f in alloc.items():
         if f and f not in online:

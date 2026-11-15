@@ -4,6 +4,7 @@ import MapView, { LayersOn, MapMode, legendFor } from "./MapView";
 import { AIPanel, CompliancePanel, DelayPanel, InterventionStudio, Tag } from "./Panels";
 import SelectionCard from "./SelectionCard";
 import Optimiser from "./Optimiser";
+import OpsDrawer, { CallCenter, useOps } from "./Ops";
 
 type View = "original" | "modified" | "diff";
 const CAPS = ["colonoscopy", "ct_imaging", "mdt_crc", "crc_surgery", "oncology", "radiotherapy"];
@@ -46,6 +47,11 @@ export default function App() {
   const [aiTab, setAiTab] = useState<"analysis" | "alarms" | "patient">("analysis");
   const [layersOn, setLayersOn] = useState<LayersOn>({ primary: true, private: false, patients: true, alarms: true });
   const netCache = useCache<Network>();
+  const { state: opsState, refresh: opsRefresh } = useOps();
+  const [opsOpen, setOpsOpen] = useState(false);
+  const [opsFocus, setOpsFocus] = useState(0);
+  const [opsPick, setOpsPick] = useState<string | null>(null);
+  const focusOps = () => { setOpsOpen(true); setOpsFocus(n => n + 1); };
 
   const baseline = scenarios.find(s => s.is_baseline);
   const baseRun = baseline?.latest_run ?? null;
@@ -153,6 +159,8 @@ export default function App() {
         <div className="brand"><span className="dot" />CancerFlow<small>National colorectal cancer pathway twin · Finland</small></div>
         <button className="btn opt-btn" onClick={() => setOptOpen(true)}>National optimiser</button>
         {optOpen && <Optimiser onClose={() => setOptOpen(false)} />}
+        <button className={`btn ops-btn ${opsState?.disruption ? "alarm" : ""}`} onClick={() => (opsOpen ? setOpsOpen(false) : focusOps())}>
+          {opsState?.disruption ? "● " : ""}Operations</button>
         <div className="spacer" />
         {headline ? (
           <div className="delta-chip">
@@ -170,7 +178,10 @@ export default function App() {
           <MapView geo={geo} net={net} baseNet={baseNet} healthCentres={hcs} selection={selection} onSelect={setSelection}
             mode={mapMode} capability={capability} loading={loadingNet || !net}
             privateClinics={privateClinics} alarms={alarms} selectedAlarm={selectedAlarm} onSelectAlarm={onSelectAlarm}
-            agents={agents} agent={agent} onSelectAgent={onSelectAgent} hcFlows={hcFlows} layersOn={layersOn} />
+            agents={agents} agent={agent} onSelectAgent={onSelectAgent} hcFlows={hcFlows} layersOn={layersOn}
+            ops={opsOpen ? opsState : null} onOpsFacility={setOpsPick} opsFocus={opsFocus} />
+          {opsOpen && <OpsDrawer state={opsState} refresh={opsRefresh} onFocus={focusOps} pick={opsPick} clearPick={() => setOpsPick(null)} onClose={() => setOpsOpen(false)} />}
+          <CallCenter state={opsState} refresh={opsRefresh} onFocus={focusOps} />
 
           <div className="overlay crumbs">
             <button onClick={() => setSelection({ scope: "national" })}>Finland</button>

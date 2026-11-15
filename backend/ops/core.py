@@ -116,9 +116,17 @@ def notifications(conn, audience=None, patient_id=None, facility_id=None, limit=
         q.append("AND facility_id=%s"); a.append(facility_id)
     q.append("ORDER BY created_at DESC, id LIMIT %s"); a.append(limit)
     rows = conn.cursor(row_factory=dict_row).execute(" ".join(q), a).fetchall()
+    appt_ids = [r["payload"].get("appointment_id") for r in rows if r["payload"].get("appointment_id")]
+    st = {str(a): (s, c) for a, s, c in conn.execute(
+        "SELECT id, status, confirmed_at FROM appointment WHERE id::text = ANY(%s)", (appt_ids,)).fetchall()} if appt_ids else {}
     for r in rows:
         r["id"] = str(r["id"])
         r["pathway_id"] = str(r["pathway_id"]) if r["pathway_id"] else None
+        a = st.get(r["payload"].get("appointment_id"))
+        if a:                                   # only a live, unconfirmed booking still asks for confirmation
+            r["appointment_status"], r["confirmed"] = a[0], a[1] is not None
+            if a[0] != "booked" or (a[1] is not None and not r["payload"].get("needs_checkin")):
+                r["payload"] = {**r["payload"], "needs_confirmation": False, "needs_checkin": False if a[0] != "booked" else r["payload"].get("needs_checkin")}
     return rows
 
 
