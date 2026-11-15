@@ -22,7 +22,7 @@ export type Network = {
   national: { indicators: Record<string, Indicator>; sim: MetricMap };
   counties: CountyNode[]; facilities: FacilityNode[]; flows: Flow[];
 };
-export type Scenario = { id: string; name: string; description: string; is_baseline: boolean; latest_run: string | null; created_at: string };
+export type Scenario = { id: string; name: string; description: string; is_baseline: boolean; latest_run: string | null; created_at: string; twin?: string | null };
 
 export type Compliance = {
   p_within_target: number | null; ci: [number | null, number | null] | null; cohort_n_per_year: number | null;

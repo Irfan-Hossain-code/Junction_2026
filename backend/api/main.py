@@ -315,6 +315,7 @@ async def stream(ws: WebSocket):
 # ------------------------------------------------------------------ digital twin (simulation / optimisation)
 import backend.api.twin_ai  # noqa: E402,F401  (registers /twin/context, /summary, /interpret, /simulate)
 import backend.api.twin_agents  # noqa: E402,F401  (registers /twin/anomalies, /patients, /hc_flows)
+import backend.api.twin_chat  # noqa: E402,F401  (registers /twin/chat, /twin/evaluate)
 from backend.api.twin import router as twin_router  # noqa: E402
 
 app.include_router(twin_router)

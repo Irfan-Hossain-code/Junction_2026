@@ -71,6 +71,7 @@ def demand(snap: Snapshot, cap: str) -> dict:
     for mid, m in snap.munis.items():
         share = m["pop"] / tot
         sf = snap.screening_factor.get(m["county"], 1.0) if snap.screening_factor else 1.0
+        share *= (getattr(snap, "demand_factor", None) or {}).get(m["county"], 1.0)
         out[mid] = share * (snap.arrivals_per_week["screening"] * sf * up["screening"] +
                             snap.arrivals_per_week["symptomatic"] * up["symptomatic"])
     return out

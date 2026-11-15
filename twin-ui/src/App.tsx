@@ -7,6 +7,7 @@ import Optimiser from "./Optimiser";
 import OpsDrawer, { CallCenter, useOps } from "./Ops";
 
 type View = "original" | "modified" | "diff";
+type Twin = "baseline" | "disruption" | "recovery" | "history";
 const CAPS = ["colonoscopy", "ct_imaging", "mdt_crc", "crc_surgery", "oncology", "radiotherapy"];
 
 function useCache<T>() {
@@ -22,7 +23,10 @@ export default function App() {
   const [hcs, setHcs] = useState<any[]>([]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [modScenario, setModScenario] = useState<string | null>(null);
-  const [view, setView] = useState<View>("original");
+  const [twin, setTwin] = useState<Twin>("baseline");     // the three living twins (+ "history" = any stored run)
+  const [diffOn, setDiffOn] = useState(false);
+  const [histOpen, setHistOpen] = useState(false);
+  const [chatAlarm, setChatAlarm] = useState<Alarm | null>(null);
   const [selection, setSelection] = useState<Selection>({ scope: "national" });
   const [capability, setCapability] = useState("colonoscopy");
   const [mapMode, setMapMode] = useState<MapMode>("sim");
@@ -56,9 +60,14 @@ export default function App() {
   const baseline = scenarios.find(s => s.is_baseline);
   const baseRun = baseline?.latest_run ?? null;
   const mod = scenarios.find(s => s.id === modScenario);
-  const modRun = mod?.latest_run ?? null;
+  const twinRun = (k: string) => scenarios.find(s => s.twin === k)?.latest_run ?? null;
+  const runs: Record<string, string | null> = { baseline: baseRun, disruption: twinRun("disruption"), recovery: twinRun("recovery") };
+  const modRun = twin === "history" ? (mod?.latest_run ?? null) : twin === "baseline" ? null : runs[twin];
+  const view: View = twin === "baseline" || !modRun ? "original" : diffOn ? "diff" : "modified";
   const activeRun = view !== "original" && modRun ? modRun : baseRun;
-  const compareBase = view !== "original" && modRun ? baseRun : null;
+  // Disruption is compared with Baseline; MPC Recovery with the SAME disruption (the controller's value)
+  const compareBase = view === "original" ? null : twin === "recovery" ? (runs.disruption ?? baseRun) : baseRun;
+  const cmpRun = compareBase ?? baseRun;
 
   const loadScenarios = useCallback(async (prefer?: string) => {
     const s = await api.scenarios();
@@ -79,9 +88,9 @@ export default function App() {
     if (!activeRun) return;
     setLoadingNet(true);
     const a = netCache(`${activeRun}|${capability}`, () => api.network(activeRun, capability));
-    const b = baseRun ? netCache(`${baseRun}|${capability}`, () => api.network(baseRun, capability)) : Promise.resolve(null as any);
+    const b = cmpRun ? netCache(`${cmpRun}|${capability}`, () => api.network(cmpRun, capability)) : Promise.resolve(null as any);
     Promise.all([a, b]).then(([n, bn]) => { setNet(n); setBaseNet(bn); }).catch(e => setError(e.message)).finally(() => setLoadingNet(false));
-  }, [activeRun, baseRun, capability]);
+  }, [activeRun, cmpRun, capability]);
 
   // panels + AI summary follow selection and scenario
   useEffect(() => {
@@ -109,7 +118,7 @@ export default function App() {
     api.hcFlows(activeRun, selCounty).then(r => setHcFlows(r.flows)).catch(() => setHcFlows([]));
   }, [activeRun, selCounty]);
   // selected agent: same pid in the other scenario (common random numbers) for comparison
-  const otherRun = view === "original" ? modRun : baseRun;
+  const otherRun = view === "original" ? modRun : cmpRun;
   useEffect(() => {
     if (agentPid == null || !activeRun) { setAgent(null); return; }
     setAgentLoading(true); setExplain(null);
@@ -132,7 +141,7 @@ export default function App() {
   const onSimulated = async (runId: string, scenarioId: string) => {
     await loadScenarios(scenarioId);
     setModScenario(scenarioId);
-    setView("modified");
+    setTwin("history");
   };
 
   const headline = useMemo(() => {
@@ -192,19 +201,24 @@ export default function App() {
           </div>
 
           <div className="overlay toggle-wrap">
-            <div className="seg">
-              <button className={view === "original" ? "on" : ""} onClick={() => setView("original")}>Original</button>
-              <button className={view === "modified" ? "on mod" : ""} disabled={!modRun} onClick={() => setView("modified")}>Modified</button>
-              <button className={view === "diff" ? "on diff" : ""} disabled={!modRun} onClick={() => setView("diff")}>Δ Difference</button>
+            <div className="seg twins">
+              <button className={twin === "baseline" ? "on" : ""} onClick={() => setTwin("baseline")} title="Normal Finland: the reference simulation">Baseline</button>
+              <button className={twin === "disruption" ? "on bad" : ""} disabled={!runs.disruption} onClick={() => setTwin("disruption")}
+                title="SYNTHETIC referral surge in Southern Finland (same capacity)">{runs.disruption ? "Disruption" : "Disruption (computing…)"}</button>
+              <button className={twin === "recovery" ? "on mod" : ""} disabled={!runs.recovery} onClick={() => setTwin("recovery")}
+                title="Same surge + CancerFlow's optimised response">{runs.recovery ? "MPC Recovery" : "MPC Recovery (computing…)"}</button>
+              <button className={`diff-t ${diffOn && twin !== "baseline" ? "on diff" : ""}`} disabled={twin === "baseline"} onClick={() => setDiffOn(d => !d)}
+                title="Colour the map by the change versus the comparison twin">Δ {twin === "recovery" ? "vs Disruption" : "vs Baseline"}</button>
             </div>
           </div>
 
           {selection.scope === "national" && (
             <div className="overlay scenario-pick">
-              <select value={modScenario ?? ""} onChange={e => setModScenario(e.target.value || null)} title="Modified scenario">
-                {scenarios.filter(s => !s.is_baseline && s.latest_run).map(s => <option key={s.id} value={s.id}>Modified: {s.name}</option>)}
-                {!scenarios.some(s => !s.is_baseline && s.latest_run) && <option value="">No modified scenario</option>}
-              </select>
+              <button className="link" onClick={() => setHistOpen(o => !o)}>{histOpen ? "▾" : "▸"} Advanced · simulation history</button>
+              {histOpen && <select value={twin === "history" ? (modScenario ?? "") : ""} onChange={e => { setModScenario(e.target.value || null); setTwin(e.target.value ? "history" : "baseline"); }}>
+                <option value="">— choose a stored run —</option>
+                {scenarios.filter(s => !s.is_baseline && !s.twin && s.latest_run).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>}
             </div>)}
 
           {!(agent && aiTab === "patient") && <SelectionCard selection={selection} net={net} baseNet={view !== "original" ? baseNet : null} ctx={ctx}
@@ -244,6 +258,8 @@ export default function App() {
 
         <AIPanel ctx={ctx} summary={summary} loading={loadingSum} view={view === "original" ? "Original" : view === "modified" ? "Modified" : "Difference"}
           tab={aiTab} setTab={setAiTab} alarms={scopedAlarms} selectedAlarm={selectedAlarm} onAlarm={onSelectAlarm}
+          chat={{ scope: selection.scope, id: selection.scope === "national" ? undefined : selection.id, run_id: activeRun ?? null, base_run_id: compareBase ?? null, twin }}
+          chatAlarm={chatAlarm} setChatAlarm={setChatAlarm}
           agent={agent} agentLoading={agentLoading} explain={explain} onExplain={onExplain} />
         <CompliancePanel ctx={ctx} onSelect={setSelection} view={view === "original" ? "Original" : "Modified"} />
         <DelayPanel ctx={ctx} />

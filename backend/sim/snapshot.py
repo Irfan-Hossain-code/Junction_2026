@@ -32,6 +32,7 @@ class Snapshot:
     reminders: dict = field(default_factory=dict)  # county -> True (proactive reminders / follow-up calls)
     transport: dict = field(default_factory=dict)  # county -> True (transport support for distant appointments)
     purchases: list = field(default_factory=list)  # private purchasing contracts (for cost accounting)
+    demand_factor: dict = field(default_factory=dict)  # county -> referral-demand multiplier (SYNTHETIC surge scenarios)
 
     def key(self, a, b):
         return f"{a}|{b}"
@@ -170,6 +171,10 @@ def apply_scenario(snap: Snapshot, params: dict) -> Snapshot:
         s.purchases.append({"facility_id": fid, "capability": cap, "per_week": wk, "eligible_counties": elig,
                             "offer_share": round(share, 3), "cost_per_procedure": float(pp.get("cost_per_procedure", P.PRIVATE_COST_PER_COLONOSCOPY_EUR))})
         s.notes.append(f"private purchase: {wk:g} {cap}/wk at {s.facilities[fid]['name']} for {', '.join(elig)} (offered to {share:.0%})")
+    ds = params.get("demand_surge") or {}
+    if ds:                                  # SYNTHETIC demand surge: more referrals from these counties (all routes)
+        s.demand_factor = {c: float(f) for c, f in ds.items() if c in s.counties and float(f) != 1.0}
+        s.notes.append("demand surge: " + ", ".join(f"{s.counties[c].get('name', c)} x{f:g}" for c, f in s.demand_factor.items()))
     sf = params.get("screening_factor") or {}
     s.screening_factor = {c: float(sf.get(c, sf.get("*", 1.0))) for c in s.counties}
     af = float(params.get("arrival_factor", 1.0))

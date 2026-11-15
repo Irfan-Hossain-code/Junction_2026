@@ -328,10 +328,21 @@ export default function MapView({ geo, net, baseNet, healthCentres, selection, o
         getPosition: (d: FacilityNode) => [d.lon, d.lat],
         getRadius: (d: FacilityNode) => 2600 + 1300 * Math.sqrt(capUtil(d, capability)?.capacity_per_week ?? 1),
         radiusMinPixels: 3.5, radiusMaxPixels: 22, lineWidthMinPixels: 1,
-        getFillColor: (d: FacilityNode) => [...utilColor(capUtil(d, capability)?.sim.utilisation?.mean), capUtil(d, capability) ? 235 : 120] as RGBA,
+        // Difference view: colour = CHANGE in utilisation vs the comparison twin (green relieved, red more loaded, grey unchanged)
+        getFillColor: (d: FacilityNode) => {
+          const u = capUtil(d, capability)?.sim.utilisation?.mean;
+          if (mode === "diff" && baseNet) {
+            const b = baseNet.facilities.find(x => x.id === d.id);
+            const ub = b ? capUtil(b, capability)?.sim.utilisation?.mean : undefined;
+            if (u == null || ub == null) return [110, 120, 140, 120] as RGBA;
+            const dv = u - ub;
+            return (dv <= -0.03 ? [52, 211, 153, 240] : dv >= 0.03 ? [239, 83, 80, 240] : [130, 140, 160, 200]) as RGBA;
+          }
+          return [...utilColor(u), capUtil(d, capability) ? 235 : 120] as RGBA;
+        },
         getLineColor: (d: FacilityNode) => (selection.scope === "facility" && d.id === selection.id ? [255, 255, 255, 255] : [8, 14, 26, 255]),
         getLineWidth: (d: FacilityNode) => (selection.scope === "facility" && d.id === selection.id ? 3 : 1), lineWidthUnits: "pixels",
-        updateTriggers: { getFillColor: [net?.run_id, capability], getRadius: [net?.run_id, capability], getLineColor: [selection.id], getLineWidth: [selection.id] },
+        updateTriggers: { getFillColor: [net?.run_id, baseNet?.run_id, capability, mode], getRadius: [net?.run_id, capability], getLineColor: [selection.id], getLineWidth: [selection.id] },
         transitions: { getFillColor: 600, getRadius: 600 },
         onClick: (i: any) => onSelect({ scope: "facility", id: i.object.id }),
       }),

@@ -154,7 +154,9 @@ def scenarios(conn=Depends(get_conn_dep)):
         FROM scenario s ORDER BY s.is_baseline DESC, s.created_at DESC""").fetchall()
     for r in rows:
         r["id"], r["latest_run"] = str(r["id"]), (str(r["latest_run"]) if r["latest_run"] else None)
-        r["params_summary"] = {k: (len(v) if isinstance(v, (list, dict)) else v) for k, v in (r.pop("params") or {}).items()}
+        p = r.pop("params") or {}
+        r["twin"] = p.get("twin")
+        r["params_summary"] = {k: (len(v) if isinstance(v, (list, dict)) else v) for k, v in p.items() if k != "plan_summary"}
     return rows
 
 

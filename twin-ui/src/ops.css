@@ -118,3 +118,15 @@ ol.steps .link { margin-left: 6px; }
 .ai-chat { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
 .ai-chat .qa .q { color: #bae6fd; font-size: 12px; }
 .ai-chat .qa .a { font-size: 12.5px; }
+
+.chat-ctx { font-size: 11.5px; color: var(--warn); }
+.ans-h { margin: 2px 0; font-weight: 600; }
+.chip.mpc { border-color: rgba(167,139,250,.6); color: #c4b5fd; }
+.evalcard { font-size: 12px; border: 1px solid var(--border-2); border-radius: 8px; padding: 6px 8px; margin: 4px 0; }
+.alarm-key { margin-bottom: 6px; }
+.ai-chat details summary { cursor: pointer; color: var(--accent); font-size: 11.5px; }
+
+.seg.twins button.on.bad { background: rgba(239,83,80,.22); color: #fecaca; border-color: rgba(239,83,80,.6); }
+.seg.twins .diff-t { margin-left: 6px; }
+.scenario-pick .link { font-size: 11.5px; }
+.scenario-pick select { display: block; margin-top: 4px; max-width: 320px; }
